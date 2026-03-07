@@ -1,0 +1,112 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{booktabs}
+
+\geometry{
+    a4paper,
+    top=3cm,
+    bottom=3cm,
+    left=2.5cm,
+    right=2.5cm,
+}
+
+\pagestyle{empty}
+
+\begin{document}
+
+\pagestyle{plain}
+
+\begin{titlepage}
+    
+    \centering
+
+    \includegraphics[width=0.3\textwidth]{univ_rouen.jpg}
+
+    \vspace{2cm}
+    
+    {UNIVERSITÉ DE ROUEN NORMANDIE \\ FACULTÉ DES SCIENCES ET TECHNIQUES}
+
+    \vspace{2cm}
+
+    {ANNÉE UNIVERSITAIRE 2025-2026}
+
+    \vspace{2cm}
+    
+    \begin{center}
+        \rule{\textwidth}{1.5pt}
+        \vskip 1cm
+        {\huge\bfseries ADR}
+        \vskip 0.5cm
+        {\huge\bfseries Architecture Distribuée}
+        \vskip 1cm
+        \rule{\textwidth}{1.5pt}
+    \end{center}
+    
+    \vspace{2cm}
+    
+\end{titlepage}
+
+\tableofcontents
+
+\newpage
+
+\section{Stack Technologique}
+
+Trois langages sont retenus, répartis selon la nature de chaque service.
+
+\vspace{1.5em}
+
+\noindent\textbf{Services et langages}
+
+\vspace{0.5em}
+
+\noindent\begin{tabular}{|l|l|p{7cm}|}
+  \hline
+  \textbf{Langage} & \textbf{Service} & \textbf{Justification} \\
+  \hline
+  Java / Spring Boot & Véhicules & Services critiques gérant des données relationnelles complexes (CRUD, assignations). Java/Spring Boot est reconnu pour sa robustesse et ses performances dans ce type de contexte. \\
+  \hline
+  Java / Spring Boot & Conducteurs & Même logique que Véhicules : données relationnelles complexes, robustesse et performances assurées par Spring Boot. \\
+  \hline
+  Node.js / NestJS   & Localisation & Streaming GPS en temps réel via gRPC. Node.js excelle pour les opérations I/O intensives et le temps réel. \\
+  \hline
+  Node.js / NestJS   & Événements & Traitement d'événements asynchrones et notifications. Node.js est adapté aux flux I/O intensifs et à la communication temps réel. \\
+  \hline
+  Python / FastAPI   & Maintenance & Planification, suivi d'historique et génération d'alertes préventives. Python est adapté au traitement de données et aux scripts d'automatisation. \\
+  \hline
+\end{tabular}
+
+
+\vspace{2em}
+
+\noindent\textbf{Bases de données}
+
+\vspace{0.5em}
+
+\noindent\begin{tabular}{|l|l|}
+  \hline
+  \textbf{Service(s)} & \textbf{Base de données} \\
+  \hline
+  Véhicules, Conducteurs, Maintenance & PostgreSQL 15\\
+  \hline
+  Localisation                        & TimescaleDB\\
+  \hline
+  Événements                          & PostgreSQL + Redis \\
+  \hline
+\end{tabular}
+
+\section{Architecture statique}
+
+\section{Diagrammes C4}
+
+\section{Diagrammes bases de données}
+
+\end{document}
