@@ -89,6 +89,8 @@
 \vspace{6pt}
 \ruledline
 
+\newpage
+
 % ================================================================
 \section{ADR-001 --- Architecture microservices}
 
@@ -140,6 +142,8 @@ Utiliser \textbf{gRPC (HTTP/2)} pour la communication entre les boîtiers GPS et
 \textbf{Avantages :} latence très faible grâce à la connexion persistante HTTP/2, sérialisation binaire (Protobuf) plus légère que JSON, adapté au streaming unidirectionnel continu.
 
 \noindent\textbf{Inconvénients :} les navigateurs web ne supportent pas gRPC nativement --- une couche de traduction \texttt{grpc-web} ou un proxy Envoy est nécessaire entre le frontend et le service.
+
+\newpage
 
 % ================================================================
 \section{ADR-003 --- Apache Kafka pour la communication asynchrone}
@@ -230,6 +234,8 @@ Le schéma PostgreSQL est composé de 6 tables : \texttt{vehicles}, \texttt{vehi
 \textbf{Avantages :} chaque outil est optimisé pour son type de données, pas de contention entre charges différentes, TimescaleDB réduit la taille des données GPS grâce à la compression automatique.
 
 \noindent\textbf{Inconvénients :} trois systèmes à opérer et sauvegarder. Les jointures entre données de services différents sont réalisées au niveau applicatif via GraphQL.
+
+\newpage
 
 % ================================================================
 \section{ADR-005 --- Keycloak pour l'authentification et les droits}
