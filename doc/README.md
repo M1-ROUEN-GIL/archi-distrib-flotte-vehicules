@@ -1,3 +1,6 @@
+Voici l'architecture de mon projet :
+
+```mermaid
 graph TD
     %% Définition des acteurs
     Client([📱 Frontend / App Mobile])
