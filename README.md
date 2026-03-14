@@ -87,8 +87,3 @@ Chaque microservice possède sa propre base de données. Les schémas SQL pour l
 L'authentification et l'autorisation sont gérées de manière centralisée par **Keycloak**.
 - La configuration du Realm, des clients et des rôles est exportée dans [keycloak/realm-export.json](./keycloak/realm-export.json).
 - Les rôles définis sont : `admin`, `manager`, `technicien`, `utilisateur`.
-
-4.  **Accéder à l'application :**
-    - API Gateway : `http://localhost:8080`
-    - Keycloak : `http://localhost:8888`
-    - Grafana : `http://localhost:3000`
