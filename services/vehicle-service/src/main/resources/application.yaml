@@ -1,11 +1,11 @@
 server:
-  port: 8081 # Port spécifique pour éviter les conflits avec les autres services
+  port: 8080
 
 spring:
   application:
     name: vehicle-service
 
-  # Configuration de la base de données (PostgreSQL)
+  # Configuration de la base de donnees (PostgreSQL)
   datasource:
     url: jdbc:postgresql://localhost:5432/flotte_db
     username: admin
@@ -15,7 +15,7 @@ spring:
   # Configuration Hibernate / JPA
   jpa:
     hibernate:
-      ddl-auto: update # Crée ou met à jour les tables automatiquement selon tes entités Java
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:

@@ -1,12 +1,10 @@
-# ==========================================
-# Étape 1 : Build (Construction)
-# ==========================================
+# Étape 1 : Construction
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /build
 
 # On copie d'abord le pom.xml pour télécharger les dépendances
-# (Astuce Docker : ça met en cache les téléchargements Maven !)
+# (ça met en cache les téléchargements Maven)
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
@@ -14,14 +12,12 @@ RUN mvn dependency:go-offline
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# ==========================================
-# Étape 2 : Production (Exécution)
-# ==========================================
+# Étape 2 : Production
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Sécurité exigée par ton projet : création d'un utilisateur non-root
+# Sécurité : création d'un utilisateur non-root
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
