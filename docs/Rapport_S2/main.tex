@@ -201,7 +201,7 @@ Les grandes etapes realisees sont les suivantes :
   \item Mise en place des manifests Kubernetes (Deployments, Services, Secrets, Ingress)
   \item Deploiement de l'infrastructure lourde via \textbf{Helm} (PostgreSQL, Redis)
   \item Resolution du probleme de deploiement de \textbf{Kafka}
-  
+  \item Mise en place de la stack d'observabilite (\textbf{OpenTelemetry, Jaeger, Prometheus, Loki, Grafana})
 \end{enumerate}
 
 % ------------------------------------------------------------
@@ -217,7 +217,7 @@ et ne se parlent pas.
 
 \vspace{0.3cm}
 
-A la racine du projet, un fichier \texttt{docker-compose.yml} permet de lancer
+A la racine du projet, un fichier \texttt{compose.yaml} permet de lancer
 instantanement toute l'infrastructure necessaire au developpement sans passer par
 Kubernetes. Il contient 5 services :
 
@@ -258,7 +258,7 @@ etant standardise, les deux sont entierement compatibles.
 Le lancement se fait en une seule commande :
 
 \begin{lstlisting}[language=bash, caption=Lancement de l'environnement de developpement local]
-docker-compose up -d
+docker compose up -d
 \end{lstlisting}
 
 \begin{figure}[H]
@@ -643,7 +643,60 @@ L'infrastructure actuelle se concentre sur la validation fonctionnelle. Pour la 
 \end{figure}
 
 % ------------------------------------------------------------
-% SECTION 8 - BILAN
+% SECTION 8 - OBSERVABILITÉ
+% ------------------------------------------------------------
+\section{Observabilité -- Stack OpenTelemetry \& Supervision}
+
+\begin{infobox}
+\textbf{Principe :} L'observabilite repose sur les trois piliers : \textbf{Traces}, \textbf{Metriques} et \textbf{Logs}. Nous utilisons \textbf{OpenTelemetry (OTel)} comme standard d'ingestion unique pour decorreler la generation des donnees de leur stockage final.
+\end{infobox}
+
+\subsection{Architecture de la stack}
+
+La stack d'observabilite est composee de 5 outils majeurs :
+\begin{itemize}
+  \item \textbf{OpenTelemetry Collector :} Point d'entree unique qui recoit, traite et exporte les donnees vers les differents backends.
+  \item \textbf{Jaeger :} Stockage et visualisation des traces distribuees (tracing).
+  \item \textbf{Prometheus :} Stockage des metriques de performance.
+  \item \textbf{Loki :} Agregation et stockage des journaux (logs).
+  \item \textbf{Grafana :} Interface de visualisation unifiee pour les trois types de donnees.
+\end{itemize}
+
+\subsection{Deploiement Local -- Extension via Compose Override}
+
+Pour ne pas surcharger le \texttt{compose.yaml} principal tout en facilitant le developpement, un fichier \texttt{compose.override.yaml} a ete cree. Docker Compose fusionne automatiquement ce fichier avec la configuration de base lors du lancement. Cela permet de disposer de la stack d'observabilite par defaut sans argument supplementaire :
+
+\begin{lstlisting}[language=bash, caption=Lancement de l'integralite de l'environnement (Infrastructure + Logs)]
+# Docker detecte et fusionne automatiquement compose.yaml et compose.override.yaml
+docker compose up -d
+\end{lstlisting}
+
+Les fichiers de configuration (OTel Collector et Prometheus) sont centralises dans le dossier \texttt{infra/observability-config/}.
+
+\subsection{Deploiement Kubernetes -- Isolation et Ingress}
+
+Sur Kubernetes, chaque composant est deploye dans le namespace \texttt{flotte-namespace} avec ses propres \texttt{Deployment} et \texttt{Service}.
+
+\textbf{Acces simplifie via l'Ingress :}
+Afin d'eviter l'utilisation de \texttt{port-forward}, des regles d'Ingress ont ete ajoutees pour acceder aux interfaces graphiques via le domaine \texttt{flotte.local} :
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{URL} & \textbf{Interface} \\
+    \midrule
+    \texttt{flotte.local/grafana} & Tableaux de bord (admin/admin) \\
+    \texttt{flotte.local/jaeger}  & Tracing des requetes \\
+    \bottomrule
+  \end{tabular}
+  \caption{Acces externes aux outils d'observabilite}
+\end{table}
+
+Une configuration specifique (\texttt{root\_url} pour Grafana et \texttt{base-path} pour Jaeger) a ete appliquee pour permettre le fonctionnement correct derrière ces sous-chemins URLs.
+
+% ------------------------------------------------------------
+% SECTION 9 - BILAN
 % ------------------------------------------------------------
 \section{Bilan de la semaine 2}
 
@@ -664,16 +717,15 @@ L'infrastructure actuelle se concentre sur la validation fonctionnelle. Pour la 
     \midrule
     PostgreSQL           & \textcolor{success}{\textbf{Running}} & Helm (Bitnami) \\
     Redis                & \textcolor{success}{\textbf{Running}} & Helm (Bitnami) \\
-    Kafka  & \textcolor{success}{\textbf{Running}} & Manifest K8s (Confluent cp-kafka:7.5.0) \\
+    Kafka  & \textcolor{success}{\textbf{Running}} & Manifest K8s (Confluent) \\
+    OTel Collector       & \textcolor{success}{\textbf{Running}} & Manifest K8s \\
+    Jaeger / Prometheus  & \textcolor{success}{\textbf{Running}} & Manifest K8s \\
+    Grafana / Loki       & \textcolor{success}{\textbf{Running}} & Manifest K8s \\
     vehicle-service      & \textcolor{success}{\textbf{Running}} & Manifest K8s \\
-    driver-service       & \textcolor{warning}{\textbf{Pending}} & Image a builder (S3) \\
-    maintenance-service  & \textcolor{warning}{\textbf{Pending}} & Image a builder (S4) \\
-    location-service     & \textcolor{warning}{\textbf{Pending}} & Image a builder (S5) \\
-    event-service        & \textcolor{warning}{\textbf{Pending}} & Image a builder (S4) \\
-    Ingress Controller   & \textcolor{success}{\textbf{Running}} & Minikube addon NGINX \\
+    Autres services      & \textcolor{warning}{\textbf{Pending}} & En attente de code (S3-S5) \\
     \bottomrule
   \end{tabular}
-  \caption{Bilan de l'etat des composants en fin de semaine 2}
+  \caption{Bilan de l'etat des composants incluant l'observabilite}
 \end{table}
 
 \begin{infobox}
@@ -685,47 +737,25 @@ prete a les accueillir.
 
 \subsection{Structure finale du projet}
 
-\begin{lstlisting}[caption=Arborescence du projet en fin de semaine 2]
+\begin{lstlisting}[caption=Arborescence des dossiers d'infrastructure]
 racine-du-projet/
-|-- .github/workflows/ci-cd.yml     # Pipeline d'automatisation
-|-- docker-compose.yml              # Env. de dev rapide (local)
-|-- .env.example                    # Template variables d'environnement
-|-- .gitignore                      # Inclut values.secret.yaml, db-secrets.yaml
-|-- services/
-|   |-- vehicle-service/            # Spring Boot (Running)
-|   |   |-- Dockerfile
-|   |   `-- src/
-|   |-- driver-service/             # Spring Boot (a developper S3)
-|   |-- maintenance-service/        # Spring Boot (a developper S4)
-|   |-- location-service/           # Node.js    (a developper S5)
-|   `-- event-service/              # Spring Boot (a developper S4)
-`-- infra/
-    |-- helm/
-    |   `-- dependencies/
-    |       |-- Chart.yaml          # Dependances Bitnami (Postgres, Redis)
-    |       |-- values.yaml         # Config sans secrets (sur Git)
-    |       |-- values.secret.yaml  # Mots de passe (hors Git)
-    |       `-- values.secret.yaml.example
-    `-- kubernetes/
-        |-- namespaces/             # flotte-namespace
-        |-- secrets/                # db-secrets.yaml (hors Git)
-        |-- deployments/            # 5 microservices x 2 replicas
-        |-- services/               # 5 ClusterIP services
-        |-- kafka/                  # kafka.yaml (apache/kafka:3.7.0)
-        `-- ingress/                # fleet.local routing
+|-- compose.yaml                    # Env. de dev rapide (local)
+|-- compose.override.yaml           # Stack observabilite (fusion auto)
+|-- infra/
+|   |-- observability-config/       # Config OTel et Prometheus
+|   `-- kubernetes/
+|       |-- observability/          # Manifests OTel, Jaeger, Grafana...
+|       |-- ingress/                # Ingress mis a jour (/grafana, /jaeger)
+|       `-- ...
 \end{lstlisting}
 
 \subsection{Points d'attention pour la suite}
 
 \begin{itemize}
-  \item \textbf{Semaine 3 :} Coder le vehicle-service (CRUD REST, Kafka producer/consumer,
-        tests unitaires $>$80\%, OpenTelemetry)
-  \item \textbf{Automatisation :} Maintenir le pipeline GitHub Actions (tests unitaires
-        et linting a chaque Pull Request)
-  \item \textbf{Observabilite :} Deployer la stack OpenTelemetry, Prometheus, Grafana,
-        Jaeger et Loki
-  \item \textbf{Semaine 7 :} Packager les microservices dans un Chart Helm pour le
-        deploiement final prod-ready
+  \item \textbf{Semaine 3 :} Coder le vehicle-service (CRUD REST, Kafka producer/consumer)
+  \item \textbf{Instrumentation :} Integrer les SDK OpenTelemetry dans les microservices pour envoyer les traces et metriques au Collector.
+  \item \textbf{Tableaux de bord :} Creer les dashboards Grafana de reference pour le monitoring des microservices.
+  \item \textbf{Semaine 7 :} Packager les microservices dans un Chart Helm pour le deploiement final prod-ready
 \end{itemize}
 
 % ------------------------------------------------------------

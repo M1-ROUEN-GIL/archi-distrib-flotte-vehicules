@@ -1,48 +1,77 @@
-# infra/kubernetes/ingress/ingress.yaml
+# Ingress pour les APIs et Grafana (avec réécriture)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: flotte-ingress
   namespace: flotte-namespace
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
+  ingressClassName: nginx
   rules:
     - host: flotte.local
       http:
         paths:
-          - path: /api/vehicles
-            pathType: Prefix
+          - path: /grafana(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+          - path: /api/vehicles(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: vehicle-service
                 port:
                   number: 8080
-          - path: /api/drivers
-            pathType: Prefix
+          - path: /api/drivers(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: driver-service
                 port:
                   number: 8081
-          - path: /api/maintenance
-            pathType: Prefix
+          - path: /api/maintenance(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: maintenance-service
                 port:
                   number: 8082
-          - path: /api/events
-            pathType: Prefix
+          - path: /api/events(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: event-service
                 port:
                   number: 8083
-          - path: /api/location
-            pathType: Prefix
+          - path: /api/location(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: location-service
                 port:
                   number: 3000
+                  
+# Ingress dédié pour Jaeger (SANS réécriture)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jaeger-ingress
+  namespace: flotte-namespace
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: flotte.local
+      http:
+        paths:
+          - path: /jaeger
+            pathType: Prefix
+            backend:
+              service:
+                name: jaeger
+                port:
+                  number: 16686

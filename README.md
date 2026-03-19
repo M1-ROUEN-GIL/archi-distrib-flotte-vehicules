@@ -1,89 +1,89 @@
 # Système de Gestion de Flotte de Véhicules
 
-Ce projet est une application basée sur une architecture microservices pour la gestion et le suivi en temps réel d'une flotte de véhicules, dans le contexte applicatif de DHL Express.
-
-## 1. Vue d'ensemble de l'architecture
-
-Le système est découpé en services indépendants qui communiquent de manière synchrone via une API Gateway et de manière asynchrone via un bus d'événements Apache Kafka. Cette approche permet une meilleure scalabilité, une résilience accrue et des déploiements indépendants.
-
-Les décisions d'architecture détaillées sont documentées dans le répertoire [/ADR](./ADR/).
-
-### Composants principaux
-
-- **Architecture** : 5 microservices principaux (Spring Boot, Node.js)
-- **API Gateway** : Point d'entrée unique exposant les API REST et GraphQL.
-- **Communication Asynchrone** : Apache Kafka comme bus d'événements.
-- **Authentification** : Keycloak pour la gestion centralisée des identités et des accès (RBAC).
-- **Bases de données** : Approche "une base par service" avec PostgreSQL, TimescaleDB (séries temporelles) et Redis (cache).
-- **Observabilité** : Stack basée sur OpenTelemetry, Prometheus, Grafana, Loki et Jaeger.
-
-### Les Microservices
-
-| Service | Technologie | Responsabilité |
-|---|---|---|
-| **Véhicules** | Spring Boot | CRUD du parc, gestion des statuts et de l'historique. |
-| **Conducteurs** | Spring Boot | Gestion des profils livreurs, permis, et assignations. |
-| **Localisation** | Node.js | Ingestion du streaming GPS temps réel via gRPC, stockage sur TimescaleDB. |
-| **Maintenance** | Spring Boot | Planification et suivi des interventions techniques. |
-| **Événements** | Spring Boot | Analyse des règles métier et génération des alertes (ex: geofencing). |
+Projet M1 GIL -- Université de Rouen Normandie (2025-2026).
+Architecture microservices distribuée pour la gestion d'une flotte de véhicules.
 
 ---
 
-## 2. API et Schémas
+## 1. État de l'Infrastructure (Semaine 2)
 
-Le système expose ses fonctionnalités à travers une API Gateway qui supporte les protocoles REST et GraphQL.
+L'infrastructure DevOps est opérationnelle. Elle supporte le développement local via Docker Compose et l'orchestration via Kubernetes (Minikube).
 
-### API REST (OpenAPI)
-
-Les contrats d'interface pour les services REST sont définis au format OpenAPI v3 dans le répertoire [/gateway/openapi](./gateway/openapi/).
-
-- `openapi-vehicles.yaml`
-- `openapi-drivers.yaml`
-- `openapi-maintenance.yaml`
-- `openapi-events.yaml`
-- `openapi-locations.yaml`
-
-### API GraphQL
-
-Le schéma GraphQL fédéré est défini dans le répertoire [/gateway/schema](./gateway/schema/). Chaque service expose une partie du graphe de données.
-
-- `schema.graphql` (Point d'entrée)
-- `vehicle.graphql`
-- `driver.graphql`
-- `maintenance.graphql`
-- `location.graphql`
-- `alert.graphql`
+### Stack Technique
+- Orchestration : Kubernetes (Minikube) & Docker Compose.
+- Bus & Data : Apache Kafka (KRaft), PostgreSQL, Redis.
+- Sécurité : Keycloak (SSO).
+- Observabilité : OpenTelemetry, Jaeger, Prometheus, Loki, Grafana.
 
 ---
 
-## 3. Communication Asynchrone avec Kafka
+## 2. Développement Local (Docker Compose)
 
-La communication inter-services est basée sur des événements échangés via Apache Kafka, garantissant le découplage des services. La liste complète des topics et leurs schémas sont documentés dans [kafka/kafka_topics.md](./kafka/kafka_topics.md).
+### Lancement
+```bash
+docker compose up -d
+```
 
-**Topics principaux :**
-- `flotte.vehicules.events` : Cycle de vie des véhicules.
-- `flotte.conducteurs.events` : Cycle de vie des conducteurs.
-- `flotte.assignments.events` : Affectation véhicule-livreur.
-- `flotte.localisation.gps` : Positions GPS brutes à haute fréquence.
-- `flotte.maintenance.events` : Événements de maintenance.
-- `flotte.alertes.events` : Alertes consolidées pour les managers.
-
----
-
-## 4. Schémas de Base de Données
-
-Chaque microservice possède sa propre base de données. Les schémas SQL pour les bases de données PostgreSQL sont disponibles dans le répertoire [/sql](./sql/).
-
-- `vehicle.sql`
-- `driver.sql`
-- `maintenance.sql`
-- `location.sql`
-- `events.sql`
+### Accès aux Services (Localhost)
+| Service | URL / Port | Identifiants |
+| :--- | :--- | :--- |
+| Grafana | http://localhost:3001 | admin / admin |
+| Jaeger | http://localhost:16686 | - |
+| Keycloak | http://localhost:8180 | admin / admin |
+| pgAdmin | http://localhost:5050 | admin@flotte.com / admin |
 
 ---
 
-## 5. Sécurité
+## 3. Mode Cluster Local (Kubernetes / Minikube)
 
-L'authentification et l'autorisation sont gérées de manière centralisée par **Keycloak**.
-- La configuration du Realm, des clients et des rôles est exportée dans [keycloak/realm-export.json](./keycloak/realm-export.json).
-- Les rôles définis sont : `admin`, `manager`, `technicien`, `utilisateur`.
+### Étape 1 : Préparer Minikube
+```bash
+minikube start
+minikube addons enable ingress
+kubectl apply -f infra/kubernetes/namespaces/namespaces.yaml
+```
+
+### Étape 2 : Construire les images (Local Build)
+```bash
+eval $(minikube docker-env)
+docker build -t vehicle-service:latest ./services/vehicle-service/
+```
+
+### Étape 3 : Déployer l'Infrastructure Lourde (Helm)
+```bash
+helm dependency update ./infra/helm/dependencies/
+helm upgrade --install infra-stack ./infra/helm/dependencies/ \
+  -n flotte-namespace \
+  -f ./infra/helm/dependencies/values.yaml \
+  -f ./infra/helm/dependencies/values.secret.yaml
+```
+
+### Étape 4 : Déployer les Manifests K8s
+```bash
+kubectl apply -f infra/kubernetes/ -R
+```
+
+### Étape 5 : Configuration Réseau
+```bash
+echo "$(minikube ip) flotte.local" | sudo tee -a /etc/hosts
+```
+
+Accès unifiés (Slash final obligatoire) :
+- Grafana : http://flotte.local/grafana/
+- Jaeger : http://flotte.local/jaeger/
+- APIs : http://flotte.local/api/[service]/
+
+---
+
+## 4. Pipeline CI/CD (GitHub Actions)
+Le workflow `.github/workflows/ci-cd.yml` valide chaque commit :
+- Tests unitaires (Maven/NPM).
+- Linting Helm.
+- Build Docker & Push vers GHCR (branche main).
+
+---
+
+## 5. Prochaines étapes (Semaine 3)
+- Développement du vehicle-service (CRUD & Events).
+- Instrumentation SDK OpenTelemetry dans les services Java.
+- Création des dashboards Grafana.
