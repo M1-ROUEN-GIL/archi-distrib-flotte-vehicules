@@ -638,10 +638,12 @@ L'infrastructure actuelle se concentre sur la validation fonctionnelle. Pour la 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{pods.png}
+    \includegraphics[width=0.5\textwidth]{jobs.png}
     \caption{Visualisation symbolique de l'infrastructure validee par le pipeline}
     \label{fig:cicd}
 \end{figure}
+
+\newpage
 
 % ------------------------------------------------------------
 % SECTION 8 - OBSERVABILITE
@@ -719,9 +721,9 @@ Une configuration specifique (\texttt{root\_url} pour Grafana et \texttt{base-pa
     PostgreSQL           & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-infra}) \\
     Redis                & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-infra}) \\
     Kafka                & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-infra}) \\
-    OTel Collector       & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-infra}) \\
-    Jaeger / Prometheus  & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-infra}) \\
-    Grafana / Loki       & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-infra}) \\
+    OTel Collector       & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-observability}) \\
+    Jaeger / Prometheus  & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-observability}) \\
+    Grafana / Loki       & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-observability}) \\
     vehicle-service      & \textcolor{success}{\textbf{Running}} & Helm (\texttt{fleet-app}) \\
     Autres services      & \textcolor{warning}{\textbf{Pending}} & Helm (\texttt{fleet-app}) \\
     \bottomrule
