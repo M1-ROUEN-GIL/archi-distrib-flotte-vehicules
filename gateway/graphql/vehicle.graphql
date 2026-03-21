@@ -63,8 +63,9 @@ extend type Mutation {
     notes: String
   ): Assignment!
 
+  # Aligné sur DELETE /vehicles/{vehicle_id}/assignments/current (OpenAPI gateway)
   unassignVehicle(
-    assignment_id: ID!
+    vehicle_id: ID!
   ): Assignment!
 }
 
