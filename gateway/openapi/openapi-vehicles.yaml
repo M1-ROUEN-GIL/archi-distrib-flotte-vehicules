@@ -6,7 +6,7 @@ info:
   contact:
     name: Équipe DHL Fleet
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:8080
     description: Développement local
   - url: https://api.dhl-fleet.internal/vehicles
     description: Production
@@ -24,41 +24,28 @@ paths:
 
   /vehicles:
     get:
-      tags: [Véhicules]
-      summary: Lister les véhicules
-      description: Retourne la liste paginée des véhicules du parc DHL.
-      parameters:
-        - name: status
-          in: query
-          description: Filtrer par statut
-          schema:
-            $ref: '#/components/schemas/VehicleStatus'
-        - name: fuel_type
-          in: query
-          schema:
-            $ref: '#/components/schemas/FuelType'
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-            maximum: 100
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
-      responses:
-        '200':
-          description: Liste paginée des véhicules
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VehiclePage'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        tags: [ Véhicules ]
+        summary: Lister les véhicules
+        description: Retourne la liste complète des véhicules actifs du parc DHL.
+        parameters:
+          - name: status
+            in: query
+            description: Filtrer par statut
+            schema:
+              $ref: '#/components/schemas/VehicleStatus'
+          - name: fuel_type
+            in: query
+            schema:
+              $ref: '#/components/schemas/FuelType'
+        responses:
+          '200':
+            description: Liste des véhicules
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Vehicle'
 
     post:
       tags: [Véhicules]
@@ -77,7 +64,8 @@ paths:
               fuel_type: "diesel"
               mileage_km: 12000
               vin: "WDB9066351S123456"
-              color: "Jaune DHL"
+              payload_capacity_kg: 1500
+              cargo_volume_m3: 12.5
       responses:
         '201':
           description: Véhicule créé
@@ -338,12 +326,13 @@ components:
         vin:
           type: string
           example: "WDB9066351S123456"
-        color:
-          type: string
-          example: "Jaune DHL"
-        seats:
+        payload_capacity_kg:
           type: integer
-          example: 3
+          example: 1500
+        cargo_volume_m3:
+          type: number
+          format: float
+          example: 12.5
         created_at:
           type: string
           format: date-time
@@ -353,7 +342,7 @@ components:
 
     VehicleInput:
       type: object
-      required: [plate_number, brand, model, fuel_type, mileage_km]
+      required: [plate_number, brand, model, fuel_type, mileage_km, payload_capacity_kg, cargo_volume_m3]
       properties:
         plate_number:
           type: string
@@ -367,8 +356,11 @@ components:
           type: integer
         vin:
           type: string
-        color:
-          type: string
+        payload_capacity_kg:
+          type: integer
+        cargo_volume_m3:
+          type: number
+          format: float
 
     VehicleUpdate:
       type: object
@@ -379,24 +371,11 @@ components:
           type: string
         mileage_km:
           type: integer
-        color:
-          type: string
-        seats:
+        payload_capacity_kg:
           type: integer
-
-    VehiclePage:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Vehicle'
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+        cargo_volume_m3:
+          type: number
+          format: float
 
     Assignment:
       type: object

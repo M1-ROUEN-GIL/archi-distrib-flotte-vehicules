@@ -15,11 +15,13 @@ spring:
   # Configuration Hibernate / JPA
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none # Modifié pour laisser ton script SQL gérer la base
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        type:
+          json_format_mapper: jackson
 
   # Configuration Kafka
   kafka:
