@@ -1,9 +1,6 @@
 package com.flotte.vehicle.controller;
 
-import com.flotte.vehicle.dto.VehicleInput;
-import com.flotte.vehicle.dto.VehicleResponse;
-import com.flotte.vehicle.dto.VehicleStatusInput;
-import com.flotte.vehicle.dto.VehicleUpdate;
+import com.flotte.vehicle.dto.*;
 import com.flotte.vehicle.services.VehicleService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -64,5 +61,26 @@ public class VehicleController {
     @ResponseStatus(HttpStatus.NO_CONTENT) // Renvoie 204 No Content
     public void deleteVehicle(@PathVariable UUID id) {
         service.deleteVehicle(id);
+    }
+
+    // GET /vehicles/{id}/assignments
+    @GetMapping("/{id}/assignments")
+    public List<AssignmentResponse> getAssignments(@PathVariable UUID id) {
+        return service.getAssignments(id);
+    }
+
+    // POST /vehicles/{id}/assignments
+    @PostMapping("/{id}/assignments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AssignmentResponse createAssignment(
+            @PathVariable UUID id,
+            @Valid @RequestBody AssignmentInput input) {
+        return service.createAssignment(id, input);
+    }
+
+    // DELETE /vehicles/{id}/assignments/current
+    @DeleteMapping("/{id}/assignments/current")
+    public AssignmentResponse endCurrentAssignment(@PathVariable UUID id) {
+        return service.endCurrentAssignment(id);
     }
 }

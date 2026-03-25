@@ -1,10 +1,10 @@
 package com.flotte.vehicle.services;
 
-import com.flotte.vehicle.dto.VehicleInput;
-import com.flotte.vehicle.dto.VehicleResponse;
-import com.flotte.vehicle.dto.VehicleUpdate;
+import com.flotte.vehicle.dto.*;
 import com.flotte.vehicle.models.Vehicle;
+import com.flotte.vehicle.models.VehicleAssignment;
 import com.flotte.vehicle.models.enums.VehicleStatus;
+import com.flotte.vehicle.repositories.VehicleAssignmentRepository;
 import com.flotte.vehicle.repositories.VehicleRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,10 +20,11 @@ import java.util.stream.Collectors;
 public class VehicleService {
 
     private final VehicleRepository repository;
-
+    private final VehicleAssignmentRepository assignmentRepository;
     // Injection du Repository via le constructeur
-    public VehicleService(VehicleRepository repository) {
+    public VehicleService(VehicleRepository repository, VehicleAssignmentRepository assignmentRepository) {
         this.repository = repository;
+        this.assignmentRepository = assignmentRepository;
     }
 
     // ==========================================
@@ -104,6 +105,81 @@ public class VehicleService {
         // Au lieu de faire repository.delete(vehicle), on renseigne la date de suppression
         vehicle.setDeletedAt(OffsetDateTime.now());
         repository.save(vehicle);
+    }
+
+    // ==========================================
+// 7. LISTER LES ASSIGNATIONS D'UN VÉHICULE
+// ==========================================
+    public List<AssignmentResponse> getAssignments(UUID vehicleId) {
+        // Vérifier que le véhicule existe
+        repository.findByIdActive(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Véhicule introuvable"));
+
+        return assignmentRepository.findByVehicleIdOrderByStartedAtDesc(vehicleId)
+                .stream()
+                .map(AssignmentResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================
+// 8. CRÉER UNE ASSIGNATION
+// ==========================================
+    public AssignmentResponse createAssignment(UUID vehicleId, AssignmentInput input) {
+        Vehicle vehicle = repository.findByIdActive(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Véhicule introuvable"));
+
+        // Vérifier qu'il n'y a pas déjà une assignation active
+        assignmentRepository.findActiveByVehicleId(vehicleId).ifPresent(a -> {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Ce véhicule a déjà une assignation active");
+        });
+
+        // Vérifier que le véhicule est disponible
+        if (vehicle.getStatus() != VehicleStatus.available) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Le véhicule n'est pas disponible");
+        }
+
+        // Créer l'assignation
+        VehicleAssignment assignment = new VehicleAssignment();
+        assignment.setVehicleId(vehicleId);
+        assignment.setDriverId(input.driverId());
+        assignment.setNotes(input.notes());
+        assignment.setCreatedBy(input.createdBy());
+        assignment.setStartedAt(OffsetDateTime.now());
+
+        // Passer le véhicule en mission automatiquement
+        vehicle.setStatus(VehicleStatus.on_delivery);
+        repository.save(vehicle);
+
+        return AssignmentResponse.fromEntity(assignmentRepository.save(assignment));
+    }
+
+    // ==========================================
+// 9. TERMINER L'ASSIGNATION ACTIVE
+// ==========================================
+    public AssignmentResponse endCurrentAssignment(UUID vehicleId) {
+        repository.findByIdActive(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Véhicule introuvable"));
+
+        VehicleAssignment assignment = assignmentRepository.findActiveByVehicleId(vehicleId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Aucune assignation active pour ce véhicule"));
+
+        // Terminer l'assignation
+        assignment.setEndedAt(OffsetDateTime.now());
+        assignmentRepository.save(assignment);
+
+        // Remettre le véhicule disponible automatiquement
+        repository.findByIdActive(vehicleId).ifPresent(v -> {
+            v.setStatus(VehicleStatus.available);
+            repository.save(v);
+        });
+
+        return AssignmentResponse.fromEntity(assignment);
     }
 
     // ==========================================
