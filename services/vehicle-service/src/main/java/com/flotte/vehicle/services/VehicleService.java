@@ -1,6 +1,8 @@
 package com.flotte.vehicle.services;
 
 import com.flotte.vehicle.dto.*;
+import com.flotte.vehicle.events.VehicleEvent;
+import com.flotte.vehicle.events.producers.VehicleEventProducer;
 import com.flotte.vehicle.models.Vehicle;
 import com.flotte.vehicle.models.VehicleAssignment;
 import com.flotte.vehicle.models.enums.VehicleStatus;
@@ -21,10 +23,12 @@ public class VehicleService {
 
     private final VehicleRepository repository;
     private final VehicleAssignmentRepository assignmentRepository;
+    private final VehicleEventProducer eventProducer;
     // Injection du Repository via le constructeur
-    public VehicleService(VehicleRepository repository, VehicleAssignmentRepository assignmentRepository) {
+    public VehicleService(VehicleRepository repository, VehicleAssignmentRepository assignmentRepository, VehicleEventProducer eventProducer) {
         this.repository = repository;
         this.assignmentRepository = assignmentRepository;
+        this.eventProducer = eventProducer;
     }
 
     // ==========================================
@@ -64,6 +68,13 @@ public class VehicleService {
 
         // Le status par défaut est géré par l'entité (available)
         Vehicle savedVehicle = repository.save(vehicle);
+        eventProducer.publish(VehicleEvent.created(
+                savedVehicle.getId(),
+                savedVehicle.getPlateNumber(),
+                savedVehicle.getBrand(),
+                savedVehicle.getModel(),
+                savedVehicle.getStatus().name()
+        ));
         return mapToResponse(savedVehicle);
     }
 
@@ -92,6 +103,11 @@ public class VehicleService {
 
         vehicle.setStatus(newStatus);
         Vehicle updatedVehicle = repository.save(vehicle);
+        eventProducer.publish(VehicleEvent.statusChanged(
+                updatedVehicle.getId(),
+                updatedVehicle.getPlateNumber(),
+                updatedVehicle.getStatus().name()
+        ));
         return mapToResponse(updatedVehicle);
     }
 
@@ -105,6 +121,10 @@ public class VehicleService {
         // Au lieu de faire repository.delete(vehicle), on renseigne la date de suppression
         vehicle.setDeletedAt(OffsetDateTime.now());
         repository.save(vehicle);
+        eventProducer.publish(VehicleEvent.deleted(
+                vehicle.getId(),
+                vehicle.getPlateNumber()
+        ));
     }
 
     // ==========================================
@@ -153,7 +173,11 @@ public class VehicleService {
         // Passer le véhicule en mission automatiquement
         vehicle.setStatus(VehicleStatus.on_delivery);
         repository.save(vehicle);
-
+        eventProducer.publish(VehicleEvent.assigned(
+                vehicle.getId(),
+                vehicle.getPlateNumber(),
+                assignment.getDriverId()
+        ));
         return AssignmentResponse.fromEntity(assignmentRepository.save(assignment));
     }
 
@@ -161,7 +185,7 @@ public class VehicleService {
 // 9. TERMINER L'ASSIGNATION ACTIVE
 // ==========================================
     public AssignmentResponse endCurrentAssignment(UUID vehicleId) {
-        repository.findByIdActive(vehicleId)
+        Vehicle vehicle = repository.findByIdActive(vehicleId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Véhicule introuvable"));
 
@@ -173,11 +197,14 @@ public class VehicleService {
         assignment.setEndedAt(OffsetDateTime.now());
         assignmentRepository.save(assignment);
 
+        eventProducer.publish(VehicleEvent.unassigned(
+                vehicle.getId(),
+                vehicle.getPlateNumber(),
+                assignment.getDriverId()
+        ));
         // Remettre le véhicule disponible automatiquement
-        repository.findByIdActive(vehicleId).ifPresent(v -> {
-            v.setStatus(VehicleStatus.available);
-            repository.save(v);
-        });
+        vehicle.setStatus(VehicleStatus.available);
+            repository.save(vehicle);
 
         return AssignmentResponse.fromEntity(assignment);
     }
