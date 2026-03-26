@@ -79,7 +79,22 @@ Accès unifiés (Slash final obligatoire) :
 
 ---
 
-## 4. Pipeline CI/CD (GitHub Actions)
+## 4. Tests et Qualité (Service Véhicule)
+Le service véhicule dispose de tests unitaires et d'intégration avec un objectif de couverture > 80%.
+
+### Lancer les tests
+```bash
+cd services/vehicle-service
+./mvnw test
+```
+
+### Consulter la couverture
+Le rapport de couverture JaCoCo est **automatiquement généré** après l'exécution des tests. Le rapport détaillé est consultable ici :
+`services/vehicle-service/target/site/jacoco/index.html`
+
+---
+
+## 5. Pipeline CI/CD (GitHub Actions)
 Le workflow `.github/workflows/ci-cd.yml` valide chaque commit :
 - Tests unitaires (Maven/NPM).
 - Linting Helm.

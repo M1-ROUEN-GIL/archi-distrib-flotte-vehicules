@@ -30,16 +30,14 @@ public class Vehicle {
     private String model;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name= "fuel_type", nullable = false, columnDefinition = "fuel_type")
+    @Column(name= "fuel_type", nullable = false)
     private FuelType fuelType;
 
     @Column(name = "mileage_km", nullable = false)
     private Integer mileageKm;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "status", nullable = false, columnDefinition = "vehicle_status")
+    @Column(name = "status", nullable = false)
     private VehicleStatus status = VehicleStatus.available;
 
     @Column(unique = true, length = 17)
@@ -52,8 +50,7 @@ public class Vehicle {
     private Double cargoVolumeM3 = 10.0;
 
     // Pour le JSONB, on utilise columnDefinition pour que Hibernate ne râle pas
-    @Column(name = "metadata", columnDefinition = "jsonb")
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata")
     private String metadata = "{}";
 
     @CreationTimestamp
