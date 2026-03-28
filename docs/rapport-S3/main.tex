@@ -773,4 +773,34 @@ Comme illustré par la capture ci-dessus, les résultats obtenus sont excellents
 
 Le score de \textbf{62\% sur les branches} s'explique par la présence de nombreux contrôles de garde et validations d'erreurs (cas limites) dont certains chemins d'exception n'ont pas encore été sollicités. Néanmoins, l'intégralité du "chemin nominal" et des règles métier critiques est couverte et validée.
 
+% ------------------------------------------------------------
+% DÉFIS TECHNIQUES ET RÉSOLUTIONS
+% ------------------------------------------------------------
+\newpage
+\section{Défis techniques et résolutions}
+
+Au cours du développement et de la mise en place de l'intégration continue (CI/CD), plusieurs obstacles techniques majeurs ont été rencontrés et résolus.
+
+\subsection{Incompatibilité de version Keycloak et initialisation}
+L'export du royaume (\texttt{realm-export.json}) utilisé pour l'automatisation contenait des configurations (notamment le champ \texttt{bruteForceStrategy}) spécifiques aux versions récentes de Keycloak (v26+). L'utilisation d'une image Docker plus ancienne (v24) provoquait l'échec critique du démarrage du serveur. De plus, l'initialisation automatique du compte administrateur via les anciennes variables d'environnement était ignorée dans certains contextes de déploiement.
+
+\textbf{Solutions :} 
+\begin{itemize}
+    \item Mise à jour de l'infrastructure vers l'image \texttt{keycloak:latest}.
+    \item Nettoyage chirurgical du fichier d'export pour retirer les champs obsolètes.
+    \item Utilisation des nouvelles variables de "bootstrap" (\texttt{KC\_BOOTSTRAP\_ADMIN\_*}) et configuration des en-têtes de proxy (\texttt{xforwarded}) pour garantir l'accès immédiat à l'interface d'administration sans configuration manuelle.
+\end{itemize}
+
+\subsection{Gestion des dépendances Kafka}
+Un problème de gestion de version dans le \texttt{pom.xml} empêchait la compilation sur les agents de build CI/CD, car la dépendance \texttt{spring-boot-starter-kafka} ne récupérait pas de version par défaut.
+\textbf{Solution :} Alignement sur la dépendance \texttt{spring-kafka} (groupe \texttt{org.springframework.kafka}), permettant une gestion robuste des versions via le BOM (Bill of Materials) de Spring Boot 3.4.0.
+
+\subsection{Isolation de l'environnement de test}
+L'intégration de la sécurité OAuth2 et de l'observabilité a complexifié l'exécution des tests automatisés en environnement isolé :
+\begin{itemize}
+    \item \textbf{Sécurité} : Les tests tentaient de valider les jetons auprès d'un serveur Keycloak réel. Nous avons résolu cela en \textbf{mockant le JwtDecoder} et en utilisant l'annotation \texttt{@WithMockUser} pour simuler les rôles RBAC (\texttt{admin}, \texttt{technician}).
+    \item \textbf{Logging} : L'instrumentation OpenTelemetry pour les logs provoquait des erreurs \texttt{NoClassDefFoundError} en mode test.
+    \item \textbf{Solution} : Création d'un profil de logging spécifique (\texttt{logback-test.xml}) excluant l'appender OpenTelemetry durant la phase de test, garantissant ainsi un build fluide et rapide dans le pipeline GitHub Actions.
+\end{itemize}
+
 \end{document}

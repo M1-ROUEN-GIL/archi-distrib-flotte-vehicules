@@ -24,8 +24,15 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.actuate.autoconfigure.logging.OpenTelemetryLoggingAutoConfiguration;
+
 @WebMvcTest(VehicleController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@EnableAutoConfiguration(exclude = {OpenTelemetryLoggingAutoConfiguration.class})
 class VehicleControllerTest {
 
     @Autowired
@@ -33,6 +40,9 @@ class VehicleControllerTest {
 
     @MockitoBean
     private VehicleService vehicleService;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -59,6 +69,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "admin")
     void createVehicle_ShouldReturnCreated() throws Exception {
         VehicleInput input = new VehicleInput("AB-123-CD", "Renault", "Kangoo", FuelType.electric, 10000, "VIN123", 500, 3.0);
         VehicleResponse response = new VehicleResponse(UUID.randomUUID(), "AB-123-CD", "Renault", "Kangoo", FuelType.electric, VehicleStatus.available, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
@@ -72,6 +83,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "admin")
     void updateVehicle_ShouldReturnOk() throws Exception {
         UUID id = UUID.randomUUID();
         VehicleUpdate update = new VehicleUpdate("Renault", "Master", 15000);
@@ -86,6 +98,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "admin")
     void updateVehicleStatus_ShouldReturnOk() throws Exception {
         UUID id = UUID.randomUUID();
         VehicleStatusInput statusInput = new VehicleStatusInput(VehicleStatus.in_maintenance);
@@ -100,6 +113,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "admin")
     void deleteVehicle_ShouldReturnNoContent() throws Exception {
         UUID id = UUID.randomUUID();
 
@@ -121,6 +135,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "admin")
     void createAssignment_ShouldReturnCreated() throws Exception {
         UUID id = UUID.randomUUID();
         AssignmentInput input = new AssignmentInput(UUID.randomUUID(), "Notes", UUID.randomUUID());
@@ -135,6 +150,7 @@ class VehicleControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "admin")
     void endCurrentAssignment_ShouldReturnOk() throws Exception {
         UUID id = UUID.randomUUID();
         AssignmentResponse response = new AssignmentResponse(UUID.randomUUID(), id, UUID.randomUUID(), OffsetDateTime.now(), OffsetDateTime.now(), "Notes", UUID.randomUUID(), OffsetDateTime.now());

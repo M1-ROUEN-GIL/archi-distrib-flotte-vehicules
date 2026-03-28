@@ -42,9 +42,9 @@ services:
     
     restart: unless-stopped
 
-  # 4. Keycloak (Version 24.0.2)
+  # 4. Keycloak (Latest)
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.2
+    image: quay.io/keycloak/keycloak:latest
     container_name: flotte-keycloak
     command: start-dev --import-realm
     environment:
@@ -52,8 +52,11 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/flotte_db
       KC_DB_USERNAME: admin
       KC_DB_PASSWORD: password
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: "xforwarded"
     ports:
       - "8180:8080"
     volumes:

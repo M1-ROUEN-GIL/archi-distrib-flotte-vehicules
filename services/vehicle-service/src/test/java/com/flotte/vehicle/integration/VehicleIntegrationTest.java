@@ -13,12 +13,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.actuate.autoconfigure.logging.OpenTelemetryLoggingAutoConfiguration;
 
 @SpringBootTest(properties = {
     "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
@@ -31,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@EnableAutoConfiguration(exclude = {OpenTelemetryLoggingAutoConfiguration.class})
 class VehicleIntegrationTest {
 
     @Autowired
@@ -42,7 +49,11 @@ class VehicleIntegrationTest {
     @MockitoBean
     private VehicleEventProducer eventProducer;
 
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
+
     @Test
+    @WithMockUser(roles = "admin")
     void testVehicleCrudFlow() throws Exception {
         // 1. Create a vehicle
         VehicleInput input = new VehicleInput("ZZ-999-ZZ", "Tesla", "Model 3", FuelType.electric, 0, "VIN_TEST_INTEG", 400, 2.0);
@@ -86,6 +97,7 @@ class VehicleIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "admin")
     void testAssignmentFlow() throws Exception {
         // 1. Create a vehicle
         VehicleInput input = new VehicleInput("AA-111-AA", "Renault", "Zoe", FuelType.electric, 0, "VIN_ASSIGN", 300, 1.5);
