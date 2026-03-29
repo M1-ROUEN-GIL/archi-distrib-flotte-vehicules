@@ -6,8 +6,8 @@ postgresql:
 
   auth:
     postgresUser: "admin"
-    # postgresPassword retiré → dans values.secret.yaml
     database: "flotte_db"
+    # Utilisation de secrets pour les mots de passe
 
   primary:
     persistence:

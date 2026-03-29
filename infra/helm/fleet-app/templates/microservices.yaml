@@ -27,6 +27,11 @@ spec:
                 secretKeyRef:
                   name: db-secrets
                   key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: SPRING_DATASOURCE_USERNAME
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -37,6 +42,11 @@ spec:
                   secretKeyRef:
                     name: db-secrets
                     key: KAFKA_BROKER
+            # Configuration Keycloak (SSO)
+            - name: KEYCLOAK_ISSUER_URI
+              value: "http://keycloak-service:8080/realms/gestion-flotte"
+            - name: KEYCLOAK_JWK_SET_URI
+              value: "http://keycloak-service:8080/realms/gestion-flotte/protocol/openid-connect/certs"
             # Variables OpenTelemetry pour l'Agent Java
             - name: OTEL_SERVICE_NAME
               value: {{ $val.name }}
