@@ -12,7 +12,7 @@ kubectl create namespace flotte-namespace
 # Utilisation de l'utilisateur 'admin' défini dans la configuration Helm
 kubectl create secret generic db-secrets \
   --from-literal=SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-service:5432/flotte_db \
-  --from-literal=SPRING_DATASOURCE_USERNAME=admin \
+  --from-literal=SPRING_DATASOURCE_USERNAME=postgres \
   --from-literal=SPRING_DATASOURCE_PASSWORD=password \
   --from-literal=KAFKA_BROKER=kafka-service:9092 \
   -n flotte-namespace
