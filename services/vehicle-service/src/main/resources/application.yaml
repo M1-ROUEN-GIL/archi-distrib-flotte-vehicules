@@ -13,9 +13,10 @@ spring:
 
   # Configuration de la base de donnees (PostgreSQL)
   datasource:
-    url: jdbc:postgresql://localhost:5432/flotte_db
-    username: admin
-    password: password
+    # Si SPRING_DATASOURCE_URL existe (Kube), on l'utilise. Sinon (Local), on prend localhost
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flotte_db}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
 
   # Configuration Hibernate / JPA
@@ -31,7 +32,7 @@ spring:
 
   # Configuration Kafka
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BROKER:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
