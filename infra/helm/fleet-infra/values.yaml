@@ -16,8 +16,6 @@ postgresql:
 postgresql-maintenance:
   enabled: true
   fullnameOverride: "postgres-maintenance-service"
-  image:
-    tag: "15-alpine"
   auth:
     postgresUser: "admin"
     database: "maintenance_db"
