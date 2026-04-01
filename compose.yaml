@@ -13,10 +13,12 @@ services:
       # --- 1. SCHÉMAS (01 à 10) ---
       # On crée d'abord la structure de la base
       - ./services/vehicle-service/db/migrations/01-vehicle.sql:/docker-entrypoint-initdb.d/01-vehicle.sql
+      - ./services/driver-service/db/migrations/02-driver.sql:/docker-entrypoint-initdb.d/02-driver.sql
 
       # --- 2. DONNÉES / SEEDS (20 à 30) ---
       # Ensuite, on insère les données de test
       - ./services/vehicle-service/db/seeds/20-vehicle-seed.sql:/docker-entrypoint-initdb.d/20-vehicle-seed.sql
+      - ./services/driver-service/db/seeds/21-driver-seed.sql:/docker-entrypoint-initdb.d/21-driver-seed.sql
 
       # Le volume de sauvegarde classique
       - postgres_data:/var/lib/postgresql/data
@@ -60,8 +62,8 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/flotte_db
       KC_DB_USERNAME: admin
       KC_DB_PASSWORD: password
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      #KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      #KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: "xforwarded"
@@ -116,7 +118,36 @@ services:
       - otel-collector
       - keycloak
     restart: unless-stopped
-
+  # 7. Microservice Conducteurs (Spring Boot)
+  driver:
+    build:
+      context: ./services/driver-service
+      dockerfile: Dockerfile
+    container_name: flotte-driver
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/flotte_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=password
+      - KAFKA_BROKER=kafka:9092
+      # Configuration pour l'Agent Java OpenTelemetry (identique à vehicle)
+      - OTEL_SERVICE_NAME=driver-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED=true
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_LOG_ATTRIBUTES=true
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/gestion-flotte/protocol/openid-connect/certs
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - kafka
+      - otel-collector
+      - keycloak
+    restart: unless-stopped
 volumes:
   postgres_data:
   kafka_data:

@@ -1,0 +1,79 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: driver-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/gestion-flotte/protocol/openid-connect/certs}
+
+  # Configuration de la base de donnees (PostgreSQL)
+  datasource:
+    # Si SPRING_DATASOURCE_URL existe (Kube), on l'utilise. Sinon (Local), on prend localhost
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flotte_db}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  # Configuration Hibernate / JPA
+  jpa:
+    hibernate:
+      ddl-auto: none # Modifié pour laisser ton script SQL gérer la base
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        type:
+          json_format_mapper: jackson
+
+  # Configuration Kafka
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKER:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: driver-group # Modifié pour le service driver
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+# Configuration de l'observabilite (Micrometer + OpenTelemetry)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: [ "health", "info", "prometheus" ] # Expose les métriques Prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name} # Identifie le service dans Grafana
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0 # Capture 100% des traces pour le démo/test
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
+    metrics:
+      export:
+        url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
+    logging:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4317}
+logging:
+  otlp:
+    enabled: true
+  level:
+    root: INFO
+    io.opentelemetry: INFO
+    io.micrometer: INFO
