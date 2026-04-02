@@ -8,6 +8,7 @@ CREATE TYPE license_category AS ENUM ('A', 'B', 'C', 'D', 'BE', 'CE');
 
 CREATE TYPE driver_status AS ENUM (
   'active',
+  'on_tour',
   'on_leave',
   'suspended',
   'inactive'
