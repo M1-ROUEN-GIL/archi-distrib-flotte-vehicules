@@ -42,7 +42,7 @@ class MaintenanceControllerIntegrationTest {
 				UUID.randomUUID(), MaintenanceType.PREVENTIVE, MaintenancePriority.MEDIUM,
 				LocalDate.now().plusDays(10), "Test description");
 
-		mockMvc.perform(post("/api/maintenance")
+		mockMvc.perform(post("/maintenance")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isCreated());
@@ -55,7 +55,7 @@ class MaintenanceControllerIntegrationTest {
 				UUID.randomUUID(), MaintenanceType.PREVENTIVE, MaintenancePriority.MEDIUM,
 				LocalDate.now().plusDays(10), "Test description");
 
-		mockMvc.perform(post("/api/maintenance")
+		mockMvc.perform(post("/maintenance")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isForbidden());
@@ -64,13 +64,13 @@ class MaintenanceControllerIntegrationTest {
 	@Test
 	@WithMockUser(roles = "technician")
 	void getVehicleHistory_WhenTechnician_ShouldReturnOk() throws Exception {
-		mockMvc.perform(get("/api/maintenance/vehicle/" + UUID.randomUUID()))
+		mockMvc.perform(get("/maintenance/vehicle/" + UUID.randomUUID()))
 				.andExpect(status().isOk());
 	}
 
 	@Test
 	void getVehicleHistory_WhenNotAuthenticated_ShouldReturnUnauthorized() throws Exception {
-		mockMvc.perform(get("/api/maintenance/vehicle/" + UUID.randomUUID()))
+		mockMvc.perform(get("/maintenance/vehicle/" + UUID.randomUUID()))
 				.andExpect(status().isUnauthorized());
 	}
 }

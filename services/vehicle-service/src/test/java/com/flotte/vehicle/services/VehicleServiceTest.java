@@ -53,8 +53,8 @@ class VehicleServiceTest {
 		vehicle.setPlateNumber("AB-123-CD");
 		vehicle.setBrand("Renault");
 		vehicle.setModel("Kangoo");
-		vehicle.setFuelType(FuelType.electric);
-		vehicle.setStatus(VehicleStatus.available);
+		vehicle.setFuelType(FuelType.ELECTRIC);
+		vehicle.setStatus(VehicleStatus.AVAILABLE);
 		vehicle.setMileageKm(10000);
 	}
 
@@ -62,7 +62,7 @@ class VehicleServiceTest {
 	void getAllVehicles_ShouldReturnList() {
 		when(repository.findAllActive()).thenReturn(List.of(vehicle));
 
-		List<VehicleResponse> responses = vehicleService.getAllVehicles();
+		List<VehicleResponse> responses = vehicleService.getAllVehicles(null);
 
 		assertThat(responses).hasSize(1);
 		assertThat(responses.get(0).id()).isEqualTo(vehicleId);
@@ -90,7 +90,7 @@ class VehicleServiceTest {
 
 	@Test
 	void createVehicle_ShouldSaveAndPublishEvent() {
-		VehicleInput input = new VehicleInput("AB-123-CD", "Renault", "Kangoo", FuelType.electric, 10000, "VIN123", 500, 3.0);
+		VehicleInput input = new VehicleInput("AB-123-CD", "Renault", "Kangoo", FuelType.ELECTRIC, 10000, "VIN123", 500, 3.0);
 		when(repository.save(any(Vehicle.class))).thenReturn(vehicle);
 
 		VehicleResponse response = vehicleService.createVehicle(input);
@@ -120,9 +120,9 @@ class VehicleServiceTest {
 		when(repository.findByIdActive(vehicleId)).thenReturn(Optional.of(vehicle));
 		when(repository.save(any(Vehicle.class))).thenReturn(vehicle);
 
-		VehicleResponse response = vehicleService.updateVehicleStatus(vehicleId, VehicleStatus.in_maintenance);
+		VehicleResponse response = vehicleService.updateVehicleStatus(vehicleId, VehicleStatus.IN_MAINTENANCE);
 
-		assertThat(vehicle.getStatus()).isEqualTo(VehicleStatus.in_maintenance);
+		assertThat(vehicle.getStatus()).isEqualTo(VehicleStatus.IN_MAINTENANCE);
 		verify(repository).save(vehicle);
 		// 👈 Changement ici
 		verify(eventProducer).publishVehicleEvent(any(KafkaEventEnvelope.class));
@@ -167,7 +167,7 @@ class VehicleServiceTest {
 
 		AssignmentResponse response = vehicleService.createAssignment(vehicleId, input);
 
-		assertThat(vehicle.getStatus()).isEqualTo(VehicleStatus.on_delivery);
+		assertThat(vehicle.getStatus()).isEqualTo(VehicleStatus.ON_DELIVERY);
 		verify(repository).save(vehicle);
 		verify(assignmentRepository).save(any(VehicleAssignment.class));
 		// 👈 Changement ici : publishAssignmentEvent pour la partie assignation !
@@ -188,7 +188,7 @@ class VehicleServiceTest {
 
 	@Test
 	void createAssignment_WhenNotAvailable_ShouldThrowConflict() {
-		vehicle.setStatus(VehicleStatus.in_maintenance);
+		vehicle.setStatus(VehicleStatus.IN_MAINTENANCE);
 		AssignmentInput input = new AssignmentInput(UUID.randomUUID(), "Notes", UUID.randomUUID());
 
 		when(repository.findByIdActive(vehicleId)).thenReturn(Optional.of(vehicle));
@@ -211,7 +211,7 @@ class VehicleServiceTest {
 		AssignmentResponse response = vehicleService.endCurrentAssignment(vehicleId);
 
 		assertThat(assignment.getEndedAt()).isNotNull();
-		assertThat(vehicle.getStatus()).isEqualTo(VehicleStatus.available);
+		assertThat(vehicle.getStatus()).isEqualTo(VehicleStatus.AVAILABLE);
 		verify(assignmentRepository).save(assignment);
 		verify(repository).save(vehicle);
 		// 👈 Changement ici : publication de la fin d'assignation

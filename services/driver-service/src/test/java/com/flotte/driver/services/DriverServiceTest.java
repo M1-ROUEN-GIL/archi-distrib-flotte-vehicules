@@ -4,6 +4,7 @@ import com.flotte.driver.dto.*;
 import com.flotte.driver.events.producers.DriverEventProducer;
 import com.flotte.driver.models.Driver;
 import com.flotte.driver.models.enums.DriverStatus;
+import com.flotte.driver.models.enums.LicenseCategory;
 import com.flotte.driver.repositories.DriverLicenseRepository;
 import com.flotte.driver.repositories.DriverRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import jakarta.persistence.EntityNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +49,7 @@ public class DriverServiceTest {
 		driver.setFirstName("John");
 		driver.setLastName("Doe");
 		driver.setEmail("john.doe@example.com");
-		driver.setStatus(DriverStatus.active);
+		driver.setStatus(DriverStatus.ACTIVE);
 	}
 
 	@Test
@@ -61,6 +64,18 @@ public class DriverServiceTest {
 	}
 
 	@Test
+	void getAllDrivers_WithStatusFilter_ShouldFilter() {
+		Driver other = new Driver();
+		other.setStatus(DriverStatus.ON_LEAVE);
+		when(driverRepository.findAll()).thenReturn(List.of(driver, other));
+
+		List<DriverResponse> result = driverService.getAllDrivers(DriverStatus.ACTIVE);
+
+		assertEquals(1, result.size());
+		assertEquals("John", result.get(0).firstName());
+	}
+
+	@Test
 	void getDriverById_WhenFound_ShouldReturnDriver() {
 		when(driverRepository.findById(driverId)).thenReturn(Optional.of(driver));
 		
@@ -68,6 +83,32 @@ public class DriverServiceTest {
 		
 		assertNotNull(result);
 		assertEquals("John", result.firstName());
+	}
+
+	@Test
+	void getDriverById_WhenMissingButKeycloakMatch_ShouldReturnDriver() {
+		when(driverRepository.findById(driverId)).thenReturn(Optional.empty());
+		when(driverRepository.findByKeycloakUserId(driverId)).thenReturn(Optional.of(driver));
+
+		DriverResponse result = driverService.getDriverById(driverId);
+
+		assertEquals("John", result.firstName());
+	}
+
+	@Test
+	void getDriverById_WhenNotFound_ShouldThrow() {
+		when(driverRepository.findById(driverId)).thenReturn(Optional.empty());
+		when(driverRepository.findByKeycloakUserId(driverId)).thenReturn(Optional.empty());
+
+		assertThrows(EntityNotFoundException.class, () -> driverService.getDriverById(driverId));
+	}
+
+	@Test
+	void createDriver_WhenEmailExists_ShouldThrow() {
+		DriverInput input = new DriverInput(UUID.randomUUID(), "Jane", "Smith", "taken@example.com", "123456", "EMP001");
+		when(driverRepository.existsByEmail("taken@example.com")).thenReturn(true);
+
+		assertThrows(IllegalArgumentException.class, () -> driverService.createDriver(input));
 	}
 
 	@Test
@@ -88,8 +129,20 @@ public class DriverServiceTest {
 	}
 
 	@Test
+	void updateDriverStatus_ShouldPublishStatusEvent() {
+		DriverStatusInput input = new DriverStatusInput(DriverStatus.ON_TOUR);
+		when(driverRepository.findById(driverId)).thenReturn(Optional.of(driver));
+		when(driverRepository.save(any())).thenReturn(driver);
+
+		DriverResponse response = driverService.updateDriverStatus(driverId, input);
+
+		assertEquals(DriverStatus.ON_TOUR, response.status());
+		verify(eventProducer).publishDriverEvent(any());
+	}
+
+	@Test
 	void updateDriver_WhenFound_ShouldUpdateAndPublishEvent() {
-		DriverUpdate update = new DriverUpdate("Jane", "Doe", "987654", "EMP002");
+		DriverUpdate update = new DriverUpdate(UUID.randomUUID(), "Jane", "Doe", "jane.doe@example.com", "987654", "EMP002");
 		when(driverRepository.findById(driverId)).thenReturn(Optional.of(driver));
 		when(driverRepository.save(any())).thenReturn(driver);
 
@@ -121,8 +174,17 @@ public class DriverServiceTest {
 	}
 
 	@Test
+	void addLicenseToDriver_WhenNumberExists_ShouldThrow() {
+		LicenseInput input = new LicenseInput("DUP", LicenseCategory.B, java.time.LocalDate.now(), java.time.LocalDate.now().plusYears(10), "FR");
+		when(driverRepository.findById(driverId)).thenReturn(Optional.of(driver));
+		when(licenseRepository.existsByLicenseNumber("DUP")).thenReturn(true);
+
+		assertThrows(IllegalArgumentException.class, () -> driverService.addLicenseToDriver(driverId, input));
+	}
+
+	@Test
 	void addLicenseToDriver_ShouldSave() {
-		LicenseInput input = new LicenseInput("LIC123", "B", java.time.LocalDate.now(), java.time.LocalDate.now().plusYears(10), "FR");
+		LicenseInput input = new LicenseInput("LIC123", LicenseCategory.B, java.time.LocalDate.now(), java.time.LocalDate.now().plusYears(10), "FR");
 		when(driverRepository.findById(driverId)).thenReturn(Optional.of(driver));
 		when(licenseRepository.existsByLicenseNumber(any())).thenReturn(false);
 		when(driverRepository.save(any())).thenReturn(driver);

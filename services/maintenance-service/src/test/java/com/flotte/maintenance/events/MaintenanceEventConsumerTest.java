@@ -43,4 +43,24 @@ class MaintenanceEventConsumerTest {
 
 		verify(maintenanceService).processMileageUpdate(vehicleId, 15000);
 	}
+
+	@Test
+	void consumeMaintenanceEvent_Rejected_ShouldCancel() {
+		UUID recordId = UUID.randomUUID();
+		MaintenancePayload payload = new MaintenancePayload(
+				recordId, UUID.randomUUID(), com.flotte.maintenance.model.MaintenanceType.PREVENTIVE,
+				null, null, null, null, null);
+		KafkaEventEnvelope<MaintenancePayload> event = new KafkaEventEnvelope<>(
+				UUID.randomUUID(),
+				"MAINTENANCE_REJECTED",
+				"1.0",
+				java.time.OffsetDateTime.now(),
+				payload,
+				null
+		);
+
+		consumer.consumeMaintenanceEvent(event);
+
+		verify(maintenanceService).cancelRecord(recordId, "Le service véhicule a rejeté la mise à jour.");
+	}
 }

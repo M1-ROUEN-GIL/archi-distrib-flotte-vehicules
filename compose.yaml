@@ -1,19 +1,17 @@
 services:
-  # 1. Base de données PostgreSQL + TimescaleDB pour le service Véhicules
-  postgres:
+  # 1. PostgreSQL Véhicules (+ Keycloak : même instance, base vehicle_db) — aligné sur postgres-maintenance / postgres-driver ; en K8s : postgres-vehicle-service
+  postgres-vehicle:
     image: timescale/timescaledb:2.14.2-pg15
-    container_name: flotte-postgres
+    container_name: flotte-postgres-vehicle
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: flotte_db
+      POSTGRES_DB: vehicle_db
     ports:
       - "5432:5432"
     volumes:
       - ./services/vehicle-service/db/migrations/01-vehicle.sql:/docker-entrypoint-initdb.d/01-vehicle.sql
-      - ./services/events-service/db/migrations/04-events.sql:/docker-entrypoint-initdb.d/04-events.sql
-      - ./services/location-service/db/migrations/05-location.sql:/docker-entrypoint-initdb.d/05-location.sql
-      - ./services/vehicle-service/db/seeds/20-vehicle-seed.sql:/docker-entrypoint-initdb.d/20-vehicle-seed.sql
+      - ./services/vehicle-service/db/seeds/02-vehicle-seed.sql:/docker-entrypoint-initdb.d/02-vehicle-seed.sql
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
@@ -28,7 +26,8 @@ services:
     ports:
       - "5435:5432"
     volumes:
-      - ./services/maintenance-service/db/migrations/03-maintenance.sql:/docker-entrypoint-initdb.d/01-maintenance.sql
+      - ./services/maintenance-service/db/migrations/01-maintenance.sql:/docker-entrypoint-initdb.d/01-maintenance.sql
+      - ./services/maintenance-service/db/seeds/02-maintenance-seed.sql:/docker-entrypoint-initdb.d/02-maintenance-seed.sql
       - postgres_maintenance_data:/var/lib/postgresql/data
     restart: unless-stopped
 
@@ -43,8 +42,8 @@ services:
     ports:
       - "5436:5432"
     volumes:
-      - ./services/driver-service/db/migrations/02-driver.sql:/docker-entrypoint-initdb.d/01-driver.sql
-      - ./services/driver-service/db/seeds/21-driver-seed.sql:/docker-entrypoint-initdb.d/21-driver-seed.sql
+      - ./services/driver-service/db/migrations/01-driver.sql:/docker-entrypoint-initdb.d/01-driver.sql
+      - ./services/driver-service/db/seeds/02-driver-seed.sql:/docker-entrypoint-initdb.d/02-driver-seed.sql
       - postgres_driver_data:/var/lib/postgresql/data
     restart: unless-stopped
 
@@ -82,7 +81,7 @@ services:
     command: start-dev --import-realm
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/flotte_db
+      KC_DB_URL: jdbc:postgresql://postgres-vehicle:5432/vehicle_db
       KC_DB_USERNAME: admin
       KC_DB_PASSWORD: password
       KC_HOSTNAME_STRICT: "false"
@@ -93,7 +92,7 @@ services:
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm.json
     depends_on:
-      - postgres
+      - postgres-vehicle
     restart: unless-stopped
 
   # 5. Interface d'administration web pour PostgreSQL
@@ -106,7 +105,7 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - postgres
+      - postgres-vehicle
       - postgres-maintenance
       - postgres-driver
     restart: unless-stopped
@@ -118,7 +117,7 @@ services:
       dockerfile: Dockerfile
     container_name: flotte-vehicle
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/flotte_db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-vehicle:5432/vehicle_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - KAFKA_BROKER=kafka:9092
@@ -135,7 +134,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
+      - postgres-vehicle
       - kafka
       - keycloak
     restart: unless-stopped

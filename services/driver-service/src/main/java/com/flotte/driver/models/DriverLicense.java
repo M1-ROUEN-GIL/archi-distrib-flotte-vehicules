@@ -23,7 +23,6 @@ public class DriverLicense {
 	private String licenseNumber;
 
 	@Enumerated(EnumType.STRING)
-	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
 	@Column(nullable = false)
 	private LicenseCategory category;
 

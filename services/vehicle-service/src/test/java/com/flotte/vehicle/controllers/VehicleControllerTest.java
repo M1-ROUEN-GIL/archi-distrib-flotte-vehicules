@@ -49,18 +49,18 @@ class VehicleControllerTest {
 
 	@Test
 	void getAllVehicles_ShouldReturnList() throws Exception {
-		VehicleResponse response = new VehicleResponse(UUID.randomUUID(), "AB-123-CD", "Renault", "Kangoo", FuelType.electric, VehicleStatus.available, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
-		when(vehicleService.getAllVehicles()).thenReturn(List.of(response));
+		VehicleResponse response = new VehicleResponse(UUID.randomUUID(), "AB-123-CD", "Renault", "Kangoo", FuelType.ELECTRIC, VehicleStatus.AVAILABLE, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
+		when(vehicleService.getAllVehicles(any())).thenReturn(List.of(response));
 
 		mockMvc.perform(get("/vehicles"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].plateNumber").value("AB-123-CD"));
+				.andExpect(jsonPath("$[0].plate_number").value("AB-123-CD"));
 	}
 
 	@Test
 	void getVehicleById_ShouldReturnVehicle() throws Exception {
 		UUID id = UUID.randomUUID();
-		VehicleResponse response = new VehicleResponse(id, "AB-123-CD", "Renault", "Kangoo", FuelType.electric, VehicleStatus.available, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
+		VehicleResponse response = new VehicleResponse(id, "AB-123-CD", "Renault", "Kangoo", FuelType.ELECTRIC, VehicleStatus.AVAILABLE, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
 		when(vehicleService.getVehicleById(id)).thenReturn(response);
 
 		mockMvc.perform(get("/vehicles/{id}", id))
@@ -71,15 +71,15 @@ class VehicleControllerTest {
 	@Test
 	@WithMockUser(roles = "admin")
 	void createVehicle_ShouldReturnCreated() throws Exception {
-		VehicleInput input = new VehicleInput("AB-123-CD", "Renault", "Kangoo", FuelType.electric, 10000, "VIN123", 500, 3.0);
-		VehicleResponse response = new VehicleResponse(UUID.randomUUID(), "AB-123-CD", "Renault", "Kangoo", FuelType.electric, VehicleStatus.available, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
+		VehicleInput input = new VehicleInput("AB-123-CD", "Renault", "Kangoo", FuelType.ELECTRIC, 10000, "VIN123", 500, 3.0);
+		VehicleResponse response = new VehicleResponse(UUID.randomUUID(), "AB-123-CD", "Renault", "Kangoo", FuelType.ELECTRIC, VehicleStatus.AVAILABLE, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
 		when(vehicleService.createVehicle(any(VehicleInput.class))).thenReturn(response);
 
 		mockMvc.perform(post("/vehicles")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(input)))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.plateNumber").value("AB-123-CD"));
+				.andExpect(jsonPath("$.plate_number").value("AB-123-CD"));
 	}
 
 	@Test
@@ -87,7 +87,7 @@ class VehicleControllerTest {
 	void updateVehicle_ShouldReturnOk() throws Exception {
 		UUID id = UUID.randomUUID();
 		VehicleUpdate update = new VehicleUpdate("Renault", "Master", 15000);
-		VehicleResponse response = new VehicleResponse(id, "AB-123-CD", "Renault", "Master", FuelType.diesel, VehicleStatus.available, 15000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
+		VehicleResponse response = new VehicleResponse(id, "AB-123-CD", "Renault", "Master", FuelType.DIESEL, VehicleStatus.AVAILABLE, 15000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
 		when(vehicleService.updateVehicle(eq(id), any(VehicleUpdate.class))).thenReturn(response);
 
 		mockMvc.perform(put("/vehicles/{id}", id)
@@ -101,15 +101,15 @@ class VehicleControllerTest {
 	@WithMockUser(roles = "admin")
 	void updateVehicleStatus_ShouldReturnOk() throws Exception {
 		UUID id = UUID.randomUUID();
-		VehicleStatusInput statusInput = new VehicleStatusInput(VehicleStatus.in_maintenance);
-		VehicleResponse response = new VehicleResponse(id, "AB-123-CD", "Renault", "Kangoo", FuelType.electric, VehicleStatus.in_maintenance, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
+		VehicleStatusInput statusInput = new VehicleStatusInput(VehicleStatus.IN_MAINTENANCE);
+		VehicleResponse response = new VehicleResponse(id, "AB-123-CD", "Renault", "Kangoo", FuelType.ELECTRIC, VehicleStatus.IN_MAINTENANCE, 10000, "VIN123", 500, 3.0, OffsetDateTime.now(), OffsetDateTime.now());
 		when(vehicleService.updateVehicleStatus(eq(id), any(VehicleStatus.class))).thenReturn(response);
 
 		mockMvc.perform(patch("/vehicles/{id}/status", id)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(statusInput)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("in_maintenance"));
+				.andExpect(jsonPath("$.status").value("IN_MAINTENANCE"));
 	}
 
 	@Test
@@ -131,7 +131,7 @@ class VehicleControllerTest {
 
 		mockMvc.perform(get("/vehicles/{id}/assignments", id))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].vehicleId").value(id.toString()));
+				.andExpect(jsonPath("$[0].vehicle_id").value(id.toString()));
 	}
 
 	@Test
@@ -146,7 +146,7 @@ class VehicleControllerTest {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(input)))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.driverId").value(input.driverId().toString()));
+				.andExpect(jsonPath("$.driver_id").value(input.driverId().toString()));
 	}
 
 	@Test
@@ -158,6 +158,6 @@ class VehicleControllerTest {
 
 		mockMvc.perform(delete("/vehicles/{id}/assignments/current", id))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.endedAt").exists());
+				.andExpect(jsonPath("$.ended_at").exists());
 	}
 }

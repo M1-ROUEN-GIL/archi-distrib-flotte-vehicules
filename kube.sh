@@ -11,7 +11,7 @@ kubectl create namespace flotte-namespace
 # 3. Création des Secrets et ConfigMaps
 # Utilisation de l'utilisateur 'admin' défini dans la configuration Helm
 kubectl create secret generic db-secrets \
-  --from-literal=SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-service:5432/flotte_db \
+  --from-literal=SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-vehicle-service:5432/vehicle_db \
   --from-literal=MAINTENANCE_DATASOURCE_URL=jdbc:postgresql://postgres-maintenance-service:5432/maintenance_db \
   --from-literal=DRIVER_DATASOURCE_URL=jdbc:postgresql://postgres-driver-service:5432/driver_db \
   --from-literal=SPRING_DATASOURCE_USERNAME=admin \
@@ -19,21 +19,20 @@ kubectl create secret generic db-secrets \
   --from-literal=KAFKA_BROKER=kafka-service:9092 \
   -n flotte-namespace
 
-# Scripts d'initialisation pour les bases de données
-kubectl create configmap flotte-db-init \
+# Scripts d'initialisation : une ConfigMap par service (database per service)
+kubectl create configmap vehicle-db-init \
   --from-file=01-vehicle.sql=./services/vehicle-service/db/migrations/01-vehicle.sql \
-  --from-file=04-events.sql=./services/events-service/db/migrations/04-events.sql \
-  --from-file=05-location.sql=./services/location-service/db/migrations/05-location.sql \
-  --from-file=20-vehicle-seed.sql=./services/vehicle-service/db/seeds/20-vehicle-seed.sql \
+  --from-file=02-vehicle-seed.sql=./services/vehicle-service/db/seeds/02-vehicle-seed.sql \
   -n flotte-namespace
 
 kubectl create configmap maintenance-db-init \
-  --from-file=03-maintenance.sql=./services/maintenance-service/db/migrations/03-maintenance.sql \
+  --from-file=01-maintenance.sql=./services/maintenance-service/db/migrations/01-maintenance.sql \
+  --from-file=02-maintenance-seed.sql=./services/maintenance-service/db/seeds/02-maintenance-seed.sql \
   -n flotte-namespace
 
 kubectl create configmap driver-db-init \
-  --from-file=02-driver.sql=./services/driver-service/db/migrations/02-driver.sql \
-  --from-file=21-driver-seed.sql=./services/driver-service/db/seeds/21-driver-seed.sql \
+  --from-file=01-driver.sql=./services/driver-service/db/migrations/01-driver.sql \
+  --from-file=02-driver-seed.sql=./services/driver-service/db/seeds/02-driver-seed.sql \
   -n flotte-namespace
 
 # 4. Build des Images dans le Docker daemon de Minikube
@@ -43,8 +42,6 @@ echo "Building images..."
 docker build -t vehicle-service:latest ./services/vehicle-service/
 docker build -t driver-service:latest ./services/driver-service/
 docker build -t maintenance-service:latest ./services/maintenance-service/
-docker build -t event-service:latest ./services/events-service/
-docker build -t location-service:latest ./services/location-service/
 
 # 5. Déploiement Infrastructure (DB, Kafka, Redis)
 helm dependency update ./infra/helm/fleet-infra/
@@ -65,7 +62,7 @@ kubectl apply -f infra/kubernetes/keycloak/keycloak-deployment.yaml -n flotte-na
 # 8. Déploiement de l'Application via Helm (Fleet-App)
 # On attend un peu que l'infra soit prête
 echo "Waiting for infrastructure to be ready..."
-kubectl wait --for=condition=ready --timeout=300s pod/postgres-service-0 -n flotte-namespace
+kubectl wait --for=condition=ready --timeout=300s pod/postgres-vehicle-service-0 -n flotte-namespace
 kubectl wait --for=condition=ready --timeout=300s pod/postgres-maintenance-service-0 -n flotte-namespace
 
 helm upgrade --install fleet-app ./infra/helm/fleet-app/ \

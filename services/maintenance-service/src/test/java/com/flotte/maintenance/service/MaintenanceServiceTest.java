@@ -136,6 +136,26 @@ class MaintenanceServiceTest {
 	}
 
 	@Test
+	void getRecordById_WhenMissing_ShouldThrow() {
+		when(repository.findById(record.getId())).thenReturn(Optional.empty());
+		assertThrows(ResponseStatusException.class, () -> service.getRecordById(record.getId()));
+	}
+
+	@Test
+	void getAllRecords_WithFilters_ShouldApply() {
+		MaintenanceRecord other = new MaintenanceRecord();
+		other.setVehicleId(UUID.randomUUID());
+		other.setStatus(MaintenanceStatus.COMPLETED);
+		other.setPriority(MaintenancePriority.LOW);
+		when(repository.findAll()).thenReturn(List.of(record, other));
+
+		List<MaintenanceRecord> list = service.getAllRecords(vehicleId, MaintenanceStatus.SCHEDULED, MaintenancePriority.MEDIUM);
+
+		assertEquals(1, list.size());
+		assertEquals(record.getId(), list.get(0).getId());
+	}
+
+	@Test
 	void updateRecord_ShouldUpdateAndPublishEvent() {
 		com.flotte.maintenance.dto.MaintenanceUpdateRequest update = new com.flotte.maintenance.dto.MaintenanceUpdateRequest(
 				"New description", MaintenancePriority.HIGH, LocalDate.now().plusDays(5), MaintenanceStatus.IN_PROGRESS);

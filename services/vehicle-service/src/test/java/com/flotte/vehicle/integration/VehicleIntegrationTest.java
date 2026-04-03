@@ -56,7 +56,7 @@ class VehicleIntegrationTest {
 	@WithMockUser(roles = "admin")
 	void testVehicleCrudFlow() throws Exception {
 		// 1. Create a vehicle
-		VehicleInput input = new VehicleInput("ZZ-999-ZZ", "Tesla", "Model 3", FuelType.electric, 0, "VIN_TEST_INTEG", 400, 2.0);
+		VehicleInput input = new VehicleInput("ZZ-999-ZZ", "Tesla", "Model 3", FuelType.ELECTRIC, 0, "VIN_TEST_INTEG", 400, 2.0);
 		
 		String responseJson = mockMvc.perform(post("/vehicles")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -100,7 +100,7 @@ class VehicleIntegrationTest {
 	@WithMockUser(roles = "admin")
 	void testAssignmentFlow() throws Exception {
 		// 1. Create a vehicle
-		VehicleInput input = new VehicleInput("AA-111-AA", "Renault", "Zoe", FuelType.electric, 0, "VIN_ASSIGN", 300, 1.5);
+		VehicleInput input = new VehicleInput("AA-111-AA", "Renault", "Zoe", FuelType.ELECTRIC, 0, "VIN_ASSIGN", 300, 1.5);
 		String vehicleJson = mockMvc.perform(post("/vehicles")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(input)))
@@ -119,19 +119,19 @@ class VehicleIntegrationTest {
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.driverId").value(driverId.toString()));
 
-		// 3. Verify vehicle status changed to on_delivery
+		// 3. Verify vehicle status changed to ON_DELIVERY
 		mockMvc.perform(get("/vehicles/{id}", vehicleId))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("on_delivery"));
+				.andExpect(jsonPath("$.status").value("ON_DELIVERY"));
 
 		// 4. End assignment
 		mockMvc.perform(delete("/vehicles/{id}/assignments/current", vehicleId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.endedAt").exists());
 
-		// 5. Verify vehicle status back to available
+		// 5. Verify vehicle status back to AVAILABLE
 		mockMvc.perform(get("/vehicles/{id}", vehicleId))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("available"));
+				.andExpect(jsonPath("$.status").value("AVAILABLE"));
 	}
 }

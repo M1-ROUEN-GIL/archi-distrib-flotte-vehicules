@@ -53,8 +53,7 @@ public class MaintenanceRecord {
 	@Column(name = "next_service_km")
 	private Integer nextServiceKm;
 
-	@org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
-	@Column(name = "parts_used", columnDefinition = "jsonb")
+	@Column(name = "parts_used")
 	private String partsUsed = "[]";
 
 	@Column(name = "notes")

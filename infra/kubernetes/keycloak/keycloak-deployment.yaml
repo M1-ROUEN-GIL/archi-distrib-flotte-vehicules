@@ -21,7 +21,7 @@ spec:
             - name: KC_DB
               value: "postgres"
             - name: KC_DB_URL
-              value: "jdbc:postgresql://postgres-service:5432/flotte_db"
+              value: "jdbc:postgresql://postgres-vehicle-service:5432/vehicle_db"
             - name: KC_DB_USERNAME
               value: "postgres"
             - name: KC_DB_PASSWORD

@@ -1,16 +1,16 @@
 namespace: flotte-namespace
 
-# 1. Configuration de PostgreSQL principal (Vehicules)
+# 1. PostgreSQL Véhicules (aligné sur postgres-*-service ; Keycloak partage cette instance / vehicle_db)
 postgresql:
-  fullnameOverride: "postgres-service"
+  fullnameOverride: "postgres-vehicle-service"
   auth:
     username: "admin"
-    database: "flotte_db"
+    database: "vehicle_db"
   primary:
     persistence:
       enabled: false
     initdb:
-      scriptsConfigMap: "flotte-db-init"
+      scriptsConfigMap: "vehicle-db-init"
 
 # 1b. Configuration de PostgreSQL pour la Maintenance
 postgresql-maintenance:

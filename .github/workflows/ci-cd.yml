@@ -23,7 +23,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: flotte_db
+          POSTGRES_DB: vehicle_db
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: password
         ports:

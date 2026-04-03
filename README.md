@@ -54,79 +54,79 @@ Si vous accédez à `http://localhost:8080/`, vous verrez une "Whitelabel Error 
 
 ## 3. Mode Cluster Local (Kubernetes / Minikube)
 
-### Étape 1 : Préparer Minikube
+### Déploiement Automatisé (Recommandé)
+Un script est disponible pour automatiser l'intégralité du déploiement (Minikube, secrets, build d'images, Helm, Keycloak) :
+
+```bash
+chmod +x kube.sh
+./kube.sh
+```
+
+> **Note :** Le script s'occupe de tout, du démarrage de Minikube au déploiement final de l'application. Une fois terminé, suivez l'instruction pour mettre à jour votre `/etc/hosts`.
+
+### Déploiement Manuel (Détails)
+Si vous préférez exécuter les étapes manuellement :
+
+#### Étape 1 : Préparer Minikube
 ```bash
 minikube start
 minikube addons enable ingress
 kubectl apply -f infra/kubernetes/namespaces/namespaces.yaml
 ```
 
-### Étape 2 : Créer les secrets (Obligatoire)
-Le service véhicules a besoin de secrets pour se connecter aux infrastructures.
+#### Étape 2 : Créer les secrets et ConfigMaps
+Le système a besoin de secrets pour les bases de données et Kafka, ainsi que de ConfigMaps pour l'initialisation des schémas SQL.
 ```bash
+# Exemple pour les secrets
 kubectl create secret generic db-secrets \
-  --from-literal=SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-service:5432/flotte_db \
+  --from-literal=SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-vehicle-service:5432/vehicle_db \
+  --from-literal=MAINTENANCE_DATASOURCE_URL=jdbc:postgresql://postgres-maintenance-service:5432/maintenance_db \
+  --from-literal=DRIVER_DATASOURCE_URL=jdbc:postgresql://postgres-driver-service:5432/driver_db \
+  --from-literal=SPRING_DATASOURCE_USERNAME=admin \
   --from-literal=SPRING_DATASOURCE_PASSWORD=password \
   --from-literal=KAFKA_BROKER=kafka-service:9092 \
   -n flotte-namespace
 ```
 
-### Étape 3 : Construire les images (Local Build)
+#### Étape 3 : Construire les images (Local Build)
 ```bash
 eval $(minikube docker-env)
-
-# Build de tous les services
 docker build -t vehicle-service:latest ./services/vehicle-service/
-docker build -t driver-service:latest ./services/driver-service/
-docker build -t maintenance-service:latest ./services/maintenance-service/
-docker build -t event-service:latest ./services/events-service/
-docker build -t location-service:latest ./services/location-service/
+# ... répéter pour les autres services (driver, maintenance)
 ```
 
-### Étape 4 : Déployer l'Infrastructure
+#### Étape 4 : Déployer l'Infrastructure et l'Application
 ```bash
-# 1. Installer l'infra de base (PostgreSQL, Kafka, Redis) via Helm
-helm dependency update ./infra/helm/fleet-infra/
-helm upgrade --install fleet-infra ./infra/helm/fleet-infra/ \
-  -n flotte-namespace \
-  -f ./infra/helm/fleet-infra/values.secret.yaml
+# Infrastructure
+helm upgrade --install fleet-infra ./infra/helm/fleet-infra/ -n flotte-namespace -f ./infra/helm/fleet-infra/values.secret.yaml
 
-# 2. Installer la stack d'observabilité (LGTMe + OTel) via Helm
-helm upgrade --install fleet-obs ./infra/helm/fleet-observability/ \
-  -n flotte-namespace
+# Observabilité
+helm upgrade --install fleet-obs ./infra/helm/fleet-observability/ -n flotte-namespace
 
-# 3. Déployer Keycloak (SSO) via les fichiers YAML
-kubectl apply -f infra/kubernetes/keycloak/keycloak-configmap.yaml -n flotte-namespace
-kubectl apply -f infra/kubernetes/keycloak/keycloak-service.yaml -n flotte-namespace
-kubectl apply -f infra/kubernetes/keycloak/keycloak-deployment.yaml -n flotte-namespace
+# Application
+helm upgrade --install fleet-app ./infra/helm/fleet-app/ -n flotte-namespace
 ```
 
-### Étape 5 : Déployer l'Application (Helm)
-```bash
-helm upgrade --install fleet-app ./infra/helm/fleet-app/ \
-  -n flotte-namespace
-```
-
-### Étape 6 : Configuration Réseau
+### Configuration Réseau
 ```bash
 echo "$(minikube ip) flotte.local" | sudo tee -a /etc/hosts
 ```
 
-Accès unifiés :
-- **API Véhicules :** [http://flotte.local/api/vehicles/](http://flotte.local/api/vehicles/)
-- **Keycloak Admin :** [http://flotte.local/admin](http://flotte.local/admin) (admin / admin)
-- **Grafana :** [http://flotte.local/grafana/](http://flotte.local/grafana/)
-- **Jaeger :** [http://flotte.local/jaeger/](http://flotte.local/jaeger/)
+---
 
+## 4. Scripts Utiles
 
-### Vérification du service sur Minikube
-Une fois déployé, vous pouvez tester le bon fonctionnement via l'Ingress :
-- **Santé :** `curl http://flotte.local/api/vehicles/actuator/health` (Doit retourner `{"status":"UP"}`)
-- **API :** `curl http://flotte.local/api/vehicles/vehicles` (Doit retourner `[]`)
+### 📡 Monitoring Kafka en temps réel
+Pour observer les événements transitant sur le bus Kafka (création de véhicules, mises à jour de positions, etc.) :
+```bash
+chmod +x watch-kafka.sh
+./watch-kafka.sh
+```
+Ce script cible automatiquement le pod Kafka et filtre les messages du topic `flotte.*`.
 
 ---
 
-## 4. Tests et Qualité (Service Véhicule)
+## 5. Tests et Qualité (Service Véhicule)
 Le service véhicule dispose de tests unitaires et d'intégration avec un objectif de couverture > 90% (actuellement ~91%).
 
 ### Lancer les tests

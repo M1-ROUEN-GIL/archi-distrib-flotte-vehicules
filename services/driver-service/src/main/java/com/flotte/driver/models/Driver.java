@@ -42,7 +42,6 @@ public class Driver {
 	private String employeeId;
 
 	@Enumerated(EnumType.STRING)
-	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
 	@Column(name = "status", nullable = false)
 	private DriverStatus status = DriverStatus.ACTIVE;
 
@@ -68,8 +67,8 @@ public class Driver {
 	// ==========================================
 
 	public UUID getId() { return id; }
-	public UUID getKeycloakUserId() { return keycloakUserId; }
-	public String getFirstName() { return firstName; }
+	public void setId(UUID id) { this.id = id; }
+	public UUID getKeycloakUserId() { return keycloakUserId; }	public String getFirstName() { return firstName; }
 	public String getLastName() { return lastName; }
 	public String getEmail() { return email; }
 	public String getPhone() { return phone; }

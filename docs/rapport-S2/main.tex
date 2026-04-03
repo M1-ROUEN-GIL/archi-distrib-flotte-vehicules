@@ -226,7 +226,7 @@ Kubernetes. Il contient 5 services :
     \toprule
     \textbf{Conteneur} & \textbf{Image} & \textbf{Port} & \textbf{Role} \\
     \midrule
-    flotte-postgres  & timescale/timescaledb:2.14.2-pg15    & 5432 & Base de donnees principale + time-series \\
+    flotte-postgres-vehicle  & timescale/timescaledb:2.14.2-pg15    & 5432 & Base de donnees principale + time-series \\
     flotte-redis     & redis:7.2-alpine                     & 6379 & Cache et service evenements \\
     flotte-kafka     & apache/kafka:3.7.0                   & 9092 & Bus de messages (mode KRaft) \\
     flotte-keycloak  & keycloak:24.0.2  & 8180 & Authentification SSO \\
@@ -425,7 +425,7 @@ Secret, avec une valeur de fallback pour le developpement local :
 \begin{lstlisting}[language=bash, caption=application.yaml -- injection des secrets via variables d'environnement]
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flotte_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vehicle_db}
     username: ${SPRING_DATASOURCE_USERNAME:admin}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
   kafka:
