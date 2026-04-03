@@ -10,16 +10,10 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # --- 1. SCHÉMAS (01 à 10) ---
       - ./services/vehicle-service/db/migrations/01-vehicle.sql:/docker-entrypoint-initdb.d/01-vehicle.sql
-      - ./services/driver-service/db/migrations/02-driver.sql:/docker-entrypoint-initdb.d/02-driver.sql
       - ./services/events-service/db/migrations/04-events.sql:/docker-entrypoint-initdb.d/04-events.sql
       - ./services/location-service/db/migrations/05-location.sql:/docker-entrypoint-initdb.d/05-location.sql
-
-      # --- 2. DONNÉES / SEEDS (20 à 30) ---
       - ./services/vehicle-service/db/seeds/20-vehicle-seed.sql:/docker-entrypoint-initdb.d/20-vehicle-seed.sql
-      - ./services/driver-service/db/seeds/21-driver-seed.sql:/docker-entrypoint-initdb.d/21-driver-seed.sql
-
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
@@ -50,10 +44,11 @@ services:
       - "5436:5432"
     volumes:
       - ./services/driver-service/db/migrations/02-driver.sql:/docker-entrypoint-initdb.d/01-driver.sql
+      - ./services/driver-service/db/seeds/21-driver-seed.sql:/docker-entrypoint-initdb.d/21-driver-seed.sql
       - postgres_driver_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  # 2. Redis (Version 7.2)
+  # 2. Redis
   redis:
     image: redis:7.2-alpine
     container_name: flotte-redis
@@ -61,7 +56,7 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
-  # 3. Apache Kafka (Image officielle - Version 3.7.0 - Mode KRaft)
+  # 3. Apache Kafka
   kafka:
     image: apache/kafka:3.7.0
     container_name: flotte-kafka
@@ -80,7 +75,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     restart: unless-stopped
 
-  # 4. Keycloak (Latest)
+  # 4. Keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: flotte-keycloak
@@ -112,9 +107,11 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+      - postgres-maintenance
+      - postgres-driver
     restart: unless-stopped
 
-  # 6. Microservice Véhicules (Spring Boot)
+  # 6. Microservice Véhicules
   vehicle:
     build:
       context: ./services/vehicle-service
@@ -125,6 +122,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - KAFKA_BROKER=kafka:9092
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/gestion-flotte/protocol/openid-connect/certs
       # Configuration pour l'Agent Java OpenTelemetry
       - OTEL_SERVICE_NAME=vehicle-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
@@ -133,9 +132,6 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED=true
-      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_LOG_ATTRIBUTES=true
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/gestion-flotte
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/gestion-flotte/protocol/openid-connect/certs
     ports:
       - "8080:8080"
     depends_on:
@@ -144,7 +140,7 @@ services:
       - keycloak
     restart: unless-stopped
 
-  # 7. Microservice Maintenance (Spring Boot)
+  # 6. Microservice Maintenance
   maintenance:
     build:
       context: ./services/maintenance-service
@@ -157,9 +153,14 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/gestion-flotte
       - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/gestion-flotte/protocol/openid-connect/certs
+      # Configuration pour l'Agent Java OpenTelemetry
       - OTEL_SERVICE_NAME=maintenance-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED=true
     ports:
       - "8082:8080"
     depends_on:
@@ -168,7 +169,7 @@ services:
       - keycloak
     restart: unless-stopped
 
-  # 8. Microservice Conducteurs (Spring Boot)
+  # 7. Microservice Conducteurs
   driver:
     build:
       context: ./services/driver-service
@@ -179,7 +180,9 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - KAFKA_BROKER=kafka:9092
-      # Configuration pour l'Agent Java OpenTelemetry (identique à vehicle)
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/gestion-flotte/protocol/openid-connect/certs
+      # Configuration pour l'Agent Java OpenTelemetry
       - OTEL_SERVICE_NAME=driver-service
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -187,15 +190,32 @@ services:
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED=true
-      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_LOG_ATTRIBUTES=true
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/gestion-flotte
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/gestion-flotte/protocol/openid-connect/certs
     ports:
-      - "8081:8081"
+      - "8081:8080"
     depends_on:
-      - postgres
+      - postgres-driver
       - kafka
       - keycloak
+    restart: unless-stopped
+
+  # 8. GraphQL Gateway
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: flotte-gateway
+    environment:
+      - VEHICLE_SERVICE_URL=http://vehicle:8080
+      - DRIVER_SERVICE_URL=http://driver:8080
+      - MAINTENANCE_SERVICE_URL=http://maintenance:8080
+      - OTEL_SERVICE_NAME=graphql-gateway
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    ports:
+      - "4000:4000"
+    depends_on:
+      - vehicle
+      - driver
+      - maintenance
     restart: unless-stopped
 
 volumes:

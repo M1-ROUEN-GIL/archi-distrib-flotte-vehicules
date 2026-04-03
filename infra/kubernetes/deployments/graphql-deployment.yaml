@@ -26,3 +26,7 @@ spec:
               value: "http://driver-service:8080"
             - name: MAINTENANCE_SERVICE_URL
               value: "http://maintenance-service:8082"
+            - name: OTEL_SERVICE_NAME
+              value: "graphql-gateway"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector.flotte-namespace.svc.cluster.local:4318"

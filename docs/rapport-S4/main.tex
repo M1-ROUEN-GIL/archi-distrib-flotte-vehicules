@@ -458,11 +458,33 @@ Les changements d'état critiques utilisent le bus de messages \textbf{Kafka} po
 \end{infobox}
 
 \subsection{Stratégie et Résultats}
+L'assurance qualité repose sur une pyramide de tests automatisés couvrant l'intégralité des trois services métier (\textbf{Véhicules}, \textbf{Maintenance}, \textbf{Driver}).
+
 \begin{itemize}
-    \item \textbf{Tests Unitaires} : JUnit 5 + Mockito pour isoler la logique métier (notamment les Schedulers).
-    \item \textbf{Tests d'Intégration} : MockMvc + base H2 pour valider les APIs et le contrôle d'accès (RBAC).
-    \item \textbf{Couverture JaCoCo} : Supérieure à 80\% sur l'ensemble du périmètre métier des deux services.
+    \item \textbf{Tests Unitaires} : Utilisation de \textit{JUnit 5} et \textit{Mockito} pour valider 100\% des méthodes de la couche \texttt{Service}. Cela inclut la logique critique des changements d'états, les calculs kilométriques et les tâches planifiées (\textit{Schedulers}).
+    \item \textbf{Tests d'Intégration} : Utilisation de \textit{MockMvc} et d'une base de données \textit{H2} en mémoire pour valider le routage des APIs, la désérialisation JSON et le respect des règles de sécurité RBAC (Keycloak).
+    \item \textbf{Couverture JaCoCo} : La mesure automatisée via le plugin \textit{JaCoCo} confirme une couverture supérieure à 80\% sur le périmètre métier de chaque microservice, garantissant ainsi la non-régression lors des évolutions futures.
 \end{itemize}
+
+% ------------------------------------------------------------
+% OBSERVABILITE
+% ------------------------------------------------------------
+\section{Observabilité et Supervision}
+
+L'ensemble de l'architecture distribuée est couplé à une stack d'observabilité moderne permettant une supervision en temps réel de la santé des services.
+
+\subsection{Collecte centralisée (OpenTelemetry)}
+Chaque microservice métier ainsi que le Gateway GraphQL sont configurés pour exporter leurs données télémétriques vers un \textbf{OpenTelemetry Collector} centralisé. Cette approche standardisée garantit l'indépendance vis-à-vis des outils de stockage final.
+
+\subsection{Trois piliers de l'observabilité}
+\begin{itemize}
+    \item \textbf{Logs (Grafana Loki)} : Les logs de tous les conteneurs sont agrégés et indexés. L'utilisation de l'agent OpenTelemetry Java permet d'inclure automatiquement les contextes de traces dans les logs applicatifs.
+    \item \textbf{Métriques (Prometheus)} : Le système expose des indicateurs de performance (CPU, mémoire, temps de réponse des APIs) collectés par Prometheus.
+    \item \textbf{Traces distribuées (Jaeger)} : Les requêtes transitant par le Gateway GraphQL vers les services REST sont tracées de bout en bout, permettant d'identifier rapidement les goulots d'étranglement ou les échecs dans les échanges asynchrones.
+\end{itemize}
+
+\subsection{Visualisation (Grafana)}
+Un tableau de bord Grafana unique permet de croiser ces trois sources de données, offrant aux administrateurs une vision consolidée du système (disponible sur le port 3001 en local).
 
 % ------------------------------------------------------------
 % DEPLOIEMENT
