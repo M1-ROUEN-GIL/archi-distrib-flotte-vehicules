@@ -16,22 +16,14 @@ function subscriptionDisabled(name: string): never {
 
 export const stubResolvers = {
   Query: {
-    drivers: () => notImplemented('drivers'),
-    driver: () => notImplemented('driver'),
     alerts: () => notImplemented('alerts'),
     alert: () => notImplemented('alert'),
     vehicleLocation: () => notImplemented('vehicleLocation'),
     locationHistory: () => notImplemented('locationHistory'),
-    maintenanceRecords: () => notImplemented('maintenanceRecords'),
-    maintenanceRecord: () => notImplemented('maintenanceRecord'),
   },
   Mutation: {
-    createDriver: () => notImplemented('createDriver'),
-    updateDriverStatus: () => notImplemented('updateDriverStatus'),
     acknowledgeAlert: () => notImplemented('acknowledgeAlert'),
     resolveAlert: () => notImplemented('resolveAlert'),
-    createMaintenanceRecord: () => notImplemented('createMaintenanceRecord'),
-    updateMaintenanceStatus: () => notImplemented('updateMaintenanceStatus'),
   },
   Subscription: {
     vehicleStatusChanged: {

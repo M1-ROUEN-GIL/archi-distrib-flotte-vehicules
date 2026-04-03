@@ -26,6 +26,11 @@ type DriverLicense {
   country: String!
 }
 
+type DriverPage {
+  items: [Driver!]!
+  total_count: Int!
+}
+
 extend type Query {
   drivers(
     status: DriverStatus

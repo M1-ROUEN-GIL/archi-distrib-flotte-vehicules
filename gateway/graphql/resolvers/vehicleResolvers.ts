@@ -69,7 +69,7 @@ export const vehicleResolvers = {
       return ctx.vehicle.assignVehicle(
         args.vehicle_id,
         args.driver_id,
-        args.notes,
+        args.notes ?? undefined,
       );
     },
 

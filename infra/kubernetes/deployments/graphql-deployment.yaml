@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql-gateway-deployment
+  namespace: flotte-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphql-gateway
+  template:
+    metadata:
+      labels:
+        app: graphql-gateway
+    spec:
+      containers:
+        - name: graphql-gateway
+          image: graphql-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4000
+          env:
+            - name: VEHICLE_SERVICE_URL
+              value: "http://vehicle-service:8080"
+            - name: DRIVER_SERVICE_URL
+              value: "http://driver-service:8080"
+            - name: MAINTENANCE_SERVICE_URL
+              value: "http://maintenance-service:8082"

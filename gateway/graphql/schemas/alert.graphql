@@ -17,6 +17,11 @@ type Alert {
   created_at: String!
 }
 
+type AlertPage {
+  items: [Alert!]!
+  total_count: Int!
+}
+
 extend type Query {
   alerts(
     status: AlertStatus
