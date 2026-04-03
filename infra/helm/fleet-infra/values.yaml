@@ -25,6 +25,19 @@ postgresql-maintenance:
     initdb:
       scriptsConfigMap: "maintenance-db-init"
 
+# 1c. Configuration de PostgreSQL pour le Service Conducteurs
+postgresql-driver:
+  enabled: true
+  fullnameOverride: "postgres-driver-service"
+  auth:
+    username: "admin"
+    database: "driver_db"
+  primary:
+    persistence:
+      enabled: false
+    initdb:
+      scriptsConfigMap: "driver-db-init"
+
 # 2. Configuration de Redis
 redis:
   fullnameOverride: "redis-service"

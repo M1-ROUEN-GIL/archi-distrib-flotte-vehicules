@@ -38,6 +38,21 @@ services:
       - postgres_maintenance_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  # 1c. Base de données PostgreSQL pour le service Conducteurs
+  postgres-driver:
+    image: postgres:15-alpine
+    container_name: flotte-postgres-driver
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: driver_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - ./services/driver-service/db/migrations/02-driver.sql:/docker-entrypoint-initdb.d/01-driver.sql
+      - postgres_driver_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   # 2. Redis (Version 7.2)
   redis:
     image: redis:7.2-alpine
@@ -160,7 +175,7 @@ services:
       dockerfile: Dockerfile
     container_name: flotte-driver
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/flotte_db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-driver:5432/driver_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - KAFKA_BROKER=kafka:9092
@@ -186,4 +201,5 @@ services:
 volumes:
   postgres_data:
   postgres_maintenance_data:
+  postgres_driver_data:
   kafka_data:

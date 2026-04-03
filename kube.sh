@@ -13,6 +13,7 @@ kubectl create namespace flotte-namespace
 kubectl create secret generic db-secrets \
   --from-literal=SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-service:5432/flotte_db \
   --from-literal=MAINTENANCE_DATASOURCE_URL=jdbc:postgresql://postgres-maintenance-service:5432/maintenance_db \
+  --from-literal=DRIVER_DATASOURCE_URL=jdbc:postgresql://postgres-driver-service:5432/driver_db \
   --from-literal=SPRING_DATASOURCE_USERNAME=admin \
   --from-literal=SPRING_DATASOURCE_PASSWORD=password \
   --from-literal=KAFKA_BROKER=kafka-service:9092 \
@@ -21,15 +22,18 @@ kubectl create secret generic db-secrets \
 # Scripts d'initialisation pour les bases de données
 kubectl create configmap flotte-db-init \
   --from-file=01-vehicle.sql=./services/vehicle-service/db/migrations/01-vehicle.sql \
-  --from-file=02-driver.sql=./services/driver-service/db/migrations/02-driver.sql \
   --from-file=04-events.sql=./services/events-service/db/migrations/04-events.sql \
   --from-file=05-location.sql=./services/location-service/db/migrations/05-location.sql \
   --from-file=20-vehicle-seed.sql=./services/vehicle-service/db/seeds/20-vehicle-seed.sql \
-  --from-file=21-driver-seed.sql=./services/driver-service/db/seeds/21-driver-seed.sql \
   -n flotte-namespace
 
 kubectl create configmap maintenance-db-init \
   --from-file=03-maintenance.sql=./services/maintenance-service/db/migrations/03-maintenance.sql \
+  -n flotte-namespace
+
+kubectl create configmap driver-db-init \
+  --from-file=02-driver.sql=./services/driver-service/db/migrations/02-driver.sql \
+  --from-file=21-driver-seed.sql=./services/driver-service/db/seeds/21-driver-seed.sql \
   -n flotte-namespace
 
 # 4. Build des Images dans le Docker daemon de Minikube

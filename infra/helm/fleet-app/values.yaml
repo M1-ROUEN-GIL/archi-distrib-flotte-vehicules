@@ -12,6 +12,7 @@ services:
     image: driver-service:latest
     port: 8080
     replicas: 1
+    dbUrlKey: DRIVER_DATASOURCE_URL
   maintenance:
     name: maintenance-service
     image: maintenance-service:latest
