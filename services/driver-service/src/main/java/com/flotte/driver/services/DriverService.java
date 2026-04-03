@@ -1,6 +1,8 @@
 package com.flotte.driver.services;
 
 import com.flotte.driver.dto.*;
+import com.flotte.driver.events.DriverEventFactory;
+import com.flotte.driver.events.producers.DriverEventProducer;
 import com.flotte.driver.models.Driver;
 import com.flotte.driver.models.DriverLicense;
 import com.flotte.driver.models.enums.DriverStatus;
@@ -17,10 +19,12 @@ import java.util.stream.Collectors;
 public class DriverService {
 	private final DriverRepository driverRepository;
 	private final DriverLicenseRepository licenseRepository;
+	private final DriverEventProducer eventProducer;
 
-	public DriverService(DriverRepository driverRepository, DriverLicenseRepository licenseRepository){
+	public DriverService(DriverRepository driverRepository, DriverLicenseRepository licenseRepository, DriverEventProducer eventProducer){
 		this.driverRepository = driverRepository;
 		this.licenseRepository = licenseRepository;
+		this.eventProducer = eventProducer;
 	}
 
 	public List<DriverResponse> getAllDrivers(DriverStatus status) {
@@ -57,6 +61,19 @@ public class DriverService {
 		// status est active par defaut dans l'entité
 
 		Driver savedDriver = driverRepository.save(driver);
+
+		// 1. On fabrique l'événement
+		var event = DriverEventFactory.driverCreated(
+				savedDriver.getId(),
+				savedDriver.getFirstName(),
+				savedDriver.getLastName(),
+				savedDriver.getEmployeeId(),
+				savedDriver.getStatus().name()
+		);
+
+		// 2. On publie dans Kafka
+		eventProducer.publishDriverEvent(event);
+
 		return mapToDriverResponse(savedDriver);
 	}
 
@@ -69,6 +86,16 @@ public class DriverService {
 		if (request.employeeId() != null) driver.setEmployeeId(request.employeeId());
 
 		Driver updatedDriver = driverRepository.save(driver);
+
+		var event = DriverEventFactory.driverUpdated(
+				updatedDriver.getId(),
+				updatedDriver.getFirstName(),
+				updatedDriver.getLastName(),
+				updatedDriver.getEmployeeId(),
+				updatedDriver.getStatus().name()
+		);
+		eventProducer.publishDriverEvent(event);
+
 		return mapToDriverResponse(updatedDriver);
 	}
 
@@ -77,6 +104,17 @@ public class DriverService {
 		driver.setStatus(request.status());
 
 		Driver updatedDriver = driverRepository.save(driver);
+
+		var event = DriverEventFactory.driverStatusChanged(
+				updatedDriver.getId(),
+				updatedDriver.getFirstName(),
+				updatedDriver.getLastName(),
+				updatedDriver.getEmployeeId(),
+				driver.getStatus().name(), // ancien status
+				request.status().name() // nouveau status
+		);
+		eventProducer.publishDriverEvent(event);
+
 		return mapToDriverResponse(updatedDriver);
 	}
 
