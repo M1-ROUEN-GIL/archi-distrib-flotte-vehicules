@@ -124,7 +124,7 @@
 
   {\Huge\bfseries\color{primary} Projet Gestion de Flotte de vehicules\\[0.3cm]}
   {\LARGE\bfseries Rapport de Mise en \oe{}uvre}\\[0.3cm]
-  {\large\color{darkgray} Microservice Maintenance}
+  {\large\color{darkgray} Microservices Maintenance \& Driver}
 
   \rule{\linewidth}{0.5mm}\\[1.5cm]
 
@@ -154,30 +154,31 @@
 % ------------------------------------------------------------
 % INTRODUCTION
 % ------------------------------------------------------------
-\section{Objectifs du service Maintenance}
+\section{Objectifs des nouveaux services}
 
 \begin{infobox}
-\textbf{Objectif :} Implémenter le microservice de maintenance permettant la planification des interventions, le suivi de l'historique et la génération d'alertes préventives.
+\textbf{Objectif :} Implémenter les microservices de \textbf{Maintenance} (suivi technique) et \textbf{Driver} (gestion des conducteurs et permis) pour assurer la conformité et la disponibilité de la flotte.
 \end{infobox}
 
-Le service Maintenance est responsable de la santé technique de la flotte. Ses fonctionnalités clés incluent :
+Cette itération se concentre sur deux piliers essentiels :
 \begin{itemize}
-    \item \textbf{Planification} : Création et suivi des rendez-vous de maintenance.
-    \item \textbf{Historique} : Conservation de toutes les interventions passées pour chaque véhicule.
-    \item \textbf{Alertes Préventives} : Détection automatique des retards et des échéances kilométriques.
+    \item \textbf{Service Maintenance} : Responsable de la santé technique via la planification d'interventions et la détection de retards.
+    \item \textbf{Service Driver} : Gestion administrative des conducteurs, incluant le suivi critique de la validité des permis de conduire.
 \end{itemize}
 
 % ------------------------------------------------------------
-% MODELISATION
+% SERVICE MAINTENANCE
 % ------------------------------------------------------------
-\section{Modélisation et Persistance}
+\section{Microservice Maintenance}
+
+\subsection{Modélisation et Persistance}
 
 Le service respecte le principe d'isolation des données : \textbf{un microservice = une base de données}. Il s'appuie sur une instance PostgreSQL dédiée (\texttt{postgres-maintenance}), dont le schéma est défini dans \texttt{db/03-maintenance.sql}.
 
-\subsection{Base de données dédiée}
-Contrairement aux autres services partageant l'instance principale, la maintenance dispose de sa propre base \texttt{maintenance\_db} tournant sur un conteneur isolé. Cette architecture garantit qu'une corruption ou une maintenance sur la base des véhicules n'impacte pas le suivi des entretiens.
+\subsubsection{Base de données dédiée}
+Contrairement aux autres services partageant l'instance principale, la maintenance dispose de sa propre base \texttt{maintenance\_db} tournant sur un conteneur isolé.
 
-\subsection{Entité MaintenanceRecord}
+\subsubsection{Entité MaintenanceRecord}
 L'entité centrale \texttt{MaintenanceRecord} gère les cycles de vie des interventions via plusieurs énumérations (\texttt{Type}, \texttt{Status}, \texttt{Priority}).
 
 \begin{lstlisting}[language=Java, caption=Entité MaintenanceRecord]
@@ -198,26 +199,12 @@ public class MaintenanceRecord {
 }
 \end{lstlisting}
 
-% ------------------------------------------------------------
-% LOGIQUE METIER
-% ------------------------------------------------------------
-\section{Logique Métier et Alertes}
+\subsection{Logique Métier et Alertes}
 
 Le service implémente des mécanismes proactifs pour assurer le suivi de la maintenance.
 
-\subsection{Gestion des retards (Overdue)}
-Une tâche planifiée (\texttt{@Scheduled}) s'exécute quotidiennement pour identifier les maintenances prévues dont la date est dépassée.
-
-L'expression Cron utilisée est \texttt{"0 0 1 * * ?"}. Elle se décompose comme suit :
-\begin{itemize}
-    \item \texttt{0} (1er) : 0 seconde.
-    \item \texttt{0} (2e) : 0 minute.
-    \item \texttt{1} (3e) : 1 heure du matin.
-    \item \texttt{*} (4e) : Chaque jour du mois.
-    \item \texttt{*} (5e) : Chaque mois.
-    \item \texttt{?} (6e) : N'importe quel jour de la semaine.
-\end{itemize}
-Ainsi, le système vérifie automatiquement les retards chaque nuit à 01h00.
+\subsubsection{Gestion des retards (Overdue)}
+Une tâche planifiée (\texttt{@Scheduled}) s'exécute quotidiennement à 01h00 pour identifier les maintenances prévues dont la date est dépassée.
 
 \begin{lstlisting}[language=Java, caption=Tâche de vérification des retards]
 @Scheduled(cron = "0 0 1 * * ?")
@@ -237,97 +224,137 @@ public void checkOverdueMaintenance() {
 \end{lstlisting}
 
 % ------------------------------------------------------------
+% SERVICE DRIVER
+% ------------------------------------------------------------
+\section{Microservice Driver}
+
+Le service Driver gère le cycle de vie des conducteurs et la conformité de leurs permis de conduire.
+
+\subsection{Modélisation : Conducteurs et Permis}
+Le service respecte également l'isolation des données avec sa propre base \texttt{driver\_db} et le schéma défini dans \texttt{db/02-driver.sql}. Il utilise une relation \textbf{Un-à-Plusieurs} entre l'entité \texttt{Driver} et \texttt{DriverLicense}.
+ Un conducteur peut posséder plusieurs catégories de permis (B, C, CE, etc.).
+
+\subsection{Surveillance des Expirations (LicenseScheduler)}
+Une tâche planifiée vérifie chaque nuit la validité des permis enregistrés pour alerter les gestionnaires avant l'expiration effective.
+
+\begin{lstlisting}[language=Java, caption=Vérification proactive des permis]
+@Scheduled(cron = "0 0 0 * * *")
+@Transactional(readOnly = true)
+public void checkLicenseExpirations() {
+    // Detection des permis expirant dans 30 jours
+    LocalDate in30Days = LocalDate.now().plusDays(30);
+    licenseRepository.findByExpiryDate(in30Days).forEach(license -> {
+        eventProducer.sendLicenseExpiringEvent(license);
+    });
+
+    // Detection des permis expires aujourd'hui
+    LocalDate today = LocalDate.now();
+    licenseRepository.findByExpiryDate(today).forEach(license -> {
+        eventProducer.sendLicenseExpiredEvent(license);
+    });
+}
+\end{lstlisting}
+
+% ------------------------------------------------------------
 % INTEGRATION
 % ------------------------------------------------------------
 \section{Intégration et Communication}
 
-L'intégration repose sur un couplage fort entre le service \textbf{Maintenance} et le service \textbf{Véhicules}, orchestré par une communication hybride REST/Kafka.
+Les services \textbf{Maintenance} et \textbf{Driver} sont pleinement intégrés à l'écosystème via des APIs REST (normalisées en \texttt{snake\_case}) et des flux d'événements Kafka.
 
-\subsection{Exposition REST (API de Maintenance)}
-Le service expose une API complète pour la gestion du cycle de vie des interventions. L'API utilise la stratégie \texttt{snake\_case} pour tous les champs JSON (configurée via Jackson).
+\subsection{Exposition REST (APIs)}
 
+\subsubsection{Endpoints Maintenance}
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{|l|l|l|p{6cm}|}
+\begin{tabular}{|l|l|p{8cm}|}
   \hline
   \rowcolor{primary!15}
-  \textbf{Méthode} & \textbf{Endpoint} & \textbf{Payload Principal} & \textbf{Description} \\
+  \textbf{Méthode} & \textbf{Endpoint} & \textbf{Description} \\
   \hline
-  \textbf{POST} & \texttt{/api/maintenance} & \texttt{vehicle\_id, type, scheduled\_date} & Planification initiale d'une fiche. \\
+  \textbf{POST} & \texttt{/api/maintenance} & Planification initiale d'une fiche. \\
   \hline
-  \textbf{GET} & \texttt{/api/maintenance/\{id\}} & - & Récupération des détails d'une fiche spécifique. \\
+  \textbf{GET} & \texttt{/api/maintenance/vehicle/\{id\}} & Historique complet des interventions d'un véhicule. \\
   \hline
-  \textbf{GET} & \texttt{/api/maintenance/vehicle/\{id\}} & - & Historique complet des interventions d'un véhicule. \\
+  \textbf{PUT} & \texttt{/api/maintenance/\{id\}} & Mise à jour générale de la fiche. \\
   \hline
-  \textbf{PUT} & \texttt{/api/maintenance/\{id\}} & \texttt{description, priority, status} & Mise à jour des informations de planification. \\
-  \hline
-  \textbf{PATCH} & \texttt{/api/maintenance/\{id\}/status} & \texttt{status, cost\_eur, notes, ...} & Clôture technique ou changement d'état. \\
+  \textbf{PATCH} & \texttt{/api/maintenance/\{id\}/status} & Clôture technique (coût, notes, etc.). \\
   \hline
 \end{tabular}
-\caption{Catalogue des endpoints REST testés et fonctionnels}
+\end{table}
+
+\subsubsection{Endpoints Driver}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|l|p{8cm}|}
+  \hline
+  \rowcolor{primary!15}
+  \textbf{Méthode} & \textbf{Endpoint} & \textbf{Description} \\
+  \hline
+  \textbf{GET} & \texttt{/drivers} & Liste des conducteurs (filtrable par statut). \\
+  \hline
+  \textbf{POST} & \texttt{/drivers} & Création d'un nouveau profil conducteur. \\
+  \hline
+  \textbf{PATCH} & \texttt{/drivers/\{id\}/status} & Mise à jour du statut (\texttt{active, on_tour}, etc.). \\
+  \hline
+  \textbf{POST} & \texttt{/drivers/\{id\}/licenses} & Ajout d'un permis de conduire au profil. \\
+  \hline
+\end{tabular}
 \end{table}
 
 \subsection{Synchronisation par Événements (Kafka)}
-Le lien entre la maintenance et la disponibilité des véhicules est automatisé via le topic \texttt{flotte.maintenance.events}. Chaque modification d'état produit un message structuré (\texttt{KafkaEventEnvelope}).
+Le bus d'événements assure la cohérence entre les services sans couplage direct.
 
-\subsubsection{Flux de synchronisation du statut véhicule}
-Le service \textbf{Véhicules} consomme ces événements pour ajuster l'état opérationnel du véhicule sans intervention humaine :
+\subsubsection{Topic : flotte.maintenance.events}
+Le service \textbf{Véhicules} consomme ces messages pour ajuster l'état opérationnel :
 \begin{itemize}
     \item \texttt{MAINTENANCE\_STARTED} $\rightarrow$ Statut véhicule : \texttt{in\_maintenance}.
-    \item \texttt{MAINTENANCE\_COMPLETED} $\rightarrow$ Statut véhicule : \texttt{available}.
-    \item \texttt{MAINTENANCE\_CANCELLED} $\rightarrow$ Statut véhicule : \texttt{available}.
+    \item \texttt{MAINTENANCE\_COMPLETED/CANCELLED} $\rightarrow$ Statut véhicule : \texttt{available}.
 \end{itemize}
 
-\begin{lstlisting}[language=Java, caption=Exemple d'enveloppe d'événement Kafka]
+\subsubsection{Topic : flotte.driver.events}
+Ce topic notifie les créations et mises à jour de conducteurs, ainsi que les alertes d'expiration de permis détectées par le \texttt{LicenseScheduler}.
+
+\begin{lstlisting}[language=Java, caption=Format d'enveloppe unifie (KafkaEventEnvelope)]
 {
+  "eventId": "625c87b9-...",
   "eventType": "MAINTENANCE_COMPLETED",
+  "timestamp": 1775220800.293,
   "payload": {
     "record_id": "7e3638d7-...",
     "vehicle_id": "39e75ab3-...",
-    "status": { "previous": "IN_PROGRESS", "current": "COMPLETED" },
     "cost_eur": 250.50
-  }
+  },
+  "metadata": { "triggered_by": "maintenance-service" }
 }
 \end{lstlisting}
 
 \subsection{Corrections Techniques Apportées}
 Lors de la mise en \oe{}uvre, plusieurs points critiques ont été résolus :
 \begin{itemize}
-    \item \textbf{Alignement des Ports} : Correction du port de service Kubernetes (8082 vs 8080) et mise en cohérence de l'Ingress.
-    \item \textbf{Désérialisation Inter-Service} : Ajout du mappage explicite de \texttt{VehiclePayload} dans la configuration Kafka du service Maintenance pour éviter les erreurs de cast (\texttt{LinkedHashMap}).
-    \item \textbf{Cohérence des Types} : Correction du mappage JSON pour supporter les structures complexes (StatusChange) lors des mises à jour.
+    \item \textbf{Alignement des Ports} : Correction du port de service Kubernetes (8082 vs 8080) et mise en cohérence de l'Ingress pour les deux nouveaux services.
+    \item \textbf{Désérialisation Inter-Service} : Ajout du mappage explicite de \texttt{VehiclePayload} et \texttt{DriverPayload} dans la configuration Kafka pour éviter les erreurs de cast (\texttt{LinkedHashMap}).
+    \item \textbf{Cohérence des Types} : Correction du mappage JSON pour supporter les structures complexes (StatusChange) lors des mises à jour d'états.
 \end{itemize}
 
 \subsection{Exposition via le Gateway GraphQL}
-Le service est pleinement intégré à l'API Gateway via GraphQL.
-
-\subsubsection{Agrégation multi-services}
-L'agrégation permet de croiser les données de trois services distincts :
+Les deux services sont pleinement intégrés à l'API Gateway via GraphQL, permettant une agrégation riche :
 \begin{itemize}
-    \item \textbf{Maintenance $\rightarrow$ Véhicule} : Récupération des caractéristiques techniques (Service Véhicules).
-    \item \textbf{Maintenance $\rightarrow$ Technicien} : Résolution de l'objet \texttt{Driver} lié au \texttt{technician\_id} (Service Conducteurs).
-    \item \textbf{Véhicule $\rightarrow$ Maintenance} : Affichage de l'historique depuis la fiche véhicule.
+    \item \textbf{Maintenance $\leftrightarrow$ Conducteur} : Résolution du technicien via son ID conducteur.
+    \item \textbf{Véhicule $\leftrightarrow$ Maintenance} : Affichage de l'historique technique depuis la fiche véhicule.
 \end{itemize}
-
-\begin{lstlisting}[language=SQL, caption=Cohérence des types SQL/GraphQL]
--- Le champ JSONB parts_used en SQL est expose comme [String!]! en GraphQL
-CREATE TABLE maintenance_records (
-  ...
-  parts_used JSONB NOT NULL DEFAULT '[]',
-  ...
-);
-\end{lstlisting}
 
 % ------------------------------------------------------------
 % SAGA PATTERN
 % ------------------------------------------------------------
 \section{Architecture Événementielle (Saga Pattern)}
 
-Le service participe au cycle de vie global via Kafka :
+Les services participent au cycle de vie global via Kafka :
 \begin{itemize}
-    \item \textbf{Producers} : Publication sur \texttt{maintenance-topic} (\texttt{scheduled}, \texttt{started}, \texttt{completed}, \texttt{cancelled}).
-    \item \textbf{Consumers} : Écoute du topic \texttt{vehicle-events} pour réagir aux mises à jour de kilométrage.
+    \item \textbf{Producers} : Publication sur \texttt{flotte.maintenance.events} et \texttt{flotte.driver.events}.
+    \item \textbf{Consumers} : Le service Maintenance écoute \texttt{flotte.vehicules.events} pour le kilométrage ; le service Driver écoute les assignations de véhicules.
 \end{itemize}
 
 % ------------------------------------------------------------
@@ -341,9 +368,9 @@ Le service participe au cycle de vie global via Kafka :
 
 \subsection{Stratégie et Résultats}
 \begin{itemize}
-    \item \textbf{Tests Unitaires} : JUnit 5 + Mockito pour isoler la logique métier.
-    \item \textbf{Tests d'Intégration} : MockMvc + base H2 pour valider l'API et le RBAC.
-    \item \textbf{Couverture JaCoCo} : Supérieure à 80\% sur l'ensemble du périmètre métier.
+    \item \textbf{Tests Unitaires} : JUnit 5 + Mockito pour isoler la logique métier (notamment les Schedulers).
+    \item \textbf{Tests d'Intégration} : MockMvc + base H2 pour valider les APIs et le contrôle d'accès (RBAC).
+    \item \textbf{Couverture JaCoCo} : Supérieure à 80\% sur l'ensemble du périmètre métier des deux services.
 \end{itemize}
 
 % ------------------------------------------------------------
@@ -353,8 +380,8 @@ Le service participe au cycle de vie global via Kafka :
 
 \subsection{Isolation de l'infrastructure (Helm)}
 \begin{itemize}
-    \item \textbf{Chart fleet-infra} : Alias pour déployer un second StatefulSet (\texttt{postgres-maintenance-service}).
-    \item \textbf{Initialisation} : ConfigMap \texttt{maintenance-db-init} injectant \texttt{03-maintenance.sql}.
+    \item \textbf{Chart fleet-infra} : Déploiement de bases PostgreSQL isolées (\texttt{postgres-maintenance} et \texttt{postgres-driver}).
+    \item \textbf{Initialisation} : Utilisation de ConfigMaps pour injecter les schémas SQL spécifiques au démarrage.
 \end{itemize}
 
 \end{document}
