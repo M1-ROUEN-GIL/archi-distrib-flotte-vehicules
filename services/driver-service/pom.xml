@@ -29,6 +29,56 @@
     <properties>
         <java.version>21</java.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Tomcat vulnerabilities (CVE-2025-24813, CVE-2024-50379, etc) -->
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>10.1.35</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-el</artifactId>
+                <version>10.1.35</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>10.1.35</version>
+            </dependency>
+            <!-- Spring Security vulnerabilities (CVE-2025-41232, CVE-2026-22732, etc) -->
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-core</artifactId>
+                <version>6.4.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-web</artifactId>
+                <version>6.4.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-crypto</artifactId>
+                <version>6.4.6</version>
+            </dependency>
+            <!-- LZ4 vulnerability (CVE-2025-12183) -->
+            <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>1.8.1</version>
+            </dependency>
+            <!-- Postgres vulnerability (CVE-2025-49146) -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.7.7</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>net.datafaker</groupId>
@@ -55,7 +105,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.7</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
