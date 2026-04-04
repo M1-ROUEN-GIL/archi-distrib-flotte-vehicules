@@ -52,8 +52,19 @@ kubectl wait --for=condition=ready --timeout=300s pod/postgres-flotte-service-0 
 helm upgrade --install fleet-app ./infra/helm/fleet-app/ \
   -n flotte-namespace
 
-# 9. Configuration du Host (Optionnel : demande sudo)
+# 9. Attendre que les backends soient réellement prêts (sinon nginx → 503, ex. Bruno / Minikube)
+#    Ne concerne que ce script : aucun impact sur Docker Compose ou le mode local hors Minikube.
+echo "Waiting for Keycloak and app rollouts (premier démarrage = plusieurs minutes)..."
+kubectl rollout status deployment/keycloak-deployment -n flotte-namespace --timeout=900s
+kubectl rollout status deployment/graphql-gateway-deployment -n flotte-namespace --timeout=600s
+kubectl rollout status deployment/vehicle-service-deployment -n flotte-namespace --timeout=600s
+kubectl rollout status deployment/driver-service-deployment -n flotte-namespace --timeout=600s
+kubectl rollout status deployment/maintenance-service-deployment -n flotte-namespace --timeout=600s
+
+# 10. Configuration du Host (Optionnel : demande sudo)
 echo "--------------------------------------------------"
 echo "Terminé ! N'oubliez pas d'ajouter l'entrée suivante à votre /etc/hosts :"
 echo "$(minikube ip) flotte.local"
+echo "Bruno : environnement « Minikube » (base_url http://flotte.local). Pas de changement requis pour « Docker »."
+echo "Si 503 après coup : kubectl get pods -n flotte-namespace"
 echo "--------------------------------------------------"

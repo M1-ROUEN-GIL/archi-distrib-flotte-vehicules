@@ -88,8 +88,9 @@ spec:
     - host: flotte.local
       http:
         paths:
+          # Prefix : tout /auth/… (token OIDC, realms, etc.) — ImplementationSpecific pouvait être ambigu selon la version nginx
           - path: /auth
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: keycloak-service

@@ -87,11 +87,13 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 36
+          # TCP seul peut laisser « Ready » trop tôt ; l’ingress renvoie alors 503 jusqu’à ce que Spring réponde vraiment.
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /actuator/health
               port: {{ $val.port }}
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: 5
             failureThreshold: 6
           livenessProbe:
             tcpSocket:

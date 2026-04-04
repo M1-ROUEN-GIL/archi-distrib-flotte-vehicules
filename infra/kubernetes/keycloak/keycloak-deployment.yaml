@@ -43,6 +43,21 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+          # Sans ça, le pod passe « Ready » alors que Keycloak boot encore → nginx / Bruno → 503 sur /auth
+          startupProbe:
+            httpGet:
+              path: /auth/realms/gestion-flotte
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /auth/realms/gestion-flotte
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
           volumeMounts:
             - name: realm-import
               mountPath: /opt/keycloak/data/import/realm.json
