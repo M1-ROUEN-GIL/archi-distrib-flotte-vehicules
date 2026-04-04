@@ -34,7 +34,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: vehicle_db
+          POSTGRES_DB: postgres
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: password
         ports:
@@ -73,7 +73,7 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y postgresql-client
           export PGPASSWORD=password
-          for db in driver_db maintenance_db; do
+          for db in vehicle_db driver_db maintenance_db; do
             psql -h localhost -U admin -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$db'" | grep -q 1 \
               || psql -h localhost -U admin -d postgres -c "CREATE DATABASE $db;"
           done
