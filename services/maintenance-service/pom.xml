@@ -28,6 +28,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <spring-framework.version>6.2.11</spring-framework.version>
     </properties>
 
     <dependencyManagement>
@@ -35,37 +36,47 @@
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-core</artifactId>
-                <version>10.1.35</version>
+                <version>10.1.52</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-el</artifactId>
-                <version>10.1.35</version>
+                <version>10.1.52</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-websocket</artifactId>
-                <version>10.1.35</version>
+                <version>10.1.52</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-core</artifactId>
-                <version>6.4.2</version>
+                <version>6.5.9</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-web</artifactId>
-                <version>6.4.2</version>
+                <version>6.5.9</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-crypto</artifactId>
-                <version>6.4.2</version>
+                <version>6.5.9</version>
             </dependency>
             <dependency>
-                <groupId>org.lz4</groupId>
-                <artifactId>lz4-java</artifactId>
-                <version>1.10.1</version>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-resource-server</artifactId>
+                <version>6.5.9</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-jose</artifactId>
+                <version>6.5.9</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-config</artifactId>
+                <version>6.5.9</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>
@@ -161,11 +172,6 @@
         </plugins>
     </build>
 
-    <!--
-      Couverture "tests unitaires" (Surefire exclut intégration + smoke contextLoads).
-      Rapport : mvn clean test -Punit-coverage  puis target/site/jacoco/index.html
-      Avec seuil 80 % lignes : mvn clean verify -Punit-coverage -Djacoco.skip.unit.check=false
-    -->
     <profiles>
         <profile>
             <id>unit-coverage</id>
