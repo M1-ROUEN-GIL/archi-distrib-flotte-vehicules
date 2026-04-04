@@ -49,9 +49,9 @@ script:pre-request {
     return urlStr;
   }
 
-  /** Docker local : http://127.0.0.1/graphql sans port → port 80 implicite → ECONNREFUSED:80. Forcer :4000 (gateway) ou :8180 (/auth → Keycloak). */
+  /** http://127.0.0.1/... sans port → port 80 implicite → ECONNREFUSED:80. Ne pas dépendre de bruno_host_gateway (souvent oublié / mauvais env). flotte.local etc. inchangé. */
   function fixLocalhostDockerPorts(urlStr) {
-    if (!hostGateway || !urlStr) return urlStr;
+    if (!urlStr) return urlStr;
     let u;
     try {
       u = new URL(urlStr.includes('://') ? urlStr : 'http://' + urlStr);
@@ -101,7 +101,7 @@ script:pre-request {
       if (hostGateway && local && (port === '80' || port === '443')) {
         u.port = '4000';
       }
-      apiBase = u.href.replace(/\/$/, '');
+      apiBase = fixLocalhostDockerPorts(u.href.replace(/\/$/, ''));
     }
   } catch (e) { /* ignore */ }
   if (!apiBase && hostGateway) {
@@ -121,6 +121,13 @@ script:pre-request {
         const p = reqUrl.startsWith('/') ? reqUrl : '/' + reqUrl;
         req.setUrl(base.origin + p);
       } catch (e2) { /* ignore */ }
+    }
+  }
+  {
+    const afterMerge = req.getUrl() || '';
+    const fixed = fixLocalhostDockerPorts(afterMerge);
+    if (fixed && fixed !== afterMerge) {
+      req.setUrl(fixed);
     }
   }
 

@@ -187,8 +187,13 @@ services:
       - DRIVER_SERVICE_URL=http://driver:8080
       - MAINTENANCE_SERVICE_URL=http://maintenance:8080
       - OTEL_SERVICE_NAME=graphql-gateway
+    # Port 80 = même effet qu’un reverse-proxy : http://127.0.0.1/ ou http://localhost/ sans :4000.
+    # Deux bindings : IPv4 et IPv6 (::1), sinon « localhost » peut résoudre en ::1 → ECONNREFUSED sur :80.
+    # Après modification : docker compose up -d --force-recreate gateway
     ports:
       - "4000:4000"
+      - "127.0.0.1:80:4000"
+      - "[::1]:80:4000"
     depends_on:
       vehicle:
         condition: service_healthy
