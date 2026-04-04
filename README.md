@@ -63,9 +63,20 @@ echo "$(minikube ip) flotte.local" | sudo tee -a /etc/hosts
 ## 🧪 Tests et Documentation API
 
 ### Bruno (Remplaçant de Postman)
-Nous utilisons **[Bruno](https://usebruno.com)** pour tester nos APIs. La collection complète est disponible dans le dossier [`/bruno`](./bruno).
-- **Auto-Auth :** Un script `pre-request` gère automatiquement la récupération et le rafraîchissement du token JWT.
-- **Environnements :** Sélectionnez `Docker` ou `Minikube` dans Bruno pour basculer les URLs.
+Toutes les requêtes de test (REST et GraphQL) sont centralisées dans une collection **[Bruno](https://usebruno.com)**.
+
+#### Utilisation
+1.  **Ouvrir Bruno** et cliquer sur "Open Collection".
+2.  Sélectionner le dossier [`/bruno`](./bruno) à la racine du projet.
+3.  **Sélectionner l'environnement** en haut à droite :
+    - `Docker` : pour tester sur `localhost` (port 4000 pour le gateway, 8180 pour Keycloak).
+    - `Minikube` : pour tester sur `http://flotte.local` (nécessite la configuration du fichier `/etc/hosts`).
+4.  **Authentification Automatique** : La collection inclut un script `pre-request` qui récupère automatiquement un token JWT auprès de Keycloak et le stocke dans la variable `access_token`. Vous n'avez rien à faire, le token est injecté dans toutes les requêtes.
+
+#### Structure de la collection
+- **`Auth/`** : Requêtes manuelles pour tester l'obtention de jetons.
+- **`REST/`** : Tests des endpoints CRUD pour les services `vehicle`, `driver` et `maintenance`.
+- **`GraphQL/`** : Requêtes d'agrégation via le Gateway (port 4000).
 
 ### Qualité et Couverture (JaCoCo)
 Chaque service Spring Boot vise une couverture de test **> 80%**.
@@ -74,16 +85,6 @@ Chaque service Spring Boot vise une couverture de test **> 80%**.
 cd services/driver-service && ./mvnw test -Punit-coverage
 ```
 Les rapports sont générés dans `target/site/jacoco/index.html` de chaque service.
-
----
-
-## 📡 Architecture Événementielle (Saga)
-
-Le système utilise Kafka pour maintenir la cohérence entre les services sans couplage fort.
-- **Scénario de Maintenance :**
-  1. `maintenance-service` crée une intervention → émet `MAINTENANCE_STARTED`.
-  2. `vehicle-service` consomme l'événement → passe le véhicule en statut `IN_MAINTENANCE`.
-  3. En cas d'erreur, une transaction compensatoire `MAINTENANCE_REJECTED` est émise pour annuler l'intervention.
 
 ---
 
