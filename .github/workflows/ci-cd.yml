@@ -134,15 +134,7 @@ jobs:
         run: |
           echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
 
-      - name: Build Docker image (local)
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ matrix.context }}
-          load: true
-          tags: ${{ matrix.service }}:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
@@ -152,4 +144,3 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.service }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
