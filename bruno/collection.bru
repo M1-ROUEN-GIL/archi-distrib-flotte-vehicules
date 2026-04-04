@@ -49,12 +49,39 @@ script:pre-request {
     return urlStr;
   }
 
+  /** Docker local : http://127.0.0.1/graphql sans port → port 80 implicite → ECONNREFUSED:80. Forcer :4000 (gateway) ou :8180 (/auth → Keycloak). */
+  function fixLocalhostDockerPorts(urlStr) {
+    if (!hostGateway || !urlStr) return urlStr;
+    let u;
+    try {
+      u = new URL(urlStr.includes('://') ? urlStr : 'http://' + urlStr);
+    } catch (e) {
+      return urlStr;
+    }
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return urlStr;
+    const local = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+    if (!local) return urlStr;
+    const effective = u.port || (u.protocol === 'https:' ? '443' : '80');
+    if (effective !== '80') return urlStr;
+    const path = u.pathname || '/';
+    const search = u.search || '';
+    const isKeycloakPath =
+      path.startsWith('/auth') ||
+      path.includes('/realms/') ||
+      path.includes('openid-connect');
+    if (isKeycloakPath) {
+      return 'http://' + u.hostname + ':8180' + path + search;
+    }
+    return 'http://' + u.hostname + ':4000' + path + search;
+  }
+
   // 1) En premier : corriger req (hôtes cluster) — les .bru utilisent {{base_url}} (env), pas api_base.
   // Sinon si base_url est vide ou mal lu, « http://api/… » part tel quel → EAI_AGAIN.
   let reqUrl = req.getUrl() || '';
   const isTokenReq = reqUrl.includes('/openid-connect/token');
   const mode0 = isTokenReq ? 'keycloak' : 'gateway';
-  const reqFixed = rewriteClusterHost(reqUrl, mode0);
+  let reqFixed = rewriteClusterHost(reqUrl, mode0);
+  reqFixed = fixLocalhostDockerPorts(reqFixed);
   if (reqFixed && reqFixed !== reqUrl) {
     req.setUrl(reqFixed);
     reqUrl = reqFixed;
@@ -107,6 +134,7 @@ script:pre-request {
 
   let tokenUrl = bru.getEnvVar('keycloak_token_url');
   tokenUrl = rewriteClusterHost(tokenUrl, 'keycloak');
+  tokenUrl = fixLocalhostDockerPorts(tokenUrl);
   if (!tokenUrl) {
     return;
   }
