@@ -83,23 +83,6 @@ jobs:
           chmod +x mvnw
           ./mvnw clean test
 
-  # 2. Tests pour le microservice Node.js
-  test-node-location:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: services/location-service/package-lock.json
-      - name: Install and Test Node Service
-        run: |
-          cd services/location-service
-          npm ci
-          npm test || echo "Pas de tests définis pour le moment"
-
   # 3. Validation de l'infrastructure (Helm & Dockerfiles)
   linting:
     runs-on: ubuntu-latest
@@ -116,7 +99,7 @@ jobs:
   # 4. Construction et Publication des images Docker
   # Ce job ne s'exécute que si les tests passent et qu'on est sur la branche main ou staging
   build-and-push:
-    needs: [test-java-services, test-node-location, linting]
+    needs: [test-java-services, test-gateway, linting]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
     runs-on: ubuntu-latest
     permissions:
@@ -124,7 +107,15 @@ jobs:
       packages: write
     strategy:
       matrix:
-        service: [driver-service, events-service, location-service, maintenance-service, vehicle-service]
+        include:
+          - service: driver-service
+            context: ./services/driver-service
+          - service: maintenance-service
+            context: ./services/maintenance-service
+          - service: vehicle-service
+            context: ./services/vehicle-service
+          - service: gateway
+            context: ./gateway
     steps:
       - uses: actions/checkout@v4
       
@@ -145,10 +136,36 @@ jobs:
         run: |
           echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
 
+      - name: Build Docker image (local)
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          load: true
+          tags: ${{ matrix.service }}:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ matrix.service }}:test'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/${{ matrix.service }}
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.service }}:latest
+            ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+rvices/${{ matrix.service }}
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.REPO_LOWER }}/${{ matrix.service }}:latest
