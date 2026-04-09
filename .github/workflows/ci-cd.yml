@@ -23,7 +23,9 @@ jobs:
             datasource_url: jdbc:postgresql://localhost:5432/driver_db
           - service: maintenance-service
             datasource_url: jdbc:postgresql://localhost:5432/maintenance_db
-    
+          - service: events-service
+            datasource_url: jdbc:postgresql://localhost:5432/events_db
+
     env:
       SPRING_DATASOURCE_URL: ${{ matrix.datasource_url }}
 
@@ -71,7 +73,7 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y postgresql-client
           export PGPASSWORD=password
-          for db in vehicle_db driver_db maintenance_db; do
+          for db in vehicle_db driver_db maintenance_db events_db; do
             psql -h localhost -U admin -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$db'" | grep -q 1 \
               || psql -h localhost -U admin -d postgres -c "CREATE DATABASE $db;"
           done
@@ -112,6 +114,8 @@ jobs:
             context: ./services/maintenance-service
           - service: vehicle-service
             context: ./services/vehicle-service
+          - service: events-service
+            context: ./services/events-service
           - service: gateway
             context: ./gateway
     steps:

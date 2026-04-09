@@ -177,6 +177,38 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  events:
+    build:
+      context: ./services/events-service
+      dockerfile: Dockerfile
+    container_name: flotte-events
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/events_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=password
+      - KAFKA_BROKER=kafka:9092
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/auth/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
+      - JAVA_TOOL_OPTIONS=
+      - OTEL_SERVICE_NAME=events-service
+    ports:
+      - "8083:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 150s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    restart: unless-stopped
+
   gateway:
     build:
       context: ./gateway
@@ -186,6 +218,7 @@ services:
       - VEHICLE_SERVICE_URL=http://vehicle:8080
       - DRIVER_SERVICE_URL=http://driver:8080
       - MAINTENANCE_SERVICE_URL=http://maintenance:8080
+      - EVENTS_SERVICE_URL=http://events:8080
       - OTEL_SERVICE_NAME=graphql-gateway
     # Port 80 = même effet qu’un reverse-proxy : http://127.0.0.1/ ou http://localhost/ sans :4000.
     # Deux bindings : IPv4 et IPv6 (::1), sinon « localhost » peut résoudre en ::1 → ECONNREFUSED sur :80.

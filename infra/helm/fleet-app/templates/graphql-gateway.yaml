@@ -51,6 +51,8 @@ spec:
               value: "http://driver-service.{{ .Values.namespace }}.svc.cluster.local:8080"
             - name: MAINTENANCE_SERVICE_URL
               value: "http://maintenance-service.{{ .Values.namespace }}.svc.cluster.local:8080"
+            - name: EVENTS_SERVICE_URL
+              value: "http://events-service.{{ .Values.namespace }}.svc.cluster.local:8080"
             - name: OTEL_SERVICE_NAME
               value: "graphql-gateway"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

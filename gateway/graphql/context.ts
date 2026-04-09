@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import { IncomingMessage } from 'http';
 import {
 	DRIVER_SERVICE_URL,
+	EVENTS_SERVICE_URL,
 	MAINTENANCE_SERVICE_URL,
 	VEHICLE_SERVICE_URL,
 } from '../config.js';
@@ -34,6 +35,7 @@ export interface GraphQLContext {
   vehicle: VehicleClient;
   driver: DriverClient;
   maintenance: MaintenanceClient;
+  events: EventsClient;
 }
 
 class BaseClient {
@@ -129,11 +131,31 @@ class MaintenanceClient extends BaseClient {
   }
 }
 
+class EventsClient extends BaseClient {
+  async listAlerts(params: any) {
+    const { data } = await this.http.get('/alerts', { params });
+    return data;
+  }
+  async getAlert(id: string) {
+    const { data } = await this.http.get(`/alerts/${id}`);
+    return data;
+  }
+  async acknowledgeAlert(id: string) {
+    const { data } = await this.http.patch(`/alerts/${id}/acknowledge`);
+    return data;
+  }
+  async resolveAlert(id: string) {
+    const { data } = await this.http.patch(`/alerts/${id}/resolve`);
+    return data;
+  }
+}
+
 export const createContext = async ({ req }: { req: IncomingMessage }): Promise<GraphQLContext> => {
   const authHeader = req.headers.authorization;
   return {
     vehicle: new VehicleClient(VEHICLE_SERVICE_URL, authHeader),
     driver: new DriverClient(DRIVER_SERVICE_URL, authHeader),
     maintenance: new MaintenanceClient(MAINTENANCE_SERVICE_URL, authHeader),
+    events: new EventsClient(EVENTS_SERVICE_URL, authHeader),
   };
 };

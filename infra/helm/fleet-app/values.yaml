@@ -20,6 +20,12 @@ services:
     port: 8080
     replicas: 1
     dbUrlKey: MAINTENANCE_DATASOURCE_URL
+  events:
+    name: events-service
+    image: events-service:latest
+    port: 8080
+    replicas: 1
+    dbUrlKey: EVENTS_DATASOURCE_URL
 
 # Gateway GraphQL (Ingress /graphql)
 graphqlGateway:

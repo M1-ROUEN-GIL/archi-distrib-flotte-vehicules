@@ -14,6 +14,7 @@ kubectl create secret generic db-secrets \
   --from-literal=SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-flotte-service:5432/vehicle_db \
   --from-literal=DRIVER_DATASOURCE_URL=jdbc:postgresql://postgres-flotte-service:5432/driver_db \
   --from-literal=MAINTENANCE_DATASOURCE_URL=jdbc:postgresql://postgres-flotte-service:5432/maintenance_db \
+  --from-literal=EVENTS_DATASOURCE_URL=jdbc:postgresql://postgres-flotte-service:5432/events_db \
   --from-literal=SPRING_DATASOURCE_USERNAME=admin \
   --from-literal=SPRING_DATASOURCE_PASSWORD=password \
   --from-literal=KAFKA_BROKER=kafka-service:9092 \
@@ -26,6 +27,7 @@ echo "Building images..."
 docker build -t vehicle-service:latest ./services/vehicle-service/
 docker build -t driver-service:latest ./services/driver-service/
 docker build -t maintenance-service:latest ./services/maintenance-service/
+docker build -t events-service:latest ./services/events-service/
 docker build -t graphql-gateway:latest ./gateway/
 
 # 5. Déploiement Infrastructure (DB, Kafka, Redis)
@@ -60,6 +62,7 @@ kubectl rollout status deployment/graphql-gateway-deployment -n flotte-namespace
 kubectl rollout status deployment/vehicle-service-deployment -n flotte-namespace --timeout=600s
 kubectl rollout status deployment/driver-service-deployment -n flotte-namespace --timeout=600s
 kubectl rollout status deployment/maintenance-service-deployment -n flotte-namespace --timeout=600s
+kubectl rollout status deployment/events-service-deployment -n flotte-namespace --timeout=600s
 
 # 10. Configuration du Host (Optionnel : demande sudo)
 echo "--------------------------------------------------"

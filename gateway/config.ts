@@ -18,3 +18,7 @@ export const DRIVER_SERVICE_URL =
 export const MAINTENANCE_SERVICE_URL =
 	process.env.MAINTENANCE_SERVICE_URL ??
 	(runningInDocker ? 'http://maintenance:8080' : 'http://127.0.0.1:8082');
+
+export const EVENTS_SERVICE_URL =
+	process.env.EVENTS_SERVICE_URL ??
+	(runningInDocker ? 'http://events:8080' : 'http://127.0.0.1:8083');

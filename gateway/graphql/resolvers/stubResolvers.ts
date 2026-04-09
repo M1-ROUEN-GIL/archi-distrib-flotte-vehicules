@@ -16,14 +16,12 @@ function subscriptionDisabled(name: string): never {
 
 export const stubResolvers = {
   Query: {
-    alerts: () => notImplemented('alerts'),
-    alert: () => notImplemented('alert'),
+    // alerts et alert → branchés sur alertResolvers
     vehicleLocation: () => notImplemented('vehicleLocation'),
     locationHistory: () => notImplemented('locationHistory'),
   },
   Mutation: {
-    acknowledgeAlert: () => notImplemented('acknowledgeAlert'),
-    resolveAlert: () => notImplemented('resolveAlert'),
+    // acknowledgeAlert, resolveAlert → branchés sur alertResolvers
   },
   Subscription: {
     vehicleStatusChanged: {

@@ -50,7 +50,7 @@ spec:
             pathType: ImplementationSpecific
           - backend:
               service:
-                name: event-service
+                name: events-service
                 port:
                   number: 8080
             path: /api/(events)(.*)

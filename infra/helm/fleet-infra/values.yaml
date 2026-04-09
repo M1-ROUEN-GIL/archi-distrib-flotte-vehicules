@@ -14,6 +14,7 @@ postgresql:
           CREATE DATABASE driver_db;
           CREATE DATABASE maintenance_db;
           CREATE DATABASE vehicle_db;
+          CREATE DATABASE events_db;
           CREATE DATABASE keycloak_db;
     persistence:
       enabled: false
