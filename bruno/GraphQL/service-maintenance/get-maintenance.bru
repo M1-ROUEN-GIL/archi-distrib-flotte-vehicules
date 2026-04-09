@@ -21,3 +21,10 @@ body:graphql {
     }
   }
 }
+
+script:post-response {
+  const items = res.getBody()?.data?.maintenanceRecords?.items;
+  if (items && items.length > 0) {
+    bru.setVar('gql_maintenance_id', items[0].id);
+  }
+}

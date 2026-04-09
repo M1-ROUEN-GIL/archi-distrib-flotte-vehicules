@@ -1,0 +1,38 @@
+meta {
+  name: acknowledge-alerte
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{base_url}}/api/alerts/{{alert_id}}/acknowledge
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  alert_id: 00000000-0000-0000-0000-000000000000
+}
+
+docs {
+  Acquitte une alerte active.
+  Le userId est extrait automatiquement du JWT Keycloak (claim "sub") côté serveur.
+  Rôles requis : admin ou manager.
+
+  Remplacer alert_id par un UUID d'alerte existante (récupéré via liste-alertes).
+}
+
+tests {
+  test("status 200 ou 404", function() {
+    expect([200, 404]).to.include(res.getStatus());
+  });
+
+  test("si 200 : statut ACKNOWLEDGED", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body.status).to.equal('ACKNOWLEDGED');
+      expect(body.acknowledged_by).to.not.be.null;
+      expect(body.acknowledged_at).to.not.be.null;
+    }
+  });
+}

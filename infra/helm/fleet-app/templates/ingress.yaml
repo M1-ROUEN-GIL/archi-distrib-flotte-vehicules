@@ -53,6 +53,13 @@ spec:
                 name: {{ .Values.services.maintenance.name }}
                 port:
                   number: {{ .Values.services.maintenance.port }}
+          - path: /api/(alerts)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ .Values.services.events.name }}
+                port:
+                  number: {{ .Values.services.events.port }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

@@ -1,0 +1,48 @@
+meta {
+  name: get-alertes-vehicule
+  type: graphql
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query AlertesVehicule($vehicleId: ID!) {
+    alerts(vehicle_id: $vehicleId) {
+      items {
+        id
+        type
+        severity
+        status
+        message
+        created_at
+      }
+      total_count
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "vehicleId": "39e75ab3-7878-48a4-814e-f20c63fc99b7"
+  }
+}
+
+docs {
+  Récupère toutes les alertes d'un véhicule donné.
+  Remplacer vehicleId par un UUID de véhicule existant.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+}

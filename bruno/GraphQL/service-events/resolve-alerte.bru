@@ -1,0 +1,52 @@
+meta {
+  name: resolve-alerte
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation ResolveAlert($id: ID!) {
+    resolveAlert(id: $id) {
+      id
+      status
+      resolved_at
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_active_alert_id}}"
+  }
+}
+
+docs {
+  Résout une alerte via GraphQL.
+  Rôles requis : admin, manager ou technicien.
+  Remplacer l'id par un UUID d'alerte existante.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    if (!bru.getVar('gql_active_alert_id')) return;
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("statut RESOLVED", function() {
+    const data = res.getBody().data;
+    if (data && data.resolveAlert) {
+      expect(data.resolveAlert.status).to.equal('RESOLVED');
+      expect(data.resolveAlert.resolved_at).to.not.be.null;
+    }
+  });
+}

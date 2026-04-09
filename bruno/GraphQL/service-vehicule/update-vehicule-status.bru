@@ -1,0 +1,53 @@
+meta {
+  name: update-vehicule-status
+  type: graphql
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation UpdateVehiculeStatus($id: ID!, $status: VehicleStatus!) {
+    updateVehicleStatus(id: $id, status: $status) {
+      id
+      plate_number
+      status
+      updated_at
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_vehicle_id}}",
+    "status": "IN_MAINTENANCE"
+  }
+}
+
+docs {
+  Met à jour le statut d'un véhicule.
+  Rôles requis : admin ou manager.
+  status : AVAILABLE | ON_DELIVERY | IN_MAINTENANCE | OUT_OF_SERVICE
+  Remplacer id par un UUID de véhicule existant.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("statut mis à jour", function() {
+    const data = res.getBody().data;
+    if (data && data.updateVehicleStatus) {
+      expect(data.updateVehicleStatus.status).to.equal('IN_MAINTENANCE');
+    }
+  });
+}

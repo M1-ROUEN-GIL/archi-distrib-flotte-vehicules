@@ -1,0 +1,36 @@
+meta {
+  name: resolve-alerte
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{base_url}}/api/alerts/{{alert_id}}/resolve
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  alert_id: 00000000-0000-0000-0000-000000000000
+}
+
+docs {
+  Résout une alerte (active ou acquittée).
+  Rôles requis : admin, manager ou technicien.
+
+  Remplacer alert_id par un UUID d'alerte existante.
+}
+
+tests {
+  test("status 200 ou 404", function() {
+    expect([200, 404]).to.include(res.getStatus());
+  });
+
+  test("si 200 : statut RESOLVED", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body.status).to.equal('RESOLVED');
+      expect(body.resolved_at).to.not.be.null;
+    }
+  });
+}

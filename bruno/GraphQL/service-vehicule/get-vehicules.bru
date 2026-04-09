@@ -22,3 +22,10 @@ body:graphql {
     }
   }
 }
+
+script:post-response {
+  const vehicles = res.getBody()?.data?.vehicles;
+  if (vehicles && vehicles.length > 0) {
+    bru.setVar('gql_vehicle_id', vehicles[0].id);
+  }
+}

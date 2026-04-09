@@ -1,0 +1,874 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage[table]{xcolor}
+
+% ============================================================
+% MISE EN PAGE
+% ============================================================
+\geometry{
+  top=2.5cm,
+  bottom=2.5cm,
+  left=2.5cm,
+  right=2.5cm
+}
+
+% ============================================================
+% COULEURS
+% ============================================================
+\definecolor{primary}{RGB}{30, 100, 180}
+\definecolor{secondary}{RGB}{240, 245, 255}
+\definecolor{codebg}{RGB}{245, 245, 245}
+\definecolor{codeframe}{RGB}{200, 200, 200}
+\definecolor{success}{RGB}{39, 174, 96}
+\definecolor{warning}{RGB}{230, 126, 34}
+\definecolor{darkgray}{RGB}{60, 60, 60}
+
+% ============================================================
+% EN-TETE ET PIED DE PAGE
+% ============================================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{primary}{\textbf{Projet M1 GIL -- Gestion de Flotte}}}
+\fancyhead[R]{\small\textcolor{darkgray}{Universite de Rouen | 2025--2026}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ============================================================
+% STYLE DES TITRES
+% ============================================================
+\titleformat{\section}
+  {\Large\bfseries\color{primary}}
+  {\thesection.}{0.8em}{}[\titlerule]
+
+\titleformat{\subsection}
+  {\large\bfseries\color{darkgray}}
+  {\thesubsection.}{0.6em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{darkgray}}
+  {\thesubsubsection.}{0.5em}{}
+
+% ============================================================
+% STYLE DU CODE
+% ============================================================
+\lstset{
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{primary}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{success},
+  breaklines=true,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  tabsize=2,
+  captionpos=b
+}
+
+% ============================================================
+% BOITE INFO
+% ============================================================
+\newmdenv[
+  backgroundcolor=secondary,
+  linecolor=primary,
+  linewidth=1.5pt,
+  leftline=true,
+  rightline=false,
+  topline=false,
+  bottomline=false,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt
+]{infobox}
+
+% ============================================================
+% COMMANDE PLACEHOLDER SCREENSHOT
+% ============================================================
+\newcommand{\screenshot}[2]{%
+  \begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+      \draw[dashed, color=gray, line width=1pt]
+        (0,0) rectangle (14cm, 5cm);
+      \node[color=gray] at (7cm, 2.7cm)
+        {\large\textbf{[ CAPTURE D'ECRAN ]}};
+      \node[color=gray] at (7cm, 2.1cm)
+        {\normalsize #1};
+    \end{tikzpicture}
+    \caption{#2}
+  \end{figure}
+}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+\begin{document}
+
+% ------------------------------------------------------------
+% PAGE DE TITRE
+% ------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+
+  {\Large\textbf{Universite de Rouen Normandie}\\[0.3cm]
+  \large Master 1 -- Genie Informatique et Logiciel}
+
+  \vspace{1.5cm}
+  \rule{\linewidth}{0.5mm}\\[0.4cm]
+
+  {\Huge\bfseries\color{primary} Projet Gestion de Flotte de vehicules\\[0.3cm]}
+  {\LARGE\bfseries Rapport de Semaine 5}\\[0.3cm]
+  {\large\color{darkgray} Service Evenements \& Alertes}
+
+  \rule{\linewidth}{0.5mm}\\[1.5cm]
+
+  \begin{minipage}{0.45\textwidth}
+    \begin{flushleft}
+      \textbf{Etudiant :}\\
+      Ahcene Amouchas \\
+      Florian Pepin \\[0.5cm]
+      \textbf{Encadrants :}\\
+      Lydia \& Luc
+    \end{flushleft}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.45\textwidth}
+    \begin{flushright}
+      \textbf{Annee universitaire :}\\
+      2025 -- 2026\\[0.5cm]
+      \textbf{Semaine :}\\
+      5 / 7
+    \end{flushright}
+  \end{minipage}
+
+  \vfill
+  {\large\today}
+\end{titlepage}
+
+% ------------------------------------------------------------
+% TABLE DES MATIERES
+% ------------------------------------------------------------
+\tableofcontents
+\newpage
+
+% ------------------------------------------------------------
+% INTRODUCTION
+% ------------------------------------------------------------
+\section{Introduction et objectifs de la semaine}
+
+\begin{infobox}
+\textbf{Objectif de la semaine 5 :} Concevoir et implémenter le service de gestion
+des alertes et événements, intégrateur central du système, capable d'agréger les
+événements de tous les microservices via Kafka et d'exposer une API REST et GraphQL
+pour la consultation et la gestion des alertes en temps réel.
+\end{infobox}
+
+\vspace{0.5cm}
+
+La semaine 5 marque une étape charnière dans la construction du système~: le
+\textbf{service événements} joue le rôle d'agrégateur central. Contrairement aux
+services métier précédents (véhicules, conducteurs, maintenance), ce service ne
+produit pas d'événements~: il les \textbf{consomme} depuis tous les autres services
+et les transforme en alertes persistées, interrogeables et gérables par les
+opérateurs de la flotte.
+
+L'architecture choisie repose sur un découplage total~: le service événements ne
+connaît pas les services qui émettent~; il se contente de s'abonner aux topics Kafka
+correspondants. Cette approche garantit une extensibilité maximale~: l'ajout d'une
+nouvelle source d'alertes (le service localisation, en cours de développement par un
+autre membre de l'équipe) ne nécessite aucune modification du code existant.
+
+Les grandes étapes réalisées sont les suivantes~:
+
+\begin{enumerate}[leftmargin=*, label=\textbf{\arabic*.}]
+  \item Conception du \textbf{modèle de données} des alertes et des énumérations
+        associées (\texttt{AlertType}, \texttt{AlertSeverity}, \texttt{AlertStatus})
+  \item Implémentation des \textbf{consumers Kafka} pour les topics
+        \texttt{flotte.alertes.events} et \texttt{flotte.conducteurs.events}
+  \item Définition du \textbf{contrat d'interface} avec le service localisation
+        (topic \texttt{flotte.location.events})
+  \item Développement de l'\textbf{API REST} complète avec filtres et gestion du
+        cycle de vie des alertes
+  \item Branchement complet sur l'\textbf{API GraphQL} de la gateway (résolveurs,
+        champs imbriqués Vehicle et Driver)
+  \item \textbf{Tests unitaires} (8 scénarios, couverture $>$80\%) et tests
+        d'intégration via la collection \textbf{Bruno}
+  \item Déploiement validé en \textbf{Docker Compose} et \textbf{Minikube} (Helm)
+\end{enumerate}
+
+% ============================================================
+% SECTION : ARCHITECTURE DU SERVICE
+% ============================================================
+\newpage
+\section{Architecture du service événements}
+
+\begin{infobox}
+\textbf{Principe directeur :} Le service événements est un \textit{aggregator}
+\textbf{passif}~: il écoute, transforme et stocke. Il ne modifie jamais l'état
+des autres services. Toute alerte créée est immuable dans sa nature~; seul son
+statut évolue (ACTIVE $\to$ ACKNOWLEDGED $\to$ RESOLVED).
+\end{infobox}
+
+\vspace{0.5cm}
+
+\subsection{Structure des packages}
+
+L'organisation du code suit le même schéma en couches que les autres microservices
+du projet~:
+
+\begin{center}
+\begin{tabular}{|l|l|}
+  \hline
+  \rowcolor{primary!10}
+  \textbf{Package} & \textbf{Responsabilité} \\
+  \hline
+  \texttt{config}      & Sécurité Keycloak, création automatique de la base \texttt{events\_db} \\
+  \texttt{model}       & Entité JPA \texttt{Alert} et ses trois énumérations \\
+  \texttt{dto}         & \texttt{AlertResponse} (record immuable), \texttt{AcknowledgeRequest} \\
+  \texttt{repository}  & \texttt{AlertRepository} avec requêtes filtrées par statut/sévérité/type \\
+  \texttt{service}     & \texttt{AlertService}~: logique métier, cycle de vie des alertes \\
+  \texttt{controller}  & \texttt{AlertController}~: exposition REST avec RBAC \\
+  \texttt{events}      & Consumers Kafka et payloads locaux découplés \\
+  \hline
+\end{tabular}
+\end{center}
+
+\subsection{Modèle de données}
+
+L'entité \texttt{Alert} centralise toutes les alertes du système, quelle que soit
+leur origine. Les références vers les autres services (\texttt{vehicleId},
+\texttt{driverId}) sont des \textbf{références logiques}~: il n'existe aucune clé
+étrangère inter-services, conformément au principe d'indépendance des microservices.
+
+\begin{lstlisting}[language=Java, caption=Entité Alert avec cycle de vie géré par JPA]
+@Entity
+@Table(name = "alerts")
+public class Alert {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AlertType type;        // MAINTENANCE_OVERDUE, LICENSE_EXPIRING...
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AlertSeverity severity; // INFO, WARNING, HIGH, CRITICAL
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AlertStatus status = AlertStatus.ACTIVE;
+
+    private UUID vehicleId;  // ref logique - pas de FK inter-service
+    private UUID driverId;   // ref logique - pas de FK inter-service
+
+    @Column(nullable = false, columnDefinition = "text")
+    private String message;
+
+    @Column(columnDefinition = "text")
+    private String metadata; // payload JSON brut pour traçabilité
+
+    private UUID acknowledgedBy;
+    private OffsetDateTime acknowledgedAt;
+    private OffsetDateTime resolvedAt;
+
+    @PrePersist
+    protected void onCreate() { createdAt = updatedAt = OffsetDateTime.now(); }
+
+    @PreUpdate
+    protected void onUpdate() { updatedAt = OffsetDateTime.now(); }
+}
+\end{lstlisting}
+
+\subsection{Types d'alertes supportés}
+
+Six types d'alertes couvrent l'ensemble des cas métier identifiés dans la
+spécification du projet~:
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+  \hline
+  \rowcolor{primary!10}
+  \textbf{Type} & \textbf{Source} & \textbf{Sévérité typique} \\
+  \hline
+  \texttt{MAINTENANCE\_OVERDUE}  & Service Maintenance (Kafka)   & WARNING / INFO \\
+  \texttt{LICENSE\_EXPIRING}     & Service Conducteurs (Kafka)   & WARNING \\
+  \texttt{LICENSE\_EXPIRING}     & Service Conducteurs (Kafka)   & CRITICAL (si expiré) \\
+  \texttt{GEOFENCING\_BREACH}    & Service Localisation (futur)  & HIGH \\
+  \texttt{SPEED\_EXCEEDED}       & Service Localisation (futur)  & WARNING à CRITICAL \\
+  \texttt{VEHICLE\_IMMOBILIZED}  & Service Localisation (futur)  & WARNING \\
+  \texttt{DELIVERY\_TOUR\_DELAYED} & Service Localisation (futur) & INFO \\
+  \hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+% SECTION : KAFKA CONSUMERS
+% ============================================================
+\newpage
+\section{Consommation Kafka et traitement des alertes}
+
+\begin{infobox}
+\textbf{Choix de désérialisation :} Contrairement aux autres services qui utilisent
+le \texttt{JsonDeserializer} typé de Spring Kafka, le service événements utilise
+un \texttt{StringDeserializer} brut suivi d'une désérialisation Jackson manuelle.
+Ce choix permet de consommer des messages de formats hétérogènes provenant de
+services différents (Spring Boot vs Node.js futur), sans dépendance aux en-têtes
+de type \texttt{\_\_TypeId\_\_} ajoutés par le \texttt{JsonSerializer}.
+\end{infobox}
+
+\vspace{0.5cm}
+
+\subsection{Consumer \texttt{flotte.alertes.events} — Alertes maintenance}
+
+Le service maintenance publie sur ce topic des objets \texttt{AlertEvent} \textbf{sans
+enveloppe} \texttt{KafkaEventEnvelope}. Le consumer crée une alerte de type
+\texttt{MAINTENANCE\_OVERDUE} et mappe la sévérité textuelle (INFO, WARNING, HIGH,
+CRITICAL) vers l'énumération interne.
+
+\begin{lstlisting}[language=Java, caption=Consumer des alertes de maintenance directes]
+@KafkaListener(topics = "flotte.alertes.events", groupId = "events-group")
+public void handleMaintenanceAlert(String rawMessage) {
+    MaintenanceAlertPayload payload =
+        objectMapper.readValue(rawMessage, MaintenanceAlertPayload.class);
+
+    alertService.createAlert(
+        resolveAlertType(payload.alertType()),
+        resolveSeverity(payload.severity()),
+        payload.vehicleId(),
+        null,
+        payload.message(),
+        rawMessage // payload brut conservé pour traçabilité
+    );
+}
+\end{lstlisting}
+
+\subsection{Consumer \texttt{flotte.conducteurs.events} — Permis conducteurs}
+
+Le service conducteurs publie des \texttt{KafkaEventEnvelope} dont seuls deux types
+d'événements intéressent le service événements~: \texttt{LICENSE\_EXPIRING} et
+\texttt{LICENSE\_EXPIRED}. Les autres types (DRIVER\_CREATED, etc.) sont ignorés
+sans erreur via un filtre sur le champ \texttt{event\_type}.
+
+\begin{lstlisting}[language=Java, caption=Filtrage des événements conducteurs par type]
+@KafkaListener(topics = "flotte.conducteurs.events", groupId = "events-group")
+public void handleDriverEvent(String rawMessage) {
+    JsonNode root = objectMapper.readTree(rawMessage);
+    String eventType = root.path("event_type").asText();
+
+    if (!"LICENSE_EXPIRING".equals(eventType)
+            && !"LICENSE_EXPIRED".equals(eventType)) {
+        log.debug("Evenement conducteur ignore : {}", eventType);
+        return;
+    }
+
+    DriverEventPayload payload = objectMapper.treeToValue(
+        root.path("payload"), DriverEventPayload.class);
+
+    AlertSeverity severity = "LICENSE_EXPIRED".equals(eventType)
+        ? AlertSeverity.CRITICAL : AlertSeverity.WARNING;
+
+    alertService.createAlert(AlertType.LICENSE_EXPIRING, severity,
+        null, payload.driverId(), buildLicenseMessage(eventType, payload),
+        rawMessage);
+}
+\end{lstlisting}
+
+\subsection{Contrat d'interface avec le service localisation}
+
+Le service localisation (Node.js, en cours de développement) est intégré via un
+consumer prêt à l'emploi sur le topic \texttt{flotte.location.events}. Ce consumer
+est déjà déployé mais n'est pas encore sollicité~: il attendra silencieusement
+les premiers messages sans erreur ni crash.
+
+Le contrat JSON attendu est documenté directement dans le fichier source
+\texttt{LocationEventPayload.java}~:
+
+\begin{lstlisting}[language=Java, caption=Contrat JSON attendu depuis le service localisation]
+/**
+ * Le location-service publie sur "flotte.location.events" :
+ * {
+ *   "event_type":     "GEOFENCING_BREACH" | "SPEED_EXCEEDED" | "VEHICLE_IMMOBILIZED",
+ *   "vehicle_id":     "uuid",
+ *   "driver_id":      "uuid",          // optionnel
+ *   "latitude":       48.8566,
+ *   "longitude":      2.3522,
+ *   "speed_kmh":      120.5,           // pour SPEED_EXCEEDED
+ *   "speed_limit_kmh": 90.0,           // pour SPEED_EXCEEDED
+ *   "zone_name":      "Zone A",        // pour GEOFENCING_BREACH
+ *   "message":        "Description",
+ *   "occurred_at":    "2024-01-01T10:00:00Z"
+ * }
+ */
+\end{lstlisting}
+
+La logique de calcul de la sévérité pour les dépassements de vitesse est
+automatique~: en dessous de 15 km/h d'excès, l'alerte est WARNING~; entre 15 et
+30 km/h, elle passe à HIGH~; au-delà de 30 km/h, elle devient CRITICAL.
+
+% ============================================================
+% SECTION : API REST
+% ============================================================
+\newpage
+\section{API REST des alertes}
+
+\begin{infobox}
+\textbf{Objectif :} Exposer une API REST claire et filtrée permettant aux opérateurs
+de consulter et gérer le cycle de vie des alertes~: de leur création automatique
+(par Kafka) jusqu'à leur résolution par un technicien ou un manager.
+\end{infobox}
+
+\vspace{0.5cm}
+
+\subsection{Endpoints disponibles}
+
+L'ensemble des routes est regroupé sous le préfixe \texttt{/api/alerts}~:
+
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+  \hline
+  \rowcolor{primary!10}
+  \textbf{Méthode} & \textbf{Endpoint} & \textbf{Description} & \textbf{Rôle requis} \\
+  \hline
+  GET   & \texttt{/api/alerts}                  & Liste avec filtres optionnels  & Tout utilisateur \\
+  GET   & \texttt{/api/alerts/\{id\}}           & Détail d'une alerte            & Tout utilisateur \\
+  GET   & \texttt{/api/alerts/stats}            & Nombre d'alertes actives       & Tout utilisateur \\
+  PATCH & \texttt{/api/alerts/\{id\}/acknowledge} & Acquitter une alerte         & admin, manager \\
+  PATCH & \texttt{/api/alerts/\{id\}/resolve}   & Résoudre une alerte            & admin, manager, technicien \\
+  \hline
+\end{tabular}
+\end{center}
+
+\vspace{0.3cm}
+
+Le endpoint \texttt{GET /api/alerts} supporte les paramètres de filtre suivants~:
+\texttt{status}, \texttt{severity}, \texttt{type}, \texttt{vehicleId} et
+\texttt{driverId}. Un seul filtre peut être appliqué à la fois~; en l'absence de
+filtre, toutes les alertes sont retournées triées par date de création décroissante.
+
+\subsection{Gestion du cycle de vie}
+
+Le cycle de vie d'une alerte suit quatre états, dont trois sont atteignables par
+l'API~:
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=3.5cm,
+  state/.style={draw, rounded corners, fill=secondary, minimum width=2.5cm, minimum height=0.9cm, font=\small\bfseries}
+]
+  \node[state, fill=warning!20] (active) {ACTIVE};
+  \node[state, right of=active] (ack) {ACKNOWLEDGED};
+  \node[state, right of=ack, fill=success!20] (resolved) {RESOLVED};
+  \node[state, below of=active, node distance=1.8cm, fill=gray!20] (expired) {EXPIRED};
+
+  \draw[->, thick] (active) -- node[above, font=\tiny] {acknowledge} (ack);
+  \draw[->, thick] (ack) -- node[above, font=\tiny] {resolve} (resolved);
+  \draw[->, thick, bend right=30] (active) to node[right, font=\tiny] {resolve} (resolved);
+  \draw[->, dashed] (active) -- node[right, font=\tiny] {auto} (expired);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Authentification centralisée avec Keycloak}
+
+Une particularité de l'endpoint \texttt{acknowledge} est que l'identifiant de
+l'utilisateur qui acquitte n'est \textbf{pas passé dans le corps} de la requête.
+Il est extrait directement du jeton JWT via l'annotation Spring Security
+\texttt{@AuthenticationPrincipal}. Cette approche évite tout risque d'usurpation
+d'identité et simplifie le client (la gateway GraphQL n'a pas à connaître
+l'identité de l'utilisateur).
+
+\begin{lstlisting}[language=Java, caption=Extraction du userId depuis le JWT Keycloak]
+@PatchMapping("/{id}/acknowledge")
+@PreAuthorize("hasAnyRole('admin', 'manager')")
+public AlertResponse acknowledge(@PathVariable UUID id,
+                                 @AuthenticationPrincipal Jwt jwt) {
+    UUID userId = UUID.fromString(jwt.getSubject()); // claim "sub" Keycloak
+    return alertService.acknowledge(id, userId);
+}
+\end{lstlisting}
+
+\subsection{Tests Bruno de l'API REST}
+
+La collection Bruno a été enrichie de neuf fichiers de tests couvrant l'ensemble
+des endpoints REST du service, incluant des assertions automatisées sur les codes
+de retour et la structure des réponses.
+
+\screenshot{Bruno — Collection service-events : 9 requêtes REST}{Tests Bruno REST du service événements}
+
+\begin{center}
+\begin{tabular}{|l|l|l|c|}
+  \hline
+  \rowcolor{primary!10}
+  \textbf{Requête} & \textbf{Endpoint} & \textbf{Code attendu} & \textbf{Résultat} \\
+  \hline
+  GET   & /api/alerts                         & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  GET   & /api/alerts?status=ACTIVE           & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  GET   & /api/alerts?severity=CRITICAL       & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  GET   & /api/alerts?type=MAINTENANCE\_OVERDUE & 200 OK & \textcolor{green!60!black}{\textbf{OK}} \\
+  GET   & /api/alerts/stats                   & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  GET   & /api/alerts/\{id\}                  & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  GET   & /api/alerts?vehicleId=\{id\}        & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  PATCH & /api/alerts/\{id\}/acknowledge      & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  PATCH & /api/alerts/\{id\}/resolve          & 200 OK   & \textcolor{green!60!black}{\textbf{OK}} \\
+  \hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+% SECTION : GRAPHQL
+% ============================================================
+\newpage
+\section{Intégration GraphQL via l'API Gateway}
+
+\begin{infobox}
+\textbf{Objectif :} Exposer les alertes dans le schéma GraphQL unifié de la gateway,
+en résolvant automatiquement les relations imbriquées \texttt{Vehicle} et
+\texttt{Driver} à partir des UUID stockés dans l'alerte.
+\end{infobox}
+
+\vspace{0.5cm}
+
+\subsection{Schéma GraphQL}
+
+Le fichier \texttt{alert.graphql} définit le type \texttt{Alert} avec ses champs
+imbriqués, deux queries, deux mutations et deux subscriptions (ces dernières
+restent en attente de l'implémentation WebSocket prévue en semaine 7)~:
+
+\begin{lstlisting}[language=bash, caption=Schéma GraphQL du domaine alertes]
+type Alert {
+  id: ID!
+  type: AlertType!
+  severity: AlertSeverity!
+  status: AlertStatus!
+  vehicle: Vehicle          # Resolu via vehicle-service
+  driver: Driver            # Resolu via driver-service
+  message: String!
+  acknowledged_by: ID
+  acknowledged_at: String
+  resolved_at: String
+  created_at: String!
+}
+
+extend type Query {
+  alerts(status: AlertStatus, severity: AlertSeverity,
+         vehicle_id: ID, limit: Int = 20, offset: Int = 0): AlertPage!
+  alert(id: ID!): Alert
+}
+
+extend type Mutation {
+  acknowledgeAlert(id: ID!): Alert!
+  resolveAlert(id: ID!): Alert!
+}
+\end{lstlisting}
+
+\subsection{Résolveurs et résolution des types imbriqués}
+
+Le fichier \texttt{alertResolvers.ts} implémente les résolveurs de queries,
+mutations et types. La particularité notable est la résolution des champs imbriqués
+\texttt{vehicle} et \texttt{driver}~: à partir des UUID stockés dans l'alerte, la
+gateway interroge les microservices correspondants en parallèle.
+
+\begin{lstlisting}[language=bash, caption=Résolveurs de types imbriqués (TypeScript)]
+Alert: {
+  vehicle: async (parent, _, ctx) => {
+    if (!parent.vehicle_id) return null;
+    try { return await ctx.vehicle.getVehicle(parent.vehicle_id); }
+    catch { return null; } // Resilience : l'alerte reste visible meme si
+  },                       // le vehicule a ete supprime
+
+  driver: async (parent, _, ctx) => {
+    if (!parent.driver_id) return null;
+    try { return await ctx.driver.getDriver(parent.driver_id); }
+    catch { return null; }
+  },
+},
+\end{lstlisting}
+
+\subsection{Migration depuis les stubs}
+
+Avant cette semaine, les queries \texttt{alerts} et \texttt{alert} ainsi que les
+mutations \texttt{acknowledgeAlert} et \texttt{resolveAlert} levaient une erreur
+\texttt{NOT\_IMPLEMENTED}. Ils sont désormais branchés sur le service événements
+via le \texttt{EventsClient} ajouté au contexte GraphQL.
+
+\begin{center}
+\begin{tabular}{|l|l|c|}
+  \hline
+  \rowcolor{primary!10}
+  \textbf{Opération GraphQL} & \textbf{Délégation} & \textbf{Statut} \\
+  \hline
+  \texttt{alerts(\ldots)}      & GET /api/alerts            & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{alert(id)}           & GET /api/alerts/\{id\}     & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{acknowledgeAlert(id)} & PATCH /api/alerts/\{id\}/acknowledge & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{resolveAlert(id)}    & PATCH /api/alerts/\{id\}/resolve & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{Alert.vehicle}       & GET /api/vehicles/\{id\}   & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{Alert.driver}        & GET /api/drivers/\{id\}    & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{alertCreated}        & WebSocket (Subscription)   & \textcolor{warning}{\textbf{Semaine 7}} \\
+  \hline
+\end{tabular}
+\end{center}
+
+\subsection{Tests Bruno GraphQL}
+
+Six requêtes GraphQL couvrent l'ensemble des opérations du domaine alertes depuis
+la gateway, dont une requête exploitant les champs imbriqués \texttt{vehicle} et
+\texttt{driver} pour valider la résolution cross-services.
+
+\screenshot{Bruno — Collection GraphQL service-events : queries et mutations}{Tests Bruno GraphQL — résolution des champs imbriqués Vehicle et Driver}
+
+% ============================================================
+% SECTION : TESTS
+% ============================================================
+\newpage
+\section{Tests automatisés et couverture de code}
+
+\begin{infobox}
+\textbf{Objectif :} Garantir la fiabilité de la logique métier du service via une
+suite de tests unitaires isolant la couche \texttt{AlertService}, complétée par un
+test d'intégration du contexte Spring Boot.
+\end{infobox}
+
+\vspace{0.5cm}
+
+\subsection{Stratégie de tests}
+
+L'approche adoptée suit le même schéma que les semaines précédentes~:
+
+\begin{itemize}
+  \item \textbf{Tests unitaires} avec \textbf{JUnit 5} et \textbf{Mockito}~:
+        isolation complète de la logique métier du \texttt{AlertService} via
+        simulation du \texttt{AlertRepository}.
+  \item \textbf{Test de chargement du contexte} Spring Boot avec base de données
+        H2 en mémoire, validant la configuration complète du service (Kafka,
+        JPA, Security).
+\end{itemize}
+
+\subsection{Scénarios de tests unitaires}
+
+Huit scénarios couvrent les cas nominaux et les cas d'erreur de l'\texttt{AlertService}~:
+
+\begin{center}
+\begin{tabular}{|l|l|c|}
+  \hline
+  \rowcolor{primary!10}
+  \textbf{Test} & \textbf{Comportement vérifié} & \textbf{Résultat} \\
+  \hline
+  \texttt{createAlert\_shouldSaveAndReturnAlert}       & Création et persistance d'une alerte  & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{createAlert\_shouldSetStatusToActive}        & Statut initial ACTIVE obligatoire     & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{findAll\_shouldReturnAllAlerts}              & Retour de la liste complète           & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{acknowledge\_shouldUpdateStatusAndUser}      & Passage ACTIVE $\to$ ACKNOWLEDGED      & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{resolve\_shouldUpdateStatusAndResolvedAt}    & Passage ACTIVE $\to$ RESOLVED          & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{findById\_shouldThrowWhenNotFound}           & Exception sur UUID inconnu            & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{acknowledge\_shouldThrowWhenAlertNotFound}   & Exception si alerte introuvable       & \textcolor{green!60!black}{\textbf{OK}} \\
+  \texttt{resolve\_shouldBeIdempotentWhenAlreadyResolved} & Idempotence de la résolution        & \textcolor{green!60!black}{\textbf{OK}} \\
+  \hline
+\end{tabular}
+\end{center}
+
+\subsection{Rapport JaCoCo}
+
+\screenshot{Rapport JaCoCo — Service Événements : 9 tests, BUILD SUCCESS}{Couverture de code JaCoCo — Service Evenements}
+
+Les résultats obtenus confirment le respect de l'objectif de couverture fixé à 80\%~:
+
+\begin{itemize}
+  \item \textbf{9 tests} exécutés, \textbf{0 échec}, \textbf{0 erreur}.
+  \item \textbf{19 classes} analysées (modèle, service, controller, consumers, config).
+  \item \textbf{Couverture de la couche Service}~: 100\% des chemins nominaux et des
+        cas d'erreur validés.
+  \item Les consumers Kafka ne sont pas couverts par les tests unitaires~: leur
+        logique de désérialisation nécessiterait des tests d'intégration avec un
+        embedded Kafka, prévu en semaine 7.
+\end{itemize}
+
+% ============================================================
+% SECTION : DÉPLOIEMENT
+% ============================================================
+\newpage
+\section{Déploiement Docker et Kubernetes}
+
+\begin{infobox}
+\textbf{Objectif :} Valider le fonctionnement du service événements dans les deux
+environnements cibles~: développement local via \textbf{Docker Compose} et
+déploiement orchestré via \textbf{Minikube} avec les charts Helm.
+\end{infobox}
+
+\vspace{0.5cm}
+
+\subsection{Docker Compose}
+
+Le service est intégré au fichier \texttt{compose.yaml} sous le nom \texttt{events},
+accessible sur le port \texttt{8083} de la machine hôte. Il dépend de PostgreSQL
+(condition \texttt{service\_healthy}), Kafka et Keycloak.
+
+\begin{lstlisting}[language=bash, caption=Extrait de la configuration Docker Compose]
+events:
+  build:
+    context: ./services/events-service
+  container_name: flotte-events
+  environment:
+    - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/events_db
+    - KAFKA_BROKER=kafka:9092
+    - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/auth/realms/...
+  ports:
+    - "8083:8080"
+  depends_on:
+    postgres:
+      condition: service_healthy
+    kafka:
+      condition: service_started
+\end{lstlisting}
+
+La base de données \texttt{events\_db} est créée automatiquement au démarrage
+du service via le \texttt{PostgresDatabaseEnvironmentPostProcessor}, suivant le
+même mécanisme que les autres microservices.
+
+\subsection{Déploiement Minikube avec Helm}
+
+Trois modifications ont été nécessaires pour intégrer le service aux charts Helm
+existants~:
+
+\subsubsection*{fleet-infra — Création de la base de données}
+
+Le script d'initialisation PostgreSQL a été complété avec la création de la base
+\texttt{events\_db}~:
+
+\begin{lstlisting}[language=bash, caption=Ajout de events\_db dans le chart fleet-infra]
+primary:
+  initdb:
+    scripts:
+      create-databases.sql: |
+        CREATE DATABASE driver_db;
+        CREATE DATABASE maintenance_db;
+        CREATE DATABASE vehicle_db;
+        CREATE DATABASE events_db;    # Ajout
+        CREATE DATABASE keycloak_db;
+\end{lstlisting}
+
+\subsubsection*{fleet-app — Déclaration du microservice}
+
+L'events-service est ajouté à la map \texttt{services} du chart \texttt{fleet-app}.
+Le template Helm génère automatiquement le Deployment, le Service Kubernetes et
+les probes de santé (\texttt{startupProbe}, \texttt{readinessProbe},
+\texttt{livenessProbe})~:
+
+\begin{lstlisting}[language=bash, caption=Entrée events-service dans fleet-app/values.yaml]
+services:
+  events:
+    name: events-service
+    image: events-service:latest
+    port: 8080
+    replicas: 1
+    dbUrlKey: EVENTS_DATASOURCE_URL
+\end{lstlisting}
+
+\subsubsection*{Mise à jour du script kube.sh}
+
+Le secret \texttt{EVENTS\_DATASOURCE\_URL}, le build Docker et la vérification
+du rollout ont été ajoutés au script de déploiement \texttt{kube.sh}~:
+
+\begin{lstlisting}[language=bash, caption=Ajouts dans kube.sh pour le service événements]
+# Secret
+kubectl create secret generic db-secrets \
+  --from-literal=EVENTS_DATASOURCE_URL=jdbc:postgresql://...5432/events_db \
+  ...
+
+# Build dans le daemon Docker de Minikube
+docker build -t events-service:latest ./services/events-service/
+
+# Verification du rollout
+kubectl rollout status deployment/events-service-deployment \
+  -n flotte-namespace --timeout=600s
+\end{lstlisting}
+
+\subsection{Vérification en environnement Minikube}
+
+\screenshot{kubectl get pods -n flotte-namespace — events-service en Running}{Pod events-service démarré avec succès dans Minikube}
+
+\screenshot{Ingress flotte.local — route /api/events/ accessible}{Route /api/events/ fonctionnelle via l'Ingress Nginx}
+
+% ============================================================
+% SECTION : DÉFIS TECHNIQUES
+% ============================================================
+\newpage
+\section{Défis techniques et résolutions}
+
+\subsection{Hétérogénéité des formats de messages Kafka}
+
+Le principal défi de ce service est la consommation de messages Kafka produits
+par des services différents avec des formats différents~: le service maintenance
+publie un \texttt{AlertEvent} brut (sans enveloppe), tandis que le service
+conducteurs publie un \texttt{KafkaEventEnvelope} standard. Le futur service
+localisation en Node.js produira du JSON sans en-têtes de type Java.
+
+\textbf{Solution~:} Utilisation du \texttt{StringDeserializer} pour toutes les
+valeurs, suivi d'une désérialisation Jackson manuelle dans chaque consumer. Cette
+approche découple totalement le service événements des types Java des autres
+services et fonctionne nativement avec tout producteur, quel que soit son langage.
+
+\subsection{Coordination avec le service localisation (développement parallèle)}
+
+Le service localisation est développé en parallèle par un autre membre de l'équipe.
+Il était nécessaire de ne pas bloquer le développement du service événements
+sur cette dépendance tout en préparant l'intégration future.
+
+\textbf{Solution~:} Le consumer \texttt{LocationEventConsumer} est implémenté et
+déployé mais attend simplement les premiers messages. Le contrat d'interface est
+formalisé dans le fichier \texttt{LocationEventPayload.java} avec une documentation
+complète du format JSON attendu. Quand le service localisation publiera sur
+\texttt{flotte.location.events}, le traitement sera automatique sans aucune
+modification côté events-service.
+
+\subsection{Extraction du userId pour l'acquittement}
+
+Le schéma GraphQL définit \texttt{acknowledgeAlert(id: ID!): Alert!} sans
+paramètre \texttt{userId}. Il était nécessaire d'identifier l'utilisateur qui
+acquitte sans modifier le contrat GraphQL public.
+
+\textbf{Solution~:} L'identifiant est extrait du claim \texttt{sub} du jeton JWT
+Keycloak directement dans le contrôleur Spring via
+\texttt{@AuthenticationPrincipal Jwt}. Le jeton est de toute façon transmis par
+la gateway dans l'en-tête \texttt{Authorization}~: aucune information n'est perdue,
+et le contrat d'API reste propre.
+
+\subsection{Cohérence des noms entre les manifestes Kubernetes}
+
+Les manifestes Kubernetes bruts (\texttt{event-deployment.yaml},
+\texttt{event-service.yaml}) présentaient plusieurs incohérences héritées~:
+le \texttt{containerPort} était à 8083 au lieu de 8080, le selector
+\texttt{app: event-service} ne matchait pas les labels \texttt{app: event} du
+Deployment, et l'Ingress référençait \texttt{event-service} alors que le Service
+s'appelait différemment.
+
+\textbf{Solution~:} Réécriture complète des deux fichiers avec des noms harmonisés
+(\texttt{events-service} partout), port \texttt{8080} cohérent avec l'application
+Spring Boot, et mise à jour de l'Ingress.
+
+\end{document}

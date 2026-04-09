@@ -1,0 +1,53 @@
+meta {
+  name: update-driver-status
+  type: graphql
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation UpdateDriverStatus($id: ID!, $status: DriverStatus!) {
+    updateDriverStatus(id: $id, status: $status) {
+      id
+      first_name
+      last_name
+      status
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "status": "ON_LEAVE"
+  }
+}
+
+docs {
+  Met à jour le statut d'un conducteur.
+  Rôles requis : admin ou manager.
+  status : ACTIVE | ON_TOUR | ON_LEAVE | SUSPENDED | INACTIVE
+  Remplacer id par un UUID de conducteur existant.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("statut mis à jour", function() {
+    const data = res.getBody().data;
+    if (data && data.updateDriverStatus) {
+      expect(data.updateDriverStatus.status).to.equal('ON_LEAVE');
+    }
+  });
+}

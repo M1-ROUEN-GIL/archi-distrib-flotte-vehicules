@@ -43,13 +43,12 @@ export const vehicleResolvers = {
         mileage_km: number;
         vin?: string | null;
         color?: string | null;
+        payload_capacity_kg?: number | null;
+        cargo_volume_m3?: number | null; // Float (Double in Java)
       },
       ctx: GraphQLContext,
     ) => {
-      return ctx.vehicle.createVehicle({
-        ...args,
-        fuel_type: args.fuel_type.toLowerCase()
-      });
+      return ctx.vehicle.createVehicle(args);
     },
 
     updateVehicleStatus: async (
@@ -57,7 +56,7 @@ export const vehicleResolvers = {
       args: { id: string; status: string },
       ctx: GraphQLContext,
     ) => {
-      return ctx.vehicle.updateVehicleStatus(args.id, args.status.toLowerCase());
+      return ctx.vehicle.updateVehicleStatus(args.id, args.status);
     },
 
     assignVehicle: async (

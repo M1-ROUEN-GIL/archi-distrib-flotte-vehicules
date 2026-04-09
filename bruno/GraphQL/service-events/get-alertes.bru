@@ -1,0 +1,62 @@
+meta {
+  name: get-alertes
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query {
+    alerts {
+      items {
+        id
+        type
+        severity
+        status
+        message
+        created_at
+        vehicle {
+          id
+          plate_number
+          brand
+        }
+        driver {
+          id
+          first_name
+          last_name
+        }
+      }
+      total_count
+    }
+  }
+}
+
+script:post-response {
+  const items = res.getBody()?.data?.alerts?.items;
+  if (items && items.length > 0) {
+    bru.setVar('gql_alert_id', items[0].id);
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    const body = res.getBody();
+    expect(body).to.not.have.property('errors');
+  });
+
+  test("structure AlertPage correcte", function() {
+    const data = res.getBody().data;
+    expect(data.alerts).to.have.property('items');
+    expect(data.alerts).to.have.property('total_count');
+    expect(data.alerts.items).to.be.an('array');
+  });
+}

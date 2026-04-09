@@ -1,0 +1,56 @@
+meta {
+  name: get-maintenance-par-id
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query GetMaintenanceRecord($id: ID!) {
+    maintenanceRecord(id: $id) {
+      id
+      type
+      status
+      priority
+      scheduled_date
+      completed_date
+      cost_eur
+      mileage_at_service
+      next_service_km
+      description
+      notes
+      created_at
+      technician {
+        id
+        first_name
+        last_name
+      }
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_maintenance_id}}"
+  }
+}
+
+docs {
+  Récupère une fiche de maintenance par son UUID.
+  Remplacer id par un UUID existant (récupéré via get-maintenance).
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+}

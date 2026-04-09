@@ -1,0 +1,52 @@
+meta {
+  name: acknowledge-alerte
+  type: graphql
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation AcknowledgeAlert($id: ID!) {
+    acknowledgeAlert(id: $id) {
+      id
+      status
+      acknowledged_by
+      acknowledged_at
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_active_alert_id}}"
+  }
+}
+
+docs {
+  Acquitte une alerte via GraphQL.
+  Rôles requis : admin ou manager.
+  Remplacer l'id par un UUID d'alerte active.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    if (!bru.getVar('gql_active_alert_id')) return;
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("statut ACKNOWLEDGED", function() {
+    const data = res.getBody().data;
+    if (data && data.acknowledgeAlert) {
+      expect(data.acknowledgeAlert.status).to.equal('ACKNOWLEDGED');
+    }
+  });
+}

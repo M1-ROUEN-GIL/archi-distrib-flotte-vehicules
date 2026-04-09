@@ -1,0 +1,56 @@
+meta {
+  name: vehicules-par-statut
+  type: graphql
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query VehiculesByStatus($status: VehicleStatus, $limit: Int, $offset: Int) {
+    vehicles(status: $status, limit: $limit, offset: $offset) {
+      id
+      plate_number
+      brand
+      model
+      status
+      mileage_km
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "status": "AVAILABLE",
+    "limit": 10,
+    "offset": 0
+  }
+}
+
+docs {
+  Filtre les véhicules par statut.
+  status : AVAILABLE | ON_DELIVERY | IN_MAINTENANCE | OUT_OF_SERVICE
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("tous les véhicules sont AVAILABLE", function() {
+    const data = res.getBody().data;
+    if (data && data.vehicles) {
+      data.vehicles.forEach(v => {
+        expect(v.status).to.equal('AVAILABLE');
+      });
+    }
+  });
+}

@@ -1,0 +1,67 @@
+meta {
+  name: drivers-par-statut
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query DriversByStatus($status: DriverStatus, $limit: Int, $offset: Int) {
+    drivers(status: $status, limit: $limit, offset: $offset) {
+      items {
+        id
+        first_name
+        last_name
+        email
+        status
+      }
+      total_count
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "status": "ACTIVE",
+    "limit": 10,
+    "offset": 0
+  }
+}
+
+docs {
+  Filtre les conducteurs par statut avec pagination.
+  status : ACTIVE | ON_TOUR | ON_LEAVE | SUSPENDED | INACTIVE
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("structure pagination valide", function() {
+    const data = res.getBody().data;
+    if (data && data.drivers) {
+      expect(data.drivers).to.have.property('items');
+      expect(data.drivers).to.have.property('total_count');
+      expect(data.drivers.items).to.be.an('array');
+    }
+  });
+
+  test("tous les conducteurs sont ACTIVE", function() {
+    const data = res.getBody().data;
+    if (data && data.drivers) {
+      data.drivers.items.forEach(d => {
+        expect(d.status).to.equal('ACTIVE');
+      });
+    }
+  });
+}

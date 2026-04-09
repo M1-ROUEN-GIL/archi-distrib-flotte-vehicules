@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/alerts")
+@RequestMapping({"/alerts", "/alerts/"})
 public class AlertController {
 
     private final AlertService alertService;

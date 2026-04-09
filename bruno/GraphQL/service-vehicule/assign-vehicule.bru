@@ -1,0 +1,63 @@
+meta {
+  name: assign-vehicule
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation AssignVehicule($vehicle_id: ID!, $driver_id: ID!, $notes: String) {
+    assignVehicle(vehicle_id: $vehicle_id, driver_id: $driver_id, notes: $notes) {
+      id
+      vehicle {
+        id
+        plate_number
+        status
+      }
+      driver {
+        id
+        first_name
+        last_name
+      }
+      started_at
+      notes
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "vehicle_id": "{{gql_created_vehicle_id}}",
+    "driver_id": "{{gql_created_driver_id}}",
+    "notes": "Tournée de livraison nord"
+  }
+}
+
+docs {
+  Affecte un conducteur à un véhicule.
+  Rôles requis : admin ou manager.
+  Remplacer vehicle_id et driver_id par des UUIDs existants.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("assignation créée", function() {
+    const data = res.getBody().data;
+    if (data && data.assignVehicle) {
+      expect(data.assignVehicle.id).to.be.a('string');
+      expect(data.assignVehicle.started_at).to.not.be.null;
+    }
+  });
+}

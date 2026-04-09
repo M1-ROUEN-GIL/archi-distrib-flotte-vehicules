@@ -1,0 +1,23 @@
+meta {
+  name: stats-alertes
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/api/alerts/stats
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("contient activeCount", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('activeCount');
+    expect(body.activeCount).to.be.a('number');
+  });
+}

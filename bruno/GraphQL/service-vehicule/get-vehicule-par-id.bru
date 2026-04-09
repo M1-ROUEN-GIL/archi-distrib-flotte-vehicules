@@ -1,0 +1,51 @@
+meta {
+  name: get-vehicule-par-id
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query GetVehicule($id: ID!) {
+    vehicle(id: $id) {
+      id
+      plate_number
+      brand
+      model
+      fuel_type
+      status
+      mileage_km
+      vin
+      payload_capacity_kg
+      cargo_volume_m3
+      created_at
+      updated_at
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_vehicle_id}}"
+  }
+}
+
+docs {
+  Récupère un véhicule par son UUID.
+  Remplacer id par un UUID de véhicule existant (récupéré via get-vehicules).
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+}

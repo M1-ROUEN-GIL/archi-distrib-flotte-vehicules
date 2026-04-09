@@ -1,0 +1,25 @@
+meta {
+  name: liste-alertes-par-type
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/alerts?type=MAINTENANCE_OVERDUE
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("toutes les alertes ont le type MAINTENANCE_OVERDUE", function() {
+    const body = res.getBody();
+    expect(body).to.be.an('array');
+    body.forEach(function(alert) {
+      expect(alert.type).to.equal('MAINTENANCE_OVERDUE');
+    });
+  });
+}

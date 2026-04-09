@@ -1,0 +1,52 @@
+meta {
+  name: get-alerte-par-id
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query GetAlerte($id: ID!) {
+    alert(id: $id) {
+      id
+      type
+      severity
+      status
+      message
+      acknowledged_by
+      acknowledged_at
+      resolved_at
+      created_at
+      vehicle {
+        id
+        plate_number
+      }
+      driver {
+        id
+        first_name
+        last_name
+      }
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "00000000-0000-0000-0000-000000000000"
+  }
+}
+
+docs {
+  Remplacer l'id par un UUID d'alerte existante (récupéré via get-alertes).
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

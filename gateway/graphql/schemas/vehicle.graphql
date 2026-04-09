@@ -11,7 +11,7 @@ type Vehicle {
   mileage_km: Int!
   vin: String
   payload_capacity_kg: Int!
-  cargo_volume_m3: Int!
+  cargo_volume_m3: Float!
   # Résolu par le Service Localisation via l'API Gateway
   current_location: Location
   # Résolu par le Service Conducteurs
@@ -46,6 +46,8 @@ extend type Mutation {
     mileage_km: Int!
     vin: String
     color: String
+    payload_capacity_kg: Int
+    cargo_volume_m3: Float
   ): Vehicle!
 
   updateVehicleStatus(

@@ -1,0 +1,88 @@
+meta {
+  name: create-driver
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation CreateDriver(
+    $keycloak_user_id: ID!
+    $first_name: String!
+    $last_name: String!
+    $email: String!
+    $phone: String
+    $employee_id: String
+  ) {
+    createDriver(
+      keycloak_user_id: $keycloak_user_id
+      first_name: $first_name
+      last_name: $last_name
+      email: $email
+      phone: $phone
+      employee_id: $employee_id
+    ) {
+      id
+      first_name
+      last_name
+      email
+      status
+      created_at
+    }
+  }
+}
+
+script:pre-request {
+  const ts = Date.now().toString().slice(-8);
+  bru.setVar('test_driver_email', 'test.' + ts + '@flotte.fr');
+  bru.setVar('test_employee_id', 'EMP-' + ts);
+  bru.setVar('test_kc_user_id', ts.padStart(8, '0') + '-0000-0000-0000-000000000000');
+}
+
+body:graphql:vars {
+  {
+    "keycloak_user_id": "{{test_kc_user_id}}",
+    "first_name": "Jean",
+    "last_name": "Dupont",
+    "email": "{{test_driver_email}}",
+    "phone": "+33612345678",
+    "employee_id": "{{test_employee_id}}"
+  }
+}
+
+docs {
+  Crée un nouveau conducteur.
+  Rôles requis : admin ou manager.
+  keycloak_user_id : UUID du compte Keycloak associé.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("conducteur créé avec statut ACTIVE", function() {
+    const data = res.getBody().data;
+    if (data && data.createDriver) {
+      expect(data.createDriver.status).to.equal('ACTIVE');
+      expect(data.createDriver.email).to.be.a('string');
+      expect(data.createDriver.id).to.be.a('string');
+    }
+  });
+}
+
+script:post-response {
+  const data = res.getBody()?.data;
+  if (data?.createDriver?.id) {
+    bru.setVar('gql_created_driver_id', data.createDriver.id);
+  }
+}

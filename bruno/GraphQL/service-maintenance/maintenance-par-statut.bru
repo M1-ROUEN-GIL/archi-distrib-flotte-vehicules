@@ -1,0 +1,60 @@
+meta {
+  name: maintenance-par-statut
+  type: graphql
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query MaintenanceParStatut($status: MaintenanceStatus, $priority: MaintenancePriority, $limit: Int) {
+    maintenanceRecords(status: $status, priority: $priority, limit: $limit) {
+      items {
+        id
+        type
+        status
+        priority
+        scheduled_date
+        description
+      }
+      total_count
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "status": "SCHEDULED",
+    "priority": "HIGH",
+    "limit": 10
+  }
+}
+
+docs {
+  Filtre les fiches de maintenance par statut et/ou priorité.
+  status : SCHEDULED | IN_PROGRESS | COMPLETED | CANCELLED | OVERDUE
+  priority : LOW | MEDIUM | HIGH | CRITICAL
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("structure pagination valide", function() {
+    const data = res.getBody().data;
+    if (data && data.maintenanceRecords) {
+      expect(data.maintenanceRecords).to.have.property('items');
+      expect(data.maintenanceRecords).to.have.property('total_count');
+      expect(data.maintenanceRecords.items).to.be.an('array');
+    }
+  });
+}

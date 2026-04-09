@@ -1,0 +1,54 @@
+meta {
+  name: get-driver-par-id
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query GetDriver($id: ID!) {
+    driver(id: $id) {
+      id
+      first_name
+      last_name
+      email
+      phone
+      employee_id
+      status
+      license {
+        license_number
+        category
+        expiry_date
+        is_valid
+        country
+      }
+      created_at
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_driver_id}}"
+  }
+}
+
+docs {
+  Récupère un conducteur par son UUID, avec son permis de conduire.
+  Remplacer id par un UUID de conducteur existant (récupéré via get-drivers).
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+}

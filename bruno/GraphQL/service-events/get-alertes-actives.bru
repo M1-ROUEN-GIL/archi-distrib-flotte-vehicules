@@ -1,0 +1,51 @@
+meta {
+  name: get-alertes-actives
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query {
+    alerts(status: ACTIVE, limit: 10) {
+      items {
+        id
+        type
+        severity
+        status
+        message
+        created_at
+      }
+      total_count
+    }
+  }
+}
+
+script:post-response {
+  const items = res.getBody()?.data?.alerts?.items;
+  if (items && items.length > 0) {
+    bru.setVar('gql_active_alert_id', items[0].id);
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("toutes les alertes sont ACTIVE", function() {
+    const items = res.getBody().data.alerts.items;
+    items.forEach(function(alert) {
+      expect(alert.status).to.equal('ACTIVE');
+    });
+  });
+}

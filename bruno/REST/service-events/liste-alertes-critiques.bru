@@ -1,0 +1,25 @@
+meta {
+  name: liste-alertes-critiques
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/alerts?severity=CRITICAL
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("toutes les alertes ont la sévérité CRITICAL", function() {
+    const body = res.getBody();
+    expect(body).to.be.an('array');
+    body.forEach(function(alert) {
+      expect(alert.severity).to.equal('CRITICAL');
+    });
+  });
+}

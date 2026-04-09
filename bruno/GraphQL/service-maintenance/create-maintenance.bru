@@ -1,0 +1,103 @@
+meta {
+  name: create-maintenance
+  type: graphql
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation CreateMaintenance(
+    $vehicle_id: ID!
+    $type: MaintenanceType!
+    $priority: MaintenancePriority
+    $scheduled_date: String!
+    $description: String
+  ) {
+    createMaintenanceRecord(
+      vehicle_id: $vehicle_id
+      type: $type
+      priority: $priority
+      scheduled_date: $scheduled_date
+      description: $description
+    ) {
+      id
+      type
+      status
+      priority
+      scheduled_date
+      description
+      created_at
+      vehicle {
+        id
+        plate_number
+      }
+    }
+  }
+}
+
+script:pre-request {
+  if (!bru.getVar('gql_vehicle_id')) {
+    const baseUrl = bru.getVar('base_url') || 'http://flotte.local:8080';
+    const token = bru.getVar('access_token') || '';
+    try {
+      const resp = await bru.sendRequest({
+        method: 'POST',
+        url: baseUrl + '/graphql',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        data: JSON.stringify({ query: '{ vehicles { id } }' })
+      });
+      const vehicles = resp?.data?.data?.vehicles;
+      if (vehicles && vehicles.length > 0) {
+        bru.setVar('gql_vehicle_id', vehicles[0].id);
+      }
+    } catch(e) { /* ignore */ }
+  }
+}
+
+body:graphql:vars {
+  {
+    "vehicle_id": "{{gql_vehicle_id}}",
+    "type": "PREVENTIVE",
+    "priority": "MEDIUM",
+    "scheduled_date": "2026-05-01",
+    "description": "Vidange moteur + filtre à air"
+  }
+}
+
+docs {
+  Crée une nouvelle fiche de maintenance.
+  Rôles requis : admin, manager ou technicien.
+  type : PREVENTIVE | CORRECTIVE | INSPECTION | RECALL | OTHER
+  priority : LOW | MEDIUM | HIGH | CRITICAL
+  Remplacer vehicle_id par un UUID de véhicule existant.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("fiche créée avec statut SCHEDULED", function() {
+    const data = res.getBody().data;
+    if (data && data.createMaintenanceRecord) {
+      expect(data.createMaintenanceRecord.status).to.equal('SCHEDULED');
+      expect(data.createMaintenanceRecord.id).to.be.a('string');
+    }
+  });
+}
+
+script:post-response {
+  const data = res.getBody()?.data;
+  if (data?.createMaintenanceRecord?.id) {
+    bru.setVar('gql_created_maintenance_id', data.createMaintenanceRecord.id);
+  }
+}

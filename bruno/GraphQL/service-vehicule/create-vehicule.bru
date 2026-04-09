@@ -1,0 +1,95 @@
+meta {
+  name: create-vehicule
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation CreateVehicule(
+    $plate_number: String!
+    $brand: String!
+    $model: String!
+    $fuel_type: FuelType!
+    $mileage_km: Int!
+    $vin: String
+    $payload_capacity_kg: Int
+    $cargo_volume_m3: Float
+  ) {
+    createVehicle(
+      plate_number: $plate_number
+      brand: $brand
+      model: $model
+      fuel_type: $fuel_type
+      mileage_km: $mileage_km
+      vin: $vin
+      payload_capacity_kg: $payload_capacity_kg
+      cargo_volume_m3: $cargo_volume_m3
+    ) {
+      id
+      plate_number
+      brand
+      model
+      fuel_type
+      status
+      mileage_km
+      created_at
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "plate_number": "{{test_plate_number}}",
+    "brand": "Renault",
+    "model": "Master",
+    "fuel_type": "DIESEL",
+    "mileage_km": 0,
+    "vin": "{{test_vin}}",
+    "payload_capacity_kg": 1000,
+    "cargo_volume_m3": 10
+  }
+}
+
+docs {
+  Crée un nouveau véhicule.
+  Rôles requis : admin ou manager.
+  fuel_type : DIESEL | GASOLINE | ELECTRIC | HYBRID
+}
+
+script:pre-request {
+  const ts = Date.now().toString().slice(-6);
+  bru.setVar('test_plate_number', 'TS-' + ts + '-CD');
+  bru.setVar('test_vin', 'VF1TEST' + ts + '001');
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("véhicule créé avec les bonnes données", function() {
+    const data = res.getBody().data;
+    if (data && data.createVehicle) {
+      expect(data.createVehicle.brand).to.equal('Renault');
+      expect(data.createVehicle.status).to.equal('AVAILABLE');
+      expect(data.createVehicle.id).to.be.a('string');
+    }
+  });
+}
+
+script:post-response {
+  const data = res.getBody()?.data;
+  if (data?.createVehicle?.id) {
+    bru.setVar('gql_created_vehicle_id', data.createVehicle.id);
+  }
+}

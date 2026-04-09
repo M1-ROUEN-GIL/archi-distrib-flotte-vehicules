@@ -1,0 +1,58 @@
+meta {
+  name: maintenance-par-vehicule
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query MaintenanceParVehicule($vehicle_id: ID!, $limit: Int) {
+    maintenanceRecords(vehicle_id: $vehicle_id, limit: $limit) {
+      items {
+        id
+        type
+        status
+        priority
+        scheduled_date
+        cost_eur
+        description
+      }
+      total_count
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "vehicle_id": "00000000-0000-0000-0000-000000000000",
+    "limit": 10
+  }
+}
+
+docs {
+  Récupère toutes les fiches de maintenance d'un véhicule donné.
+  Remplacer vehicle_id par un UUID de véhicule existant.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("structure pagination valide", function() {
+    const data = res.getBody().data;
+    if (data && data.maintenanceRecords) {
+      expect(data.maintenanceRecords).to.have.property('items');
+      expect(data.maintenanceRecords).to.have.property('total_count');
+    }
+  });
+}

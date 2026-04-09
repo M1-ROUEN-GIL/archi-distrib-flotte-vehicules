@@ -1,0 +1,34 @@
+meta {
+  name: liste-alertes-par-vehicule
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/api/alerts?vehicleId={{vehicle_id}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  vehicle_id: 39e75ab3-7878-48a4-814e-f20c63fc99b7
+}
+
+docs {
+  Filtre les alertes par véhicule.
+  Remplacer vehicle_id par un UUID de véhicule existant (voir liste-vehicles dans service-vehicule).
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("toutes les alertes concernent le même véhicule", function() {
+    const body = res.getBody();
+    const vid = bru.getVar('vehicle_id');
+    body.forEach(function(alert) {
+      expect(alert.vehicle_id).to.equal(vid);
+    });
+  });
+}
