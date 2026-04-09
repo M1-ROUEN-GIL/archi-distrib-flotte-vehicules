@@ -177,6 +177,48 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  location:
+    build:
+      context: ./services/location-service
+      dockerfile: Dockerfile
+    container_name: flotte-location
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=postgres # On utilise la base par défaut de ton TimescaleDB
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "3000:3000"   # Port HTTP REST/GraphQL
+      - "50051:50051" # Port gRPC
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: unless-stopped
+
+  #service externe pour tester le grpc
+  simulator:
+      build:
+        context: ./services/location-service # Il utilise le même dossier que location
+        dockerfile: Dockerfile
+      container_name: flotte-simulator
+      # On écrase la commande par défaut du Dockerfile pour lancer spécifiquement le simulateur
+      command: [ "node", "dist/simulation/simulator.js" ]
+      depends_on:
+        location:
+          condition: service_started
+      restart: unless-stopped
+
+
   gateway:
     build:
       context: ./gateway
@@ -186,6 +228,7 @@ services:
       - VEHICLE_SERVICE_URL=http://vehicle:8080
       - DRIVER_SERVICE_URL=http://driver:8080
       - MAINTENANCE_SERVICE_URL=http://maintenance:8080
+      - LOCATION_SERVICE_URL=http://location:3000
       - OTEL_SERVICE_NAME=graphql-gateway
     # Port 80 = même effet qu’un reverse-proxy : http://127.0.0.1/ ou http://localhost/ sans :4000.
     # Deux bindings : IPv4 et IPv6 (::1), sinon « localhost » peut résoudre en ::1 → ECONNREFUSED sur :80.
