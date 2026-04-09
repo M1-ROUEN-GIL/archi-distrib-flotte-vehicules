@@ -194,7 +194,7 @@ services:
       - DB_USER=admin
       - DB_PASSWORD=password
       - DB_NAME=postgres # On utilise la base par défaut de ton TimescaleDB
-      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_BROKER=kafka:9092
     ports:
       - "50051:50051" # Port gRPC (simulateur externe)
     depends_on:

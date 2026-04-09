@@ -11,6 +11,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
 	DRIVER_SERVICE_URL,
+	EVENTS_SERVICE_URL,
 	LOCATION_SERVICE_URL,
 	MAINTENANCE_SERVICE_URL,
 	VEHICLE_SERVICE_URL,
@@ -91,6 +92,14 @@ app.use(
 	}),
 );
 app.use(
+	'/api/alerts',
+	createProxyMiddleware({
+		...proxyOpts,
+		target: EVENTS_SERVICE_URL,
+		pathRewrite: rewriteMounted('/alerts'),
+	}),
+);
+app.use(
 	'/api/locations',
 	createProxyMiddleware({
 		...proxyOpts,
@@ -116,5 +125,5 @@ await new Promise<void>((resolve) => {
 });
 
 console.log(
-	`🚀  Gateway — GraphQL /graphql — REST /api/* → vehicle=${VEHICLE_SERVICE_URL} driver=${DRIVER_SERVICE_URL} maintenance=${MAINTENANCE_SERVICE_URL} location=${LOCATION_SERVICE_URL}`,
+	`🚀  Gateway — GraphQL /graphql — REST /api/* → vehicle=${VEHICLE_SERVICE_URL} driver=${DRIVER_SERVICE_URL} maintenance=${MAINTENANCE_SERVICE_URL} events=${EVENTS_SERVICE_URL} location=${LOCATION_SERVICE_URL}`,
 );
