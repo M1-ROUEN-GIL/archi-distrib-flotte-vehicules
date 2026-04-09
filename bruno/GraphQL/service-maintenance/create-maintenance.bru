@@ -42,15 +42,17 @@ body:graphql {
 
 script:pre-request {
   if (!bru.getVar('gql_vehicle_id')) {
-    const baseUrl = bru.getVar('base_url') || 'http://flotte.local:8080';
+    const baseUrl = bru.getVar('base_url') || 'http://flotte.local';
     const token = bru.getVar('access_token') || '';
     try {
-      const resp = await bru.sendRequest({
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+      const request = bru.sendRequest({
         method: 'POST',
         url: baseUrl + '/graphql',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         data: JSON.stringify({ query: '{ vehicles { id } }' })
       });
+      const resp = await Promise.race([request, timeout]);
       const vehicles = resp?.data?.data?.vehicles;
       if (vehicles && vehicles.length > 0) {
         bru.setVar('gql_vehicle_id', vehicles[0].id);

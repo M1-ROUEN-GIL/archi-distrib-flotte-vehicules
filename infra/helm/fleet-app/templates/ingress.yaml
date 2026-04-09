@@ -60,6 +60,20 @@ spec:
                 name: {{ .Values.services.events.name }}
                 port:
                   number: {{ .Values.services.events.port }}
+          - path: /api/(locations)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: location-service
+                port:
+                  number: 3000
+          - path: /api/(geofences)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: location-service
+                port:
+                  number: 3000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

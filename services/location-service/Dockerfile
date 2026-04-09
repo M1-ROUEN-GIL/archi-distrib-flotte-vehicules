@@ -36,6 +36,9 @@ COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
 # (Par défaut, NestJS ignore les fichiers non-TS lors du build)
 COPY --from=builder --chown=nodejs:nodejs /app/src/grpc ./dist/proto
 
+# Copier le simulateur JS (non compilé par tsc car pas TypeScript)
+COPY --from=builder --chown=nodejs:nodejs /app/src/simulation ./dist/simulation
+
 USER nodejs
 
 # Le port classique de NestJS est 3000, mais tu peux garder 3002 si ton infra l'exige

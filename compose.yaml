@@ -94,18 +94,10 @@ services:
       - KAFKA_BROKER=kafka:9092
       - KEYCLOAK_ISSUER_URI=http://keycloak:8080/auth/realms/gestion-flotte
       - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
-      # Pas d'otel-collector dans ce compose — pas d'agent JVM
       - JAVA_TOOL_OPTIONS=
       - OTEL_SERVICE_NAME=vehicle-service
     ports:
       - "8080:8080"
-    # Pas de -f : dès que Tomcat répond (même 401/404 sur /), le port est ouvert.
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sS -o /dev/null http://127.0.0.1:8080/"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 150s
     depends_on:
       postgres:
         condition: service_healthy
@@ -130,12 +122,6 @@ services:
       - OTEL_SERVICE_NAME=maintenance-service
     ports:
       - "8082:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sS -o /dev/null http://127.0.0.1:8080/"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 150s
     depends_on:
       postgres:
         condition: service_healthy
@@ -162,12 +148,6 @@ services:
       - OTEL_SERVICE_NAME=driver-service
     ports:
       - "8081:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sS -o /dev/null http://127.0.0.1:8080/"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 150s
     depends_on:
       postgres:
         condition: service_healthy
@@ -194,12 +174,14 @@ services:
       - OTEL_SERVICE_NAME=events-service
     ports:
       - "8083:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sS -o /dev/null http://127.0.0.1:8080/"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 150s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    restart: unless-stopped
       
   location:
     build:
@@ -214,14 +196,7 @@ services:
       - DB_NAME=postgres # On utilise la base par défaut de ton TimescaleDB
       - KAFKA_BROKERS=kafka:9092
     ports:
-      - "3000:3000"   # Port HTTP REST/GraphQL
-      - "50051:50051" # Port gRPC
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      - "50051:50051" # Port gRPC (simulateur externe)
     depends_on:
       postgres:
         condition: service_healthy
@@ -256,20 +231,21 @@ services:
       - EVENTS_SERVICE_URL=http://events:8080
       - LOCATION_SERVICE_URL=http://location:3000
       - OTEL_SERVICE_NAME=graphql-gateway
-    # Port 80 = même effet qu’un reverse-proxy : http://127.0.0.1/ ou http://localhost/ sans :4000.
-    # Deux bindings : IPv4 et IPv6 (::1), sinon « localhost » peut résoudre en ::1 → ECONNREFUSED sur :80.
-    # Après modification : docker compose up -d --force-recreate gateway
     ports:
       - "4000:4000"
       - "127.0.0.1:80:4000"
       - "[::1]:80:4000"
     depends_on:
       vehicle:
-        condition: service_healthy
+        condition: service_started
       driver:
-        condition: service_healthy
+        condition: service_started
       maintenance:
-        condition: service_healthy
+        condition: service_started
+      events:
+        condition: service_started
+      location:
+        condition: service_started
     restart: unless-stopped
 
 volumes:

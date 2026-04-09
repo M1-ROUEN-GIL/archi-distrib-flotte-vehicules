@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package fleet.location.v1;
+package flotte.location.v1;
 
 service LocationService {
   // Streaming bidirectionnel — boîtier GPS envoie, serveur accuse réception

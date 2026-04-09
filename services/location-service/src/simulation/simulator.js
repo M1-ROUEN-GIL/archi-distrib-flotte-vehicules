@@ -3,7 +3,7 @@ const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
 
 // 1. Charger le contrat (le fichier .proto)
-const PROTO_PATH = path.join(__dirname, '../src/grpc/location.proto');
+const PROTO_PATH = path.join(__dirname, '../proto/location.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
     keepCase: true, // Très important pour garder les underscores (vehicle_id)
     longs: String,

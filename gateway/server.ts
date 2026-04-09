@@ -11,6 +11,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
 	DRIVER_SERVICE_URL,
+	LOCATION_SERVICE_URL,
 	MAINTENANCE_SERVICE_URL,
 	VEHICLE_SERVICE_URL,
 	runningInDocker,
@@ -89,6 +90,22 @@ app.use(
 		pathRewrite: rewriteMounted('/maintenance'),
 	}),
 );
+app.use(
+	'/api/locations',
+	createProxyMiddleware({
+		...proxyOpts,
+		target: LOCATION_SERVICE_URL,
+		pathRewrite: rewriteMounted('/locations'),
+	}),
+);
+app.use(
+	'/api/geofences',
+	createProxyMiddleware({
+		...proxyOpts,
+		target: LOCATION_SERVICE_URL,
+		pathRewrite: rewriteMounted('/geofences'),
+	}),
+);
 
 app.use((_req, res) => {
 	res.status(404).type('json').send(JSON.stringify({ error: 'Not found. Utilisez /graphql ou /api/{vehicles,drivers,maintenance}/…' }));
@@ -99,5 +116,5 @@ await new Promise<void>((resolve) => {
 });
 
 console.log(
-	`🚀  Gateway — GraphQL /graphql — REST /api/* → vehicle=${VEHICLE_SERVICE_URL} driver=${DRIVER_SERVICE_URL} maintenance=${MAINTENANCE_SERVICE_URL}`,
+	`🚀  Gateway — GraphQL /graphql — REST /api/* → vehicle=${VEHICLE_SERVICE_URL} driver=${DRIVER_SERVICE_URL} maintenance=${MAINTENANCE_SERVICE_URL} location=${LOCATION_SERVICE_URL}`,
 );

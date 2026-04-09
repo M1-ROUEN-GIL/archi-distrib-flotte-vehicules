@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import {Observable, Subject} from "rxjs";
 import {LocationReading} from "./location.entity";
 import { KafkaProducer } from '../kafka/kafka.producer';
+import { DetectionService } from '../detection/detection.service';
 
 
 @Injectable()
@@ -15,6 +16,7 @@ export class LocationService {
         @InjectRepository(LocationReading)
         private readonly locationRepo: Repository<LocationReading>,
         private readonly kafkaProducer: KafkaProducer,
+        private readonly detectionService: DetectionService,
     ){}
 
     async savePosition(position : any): Promise<void>{
@@ -33,8 +35,11 @@ export class LocationService {
 
         await this.locationRepo.save(reading);
 
-        // Publier sur Kafka
-        await this.kafkaProducer.publishGpsPosition(position);
+        // Publier sur Kafka + analyser pour détecter des événements métier
+        await Promise.all([
+            this.kafkaProducer.publishGpsPosition(position),
+            this.detectionService.analyzePosition(position),
+        ]);
 
         // Notifier les subscribers WatchVehicle
         const stream = this.vehicleStreams.get(position.vehicle_id);

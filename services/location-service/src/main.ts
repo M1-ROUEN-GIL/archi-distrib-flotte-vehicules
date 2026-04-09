@@ -11,9 +11,9 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,
     options: {
-      package: 'flotte.localisation.v1',
+      package: 'flotte.location.v1',
       // Attention au chemin : pointe vers le bon dossier proto
-      protoPath: join(__dirname, '../src/proto/location.proto'),
+      protoPath: join(__dirname, 'proto/location.proto'),
       url: '0.0.0.0:50051',
     },
   });

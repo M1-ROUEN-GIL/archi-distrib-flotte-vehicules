@@ -1,0 +1,37 @@
+meta {
+  name: liste-geofences
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/geofences
+  body: none
+  auth: inherit
+}
+
+docs {
+  Liste toutes les zones de geofencing configurées.
+  Chaque zone a : id, name, centerLat, centerLon, radiusM, createdAt.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("réponse est un tableau", function() {
+    expect(res.getBody()).to.be.an('array');
+  });
+
+  test("chaque zone a les champs obligatoires", function() {
+    const body = res.getBody();
+    body.forEach(function(zone) {
+      expect(zone).to.have.property('id');
+      expect(zone).to.have.property('name');
+      expect(zone).to.have.property('centerLat');
+      expect(zone).to.have.property('centerLon');
+      expect(zone).to.have.property('radiusM');
+    });
+  });
+}

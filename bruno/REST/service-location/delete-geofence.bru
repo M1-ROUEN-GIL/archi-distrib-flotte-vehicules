@@ -1,0 +1,27 @@
+meta {
+  name: delete-geofence
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{base_url}}/api/geofences/{{geofence_id}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  geofence_id: remplacer-par-un-uuid
+}
+
+docs {
+  Supprime une zone de geofencing par son id.
+  Lancer create-geofence avant pour récupérer un geofence_id valide
+  (la variable est automatiquement renseignée par le script post-response de create-geofence).
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

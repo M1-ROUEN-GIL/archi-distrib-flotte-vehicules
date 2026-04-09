@@ -4,15 +4,22 @@ metadata:
   name: location-deployment
   namespace: flotte-namespace
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: location
+      app: location-service
   template:
     metadata:
       labels:
-        app: location
+        app: location-service
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z postgres-flotte-service 5432; do echo waiting for postgres; sleep 2; done"]
+        - name: wait-for-kafka
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z kafka-service 9092; do echo waiting for kafka; sleep 2; done"]
       containers:
         - name: location-app
           image: location-service:latest
@@ -20,21 +27,40 @@ spec:
           ports:
             - containerPort: 3000
           env:
-            - name: SPRING_DATASOURCE_URL
+            - name: DB_HOST
+              value: "postgres-flotte-service"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "admin"
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
-                  key: SPRING_DATASOURCE_URL
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db-secrets
-                  key: SPRING_DATASOURCE_PASSWORD
-            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+                  name: postgres-flotte-service
+                  key: password
+            - name: DB_NAME
+              value: "location_db"
+            - name: KAFKA_BROKER
               valueFrom:
                 secretKeyRef:
                   name: db-secrets
                   key: KAFKA_BROKER
+          startupProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 30
           resources:
             requests:
               memory: "256Mi"
@@ -42,4 +68,3 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-

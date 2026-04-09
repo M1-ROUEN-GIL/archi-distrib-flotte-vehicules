@@ -2,18 +2,21 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LocationModule } from './location/location.module';
 import { LocationReading } from './location/location.entity';
+import { GeofenceZone } from './geofence/geofence.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres', // TimescaleDB est une extension Postgres !
       host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),      username: process.env.DB_USER || 'postgres',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'flotte',
-      entities: [LocationReading],
+      entities: [LocationReading, GeofenceZone],
       // ⚠️ TRÈS IMPORTANT : false avec TimescaleDB.
       // NestJS ne sait pas créer des Hypertables, on le fera à la main via SQL.
+      // La table geofence_zones est créée automatiquement par DetectionService.onModuleInit().
       synchronize: false,
     }),
     LocationModule,

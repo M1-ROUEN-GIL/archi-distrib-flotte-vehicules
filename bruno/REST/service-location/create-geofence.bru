@@ -1,0 +1,63 @@
+meta {
+  name: create-geofence
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/geofences
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Dépôt Paris Nord",
+    "centerLat": 48.9041,
+    "centerLon": 2.3488,
+    "radiusM": 500
+  }
+}
+
+docs {
+  Crée une nouvelle zone de geofencing.
+  Le service détectera automatiquement quand un véhicule sort de cette zone
+  et publiera un événement GEOFENCING_BREACH sur Kafka → events-service.
+
+  Champs :
+    - name      : nom lisible de la zone
+    - centerLat : latitude du centre
+    - centerLon : longitude du centre
+    - radiusM   : rayon en mètres
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("zone créée avec un id", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('id');
+    expect(body.id).to.be.a('string');
+  });
+
+  test("nom correspond à l'envoi", function() {
+    const body = res.getBody();
+    expect(body.name).to.equal('Dépôt Paris Nord');
+  });
+
+  test("coordonnées enregistrées", function() {
+    const body = res.getBody();
+    expect(body.centerLat).to.equal(48.9041);
+    expect(body.centerLon).to.equal(2.3488);
+    expect(body.radiusM).to.equal(500);
+  });
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setVar('geofence_id', body.id);
+  }
+}

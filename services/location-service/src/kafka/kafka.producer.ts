@@ -49,7 +49,34 @@ export class KafkaProducer implements OnModuleInit, OnModuleDestroy {
                 }],
             });
         } catch (error) {
-            this.logger.error(`Erreur publication Kafka : ${error.message}`);
+            this.logger.error(`Erreur publication Kafka GPS : ${error.message}`);
+        }
+    }
+
+    async publishLocationEvent(event: {
+        event_type: string;
+        vehicle_id: string;
+        driver_id?: string;
+        latitude: number;
+        longitude: number;
+        speed_kmh?: number;
+        speed_limit_kmh?: number;
+        zone_name?: string;
+        message?: string;
+    }) {
+        try {
+            await this.producer.send({
+                topic: 'flotte.location.events',
+                messages: [{
+                    key: event.vehicle_id,
+                    value: JSON.stringify({
+                        ...event,
+                        occurred_at: new Date().toISOString(),
+                    }),
+                }],
+            });
+        } catch (error) {
+            this.logger.error(`Erreur publication événement localisation : ${error.message}`);
         }
     }
 }

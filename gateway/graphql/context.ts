@@ -3,6 +3,7 @@ import { IncomingMessage } from 'http';
 import {
 	DRIVER_SERVICE_URL,
 	EVENTS_SERVICE_URL,
+	LOCATION_SERVICE_URL,
 	MAINTENANCE_SERVICE_URL,
 	VEHICLE_SERVICE_URL,
 } from '../config.js';
@@ -36,6 +37,7 @@ export interface GraphQLContext {
   driver: DriverClient;
   maintenance: MaintenanceClient;
   events: EventsClient;
+  location: LocationClient;
 }
 
 class BaseClient {
@@ -150,6 +152,19 @@ class EventsClient extends BaseClient {
   }
 }
 
+class LocationClient extends BaseClient {
+  async getLatestPosition(vehicleId: string) {
+    const { data } = await this.http.get(`/locations/${vehicleId}/latest`);
+    return data;
+  }
+  async getHistory(vehicleId: string, from: string, to: string) {
+    const { data } = await this.http.get(`/locations/${vehicleId}/history`, {
+      params: { from, to, limit: 1000 },
+    });
+    return data;
+  }
+}
+
 export const createContext = async ({ req }: { req: IncomingMessage }): Promise<GraphQLContext> => {
   const authHeader = req.headers.authorization;
   return {
@@ -157,5 +172,6 @@ export const createContext = async ({ req }: { req: IncomingMessage }): Promise<
     driver: new DriverClient(DRIVER_SERVICE_URL, authHeader),
     maintenance: new MaintenanceClient(MAINTENANCE_SERVICE_URL, authHeader),
     events: new EventsClient(EVENTS_SERVICE_URL, authHeader),
+    location: new LocationClient(LOCATION_SERVICE_URL),
   };
 };
