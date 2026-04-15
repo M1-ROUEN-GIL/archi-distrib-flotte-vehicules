@@ -145,6 +145,15 @@ class MaintenanceClient extends BaseClient {
     const { data } = await this.http.patch(`/maintenance/${id}/status`, input);
     return data;
   }
+  async getVehicleHistory(vehicleId: string) {
+    const { data } = await this.http.get(`/maintenance/vehicle/${vehicleId}`);
+    return data;
+  }
+
+  async updateRecord(id: string, payload: any) {
+    const { data } = await this.http.put(`/maintenance/${id}`, payload);
+    return data;
+  }
 }
 
 class EventsClient extends BaseClient {

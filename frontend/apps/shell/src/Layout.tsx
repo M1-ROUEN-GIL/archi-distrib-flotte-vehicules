@@ -27,7 +27,7 @@ export const Layout = () => {
                         <Link to="/drivers" style={{ color: '#666', textDecoration: 'none', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>👤</span> Conducteurs
                         </Link>
-                        <Link to="/" style={{ color: '#666', textDecoration: 'none', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Link to="/maintenance" style={{ color: '#666', textDecoration: 'none', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>🔧</span> Maintenance
                         </Link>
                     </nav>

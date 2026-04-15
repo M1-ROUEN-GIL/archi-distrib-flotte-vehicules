@@ -35,6 +35,8 @@ extend type Query {
   ): MaintenancePage!
 
   maintenanceRecord(id: ID!): MaintenanceRecord
+
+  vehicleMaintenanceHistory(vehicle_id: ID!): [MaintenanceRecord!]!
 }
 
 extend type Mutation {
@@ -50,6 +52,21 @@ extend type Mutation {
     id: ID!
     status: MaintenanceStatus!
     cost_eur: Float
+    notes: String
+  ): MaintenanceRecord!
+
+  updateMaintenanceRecord(
+    id: ID!
+    technician_id: ID
+    type: MaintenanceType
+    priority: MaintenancePriority
+    scheduled_date: String
+    completed_date: String
+    cost_eur: Float
+    mileage_at_service: Int
+    next_service_km: Int
+    parts_used: [String!]
+    description: String
     notes: String
   ): MaintenanceRecord!
 }

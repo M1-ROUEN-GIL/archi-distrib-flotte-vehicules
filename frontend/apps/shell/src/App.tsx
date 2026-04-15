@@ -24,7 +24,7 @@ const Home = () => (
 
 const VehicleList = React.lazy(() => import('vehicles_app/VehicleList'));
 const DriverList = React.lazy(() => import('drivers_app/DriverList'));
-
+const MaintenanceList = React.lazy(() => import('maintenance_app/MaintenanceList'));
 function App() {
     return (
         <BrowserRouter>
@@ -53,6 +53,12 @@ function App() {
                             </Suspense>
                         }
                     />
+
+                    <Route path="maintenance" element={
+                        <Suspense fallback={<div>Chargement de la maintenance...</div>}>
+                            <MaintenanceList />
+                        </Suspense>
+                    } />
 
                 </Route>
             </Routes>
