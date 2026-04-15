@@ -21,8 +21,9 @@ const Home = () => (
     </div>
 );
 
-// @ts-ignore
+
 const VehicleList = React.lazy(() => import('vehicles_app/VehicleList'));
+const DriverList = React.lazy(() => import('drivers_app/DriverList'));
 
 function App() {
     return (
@@ -41,6 +42,14 @@ function App() {
                         element={
                             <Suspense fallback={<div>Chargement du module véhicules...</div>}>
                                 <VehicleList />
+                            </Suspense>
+                        }
+                    />
+                    <Route
+                        path="drivers"
+                        element={
+                            <Suspense fallback={<div>Chargement du module chauffeurs...</div>}>
+                                <DriverList />
                             </Suspense>
                         }
                     />

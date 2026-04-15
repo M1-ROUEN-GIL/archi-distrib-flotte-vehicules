@@ -10,6 +10,7 @@ export default defineConfig({
       name: 'shell_app',
       remotes: {
         vehicles_app: 'http://localhost:5002/assets/remoteEntry.js',
+        drivers_app: 'http://localhost:5003/assets/remoteEntry.js',
       },
       // On partage les librairies pour que le Shell et les apps utilisent le même contexte
       shared: ['react', 'react-dom', '@flotte/shared-auth', '@apollo/client', 'graphql']

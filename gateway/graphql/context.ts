@@ -112,6 +112,20 @@ class DriverClient extends BaseClient {
     const { data } = await this.http.get(`/drivers/${driverId}/licenses`);
     return data;
   }
+  async updateDriver(id: string, payload: any) {
+    const { data } = await this.http.put(`/drivers/${id}`, payload);
+    return data;
+  }
+
+  async deleteDriver(id: string) {
+    const { data } = await this.http.delete(`/drivers/${id} `);
+    return data;
+  }
+
+  async addLicenseToDriver(driverId: string, payload: any) {
+    const { data } = await this.http.post(`/drivers/${driverId}/licenses`, payload);
+    return data;
+  }
 }
 
 class MaintenanceClient extends BaseClient {
