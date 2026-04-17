@@ -1,0 +1,75 @@
+meta {
+  name: update-driver
+  type: graphql
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation UpdateDriver(
+    $id: ID!
+    $keycloak_user_id: ID!
+    $first_name: String
+    $last_name: String
+    $email: String
+    $phone: String
+    $employee_id: String
+  ) {
+    updateDriver(
+      id: $id
+      keycloak_user_id: $keycloak_user_id
+      first_name: $first_name
+      last_name: $last_name
+      email: $email
+      phone: $phone
+      employee_id: $employee_id
+    ) {
+      id
+      first_name
+      last_name
+      email
+      phone
+      employee_id
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_created_driver_id}}",
+    "keycloak_user_id": "{{test_kc_user_id}}",
+    "first_name": "Jean-Modifie",
+    "last_name": "Dupont-Modifie",
+    "email": "{{test_driver_email}}",
+    "phone": "+33699999999",
+    "employee_id": "{{test_employee_id}}"
+  }
+}
+
+docs {
+  Met à jour les informations d'un conducteur.
+  Rôles requis : admin ou manager.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("données mises à jour", function() {
+    const data = res.getBody().data;
+    if (data && data.updateDriver) {
+      expect(data.updateDriver.first_name).to.equal('Jean-Modifie');
+      expect(data.updateDriver.phone).to.equal('+33699999999');
+    }
+  });
+}

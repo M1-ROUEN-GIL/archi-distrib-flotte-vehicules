@@ -1,0 +1,49 @@
+meta {
+  name: unassign-vehicule
+  type: graphql
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation UnassignVehicule($vehicle_id: ID!) {
+    unassignVehicle(vehicle_id: $vehicle_id) {
+      id
+      ended_at
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "vehicle_id": "{{gql_created_vehicle_id}}"
+  }
+}
+
+docs {
+  Libère un véhicule (met fin à l'assignation actuelle).
+  Rôles requis : admin ou manager.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("assignation terminée", function() {
+    const data = res.getBody().data;
+    if (data && data.unassignVehicle) {
+      expect(data.unassignVehicle.id).to.be.a('string');
+      expect(data.unassignVehicle.ended_at).to.not.be.null;
+    }
+  });
+}

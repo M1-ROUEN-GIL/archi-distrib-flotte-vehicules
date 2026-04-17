@@ -1,0 +1,71 @@
+meta {
+  name: update-vehicule
+  type: graphql
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation UpdateVehicule(
+    $id: ID!
+    $brand: String
+    $model: String
+    $mileage_km: Int
+    $vin: String
+    $color: String
+  ) {
+    updateVehicle(
+      id: $id
+      brand: $brand
+      model: $model
+      mileage_km: $mileage_km
+      vin: $vin
+      color: $color
+    ) {
+      id
+      brand
+      model
+      mileage_km
+      vin
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_created_vehicle_id}}",
+    "brand": "Renault-Modifie",
+    "model": "Master-Modifie",
+    "mileage_km": 10,
+    "vin": "{{test_vin}}",
+    "color": "Rouge"
+  }
+}
+
+docs {
+  Met à jour les informations d'un véhicule.
+  Rôles requis : admin ou manager.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("données mises à jour", function() {
+    const data = res.getBody().data;
+    if (data && data.updateVehicle) {
+      expect(data.updateVehicle.brand).to.equal('Renault-Modifie');
+      expect(data.updateVehicle.mileage_km).to.equal(10);
+    }
+  });
+}

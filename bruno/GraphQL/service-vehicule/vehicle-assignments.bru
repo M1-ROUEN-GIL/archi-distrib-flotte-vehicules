@@ -1,0 +1,54 @@
+meta {
+  name: vehicle-assignments
+  type: graphql
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query VehicleAssignments($vehicle_id: ID!) {
+    vehicleAssignments(vehicle_id: $vehicle_id) {
+      id
+      started_at
+      ended_at
+      notes
+      driver {
+        id
+        first_name
+        last_name
+      }
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "vehicle_id": "{{gql_vehicle_id}}"
+  }
+}
+
+docs {
+  Récupère l'historique des assignations d'un véhicule.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("réponse est un tableau", function() {
+    const data = res.getBody().data;
+    if (data) {
+      expect(data.vehicleAssignments).to.be.an('array');
+    }
+  });
+}

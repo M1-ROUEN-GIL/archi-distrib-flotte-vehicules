@@ -1,0 +1,72 @@
+meta {
+  name: add-license-to-driver
+  type: graphql
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation AddLicenseToDriver(
+    $driver_id: ID!
+    $license_number: String!
+    $category: String!
+    $expiry_date: String!
+    $is_valid: Boolean!
+    $country: String!
+  ) {
+    addLicenseToDriver(
+      driver_id: $driver_id
+      license_number: $license_number
+      category: $category
+      expiry_date: $expiry_date
+      is_valid: $is_valid
+      country: $country
+    ) {
+      id
+      license_number
+      category
+      expiry_date
+      is_valid
+      country
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "driver_id": "{{gql_created_driver_id}}",
+    "license_number": "L-123456789",
+    "category": "B",
+    "expiry_date": "2030-12-31",
+    "is_valid": true,
+    "country": "FR"
+  }
+}
+
+docs {
+  Ajoute un permis de conduire à un conducteur.
+  Rôles requis : admin ou manager.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("permis ajouté", function() {
+    const data = res.getBody().data;
+    if (data && data.addLicenseToDriver) {
+      expect(data.addLicenseToDriver.license_number).to.equal('L-123456789');
+      expect(data.addLicenseToDriver.category).to.equal('B');
+    }
+  });
+}

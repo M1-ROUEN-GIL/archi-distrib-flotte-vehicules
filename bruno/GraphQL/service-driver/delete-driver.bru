@@ -1,0 +1,45 @@
+meta {
+  name: delete-driver
+  type: graphql
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation DeleteDriver($id: ID!) {
+    deleteDriver(id: $id)
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_created_driver_id}}"
+  }
+}
+
+docs {
+  Supprime un conducteur.
+  Rôles requis : admin ou manager.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("suppression réussie", function() {
+    const data = res.getBody().data;
+    if (data) {
+      expect(data.deleteDriver).to.be.true;
+    }
+  });
+}

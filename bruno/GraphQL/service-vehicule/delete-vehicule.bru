@@ -1,0 +1,45 @@
+meta {
+  name: delete-vehicule
+  type: graphql
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  mutation DeleteVehicule($id: ID!) {
+    deleteVehicle(id: $id)
+  }
+}
+
+body:graphql:vars {
+  {
+    "id": "{{gql_created_vehicle_id}}"
+  }
+}
+
+docs {
+  Supprime un véhicule.
+  Rôles requis : admin ou manager.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("suppression réussie", function() {
+    const data = res.getBody().data;
+    if (data) {
+      expect(data.deleteVehicle).to.be.true;
+    }
+  });
+}

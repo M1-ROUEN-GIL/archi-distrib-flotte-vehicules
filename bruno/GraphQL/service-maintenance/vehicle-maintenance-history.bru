@@ -1,0 +1,53 @@
+meta {
+  name: vehicle-maintenance-history
+  type: graphql
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query VehicleMaintenanceHistory($vehicle_id: ID!) {
+    vehicleMaintenanceHistory(vehicle_id: $vehicle_id) {
+      id
+      type
+      status
+      priority
+      scheduled_date
+      completed_date
+      cost_eur
+      description
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "vehicle_id": "{{gql_vehicle_id}}"
+  }
+}
+
+docs {
+  Récupère l'historique de maintenance d'un véhicule.
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("pas d'erreurs GraphQL", function() {
+    expect(res.getBody()).to.not.have.property('errors');
+  });
+
+  test("réponse est un tableau", function() {
+    const data = res.getBody().data;
+    if (data) {
+      expect(data.vehicleMaintenanceHistory).to.be.an('array');
+    }
+  });
+}
