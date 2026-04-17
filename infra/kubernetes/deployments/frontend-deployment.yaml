@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: frontend:latest
-        imagePullPolicy: Never
+        image: archi-dist-flotte-vehicules-frontend:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80

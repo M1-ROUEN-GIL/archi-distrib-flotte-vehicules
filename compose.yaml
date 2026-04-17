@@ -44,7 +44,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     restart: unless-stopped
 
-  keycloak:
+  keycloak-service:
     # Version épinglée — :latest (26+) exige KC_BOOTSTRAP_ADMIN_* (KEYCLOAK_ADMIN est déprécié)
     image: quay.io/keycloak/keycloak:26.5.7
     container_name: flotte-keycloak
@@ -92,8 +92,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - KAFKA_BROKER=kafka:9092
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/auth/realms/gestion-flotte
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
+      - KEYCLOAK_ISSUER_URI=http://keycloak-service:8080/auth/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak-service:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
       - JAVA_TOOL_OPTIONS=
       - OTEL_SERVICE_NAME=vehicle-service
     ports:
@@ -116,8 +116,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/auth/realms/gestion-flotte
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
+      - KEYCLOAK_ISSUER_URI=http://keycloak-service:8080/auth/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak-service:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
       - JAVA_TOOL_OPTIONS=
       - OTEL_SERVICE_NAME=maintenance-service
     ports:
@@ -127,7 +127,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
-      keycloak:
+      keycloak-service:
         condition: service_started
     restart: unless-stopped
 
@@ -142,8 +142,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - KAFKA_BROKER=kafka:9092
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/auth/realms/gestion-flotte
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
+      - KEYCLOAK_ISSUER_URI=http://keycloak-service:8080/auth/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak-service:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
       - JAVA_TOOL_OPTIONS=
       - OTEL_SERVICE_NAME=driver-service
     ports:
@@ -153,7 +153,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
-      keycloak:
+      keycloak-service:
         condition: service_started
     restart: unless-stopped
 
@@ -168,8 +168,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
       - KAFKA_BROKER=kafka:9092
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/auth/realms/gestion-flotte
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
+      - KEYCLOAK_ISSUER_URI=http://keycloak-service:8080/auth/realms/gestion-flotte
+      - KEYCLOAK_JWK_SET_URI=http://keycloak-service:8080/auth/realms/gestion-flotte/protocol/openid-connect/certs
       - JAVA_TOOL_OPTIONS=
       - OTEL_SERVICE_NAME=events-service
     ports:
@@ -179,7 +179,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
-      keycloak:
+      keycloak-service:
         condition: service_started
     restart: unless-stopped
       
@@ -209,7 +209,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
-      keycloak:
+      keycloak-service:
         condition: service_started
     restart: unless-stopped
 

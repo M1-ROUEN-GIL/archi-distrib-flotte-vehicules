@@ -5,6 +5,10 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
     # Cette règle magique retire le préfixe /api/ et garde le reste ($1$2)
     nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+    # Support des WebSockets
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "graphql-gateway-service"
   name: flotte-ingress
   namespace: flotte-namespace
 spec:

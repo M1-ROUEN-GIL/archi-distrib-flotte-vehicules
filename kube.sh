@@ -30,7 +30,7 @@ docker build -t maintenance-service:latest ./services/maintenance-service/
 docker build -t events-service:latest ./services/events-service/
 docker build -t graphql-gateway:latest ./gateway/
 docker build -t location-service:latest ./services/location-service/
-docker build -t frontend:latest ./frontend/
+docker build -t archi-dist-flotte-vehicules-frontend:latest ./frontend/
 
 # 5. Déploiement Infrastructure (DB, Kafka, Redis)
 helm dependency update ./infra/helm/fleet-infra/
@@ -53,6 +53,12 @@ kubectl apply -f infra/kubernetes/keycloak/keycloak-deployment.yaml -n flotte-na
 echo "Waiting for infrastructure to be ready..."
 kubectl wait --for=condition=ready --timeout=300s pod/postgres-flotte-service-0 -n flotte-namespace
 
+# Création manuelle des topics Kafka pour éviter les erreurs de la Gateway
+echo "Creating Kafka topics..."
+KAFKA_POD=$(kubectl get pods -n flotte-namespace -l app=kafka-broker -o name | head -n 1)
+kubectl exec $KAFKA_POD -n flotte-namespace -- /opt/kafka/bin/kafka-topics.sh --create --topic flotte.localisation.gps --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --if-not-exists
+kubectl exec $KAFKA_POD -n flotte-namespace -- /opt/kafka/bin/kafka-topics.sh --create --topic flotte.location.events --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --if-not-exists
+
 helm upgrade --install fleet-app ./infra/helm/fleet-app/ \
   -n flotte-namespace
 
@@ -71,9 +77,14 @@ kubectl apply -f infra/kubernetes/services/location-service.yaml -n flotte-names
 kubectl apply -f infra/kubernetes/deployments/location-deployment.yaml -n flotte-namespace
 kubectl apply -f infra/kubernetes/services/frontend-service.yaml -n flotte-namespace
 kubectl apply -f infra/kubernetes/deployments/frontend-deployment.yaml -n flotte-namespace
+
+# Application des alias de services pour la compatibilité Docker/K8s
+kubectl apply -f infra/kubernetes/services/gateway-alias.yaml -n flotte-namespace
+kubectl apply -f infra/kubernetes/services/keycloak-alias.yaml -n flotte-namespace
+
 kubectl apply -f infra/kubernetes/ingress/ingress.yaml -n flotte-namespace
 kubectl rollout status deployment/location-deployment -n flotte-namespace --timeout=300s
-kubectl rollout status deployment/frontend-deployment -n flotte-namespace --timeout=300s
+kubectl rollout status deployment/frontend-deployment -n flotte-namespace --timeout=600s
 
 # 10. Configuration du Host (Optionnel : demande sudo)
 echo "--------------------------------------------------"
