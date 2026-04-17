@@ -213,14 +213,15 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  #service externe pour tester le grpc
   simulator:
       build:
-        context: ./services/location-service # Il utilise le même dossier que location
+        context: ./services/location-service
         dockerfile: Dockerfile
       container_name: flotte-simulator
-      # On écrase la commande par défaut du Dockerfile pour lancer spécifiquement le simulateur
       command: [ "node", "dist/simulation/simulator.js" ]
+      environment:
+        - LOCATION_GRPC_URL=location:50051
+        - PROTO_PATH=/app/dist/proto/location.proto
       depends_on:
         location:
           condition: service_healthy
@@ -237,6 +238,7 @@ services:
       - MAINTENANCE_SERVICE_URL=http://maintenance:8080
       - EVENTS_SERVICE_URL=http://events:8080
       - LOCATION_SERVICE_URL=http://location:3000
+      - LOCATION_GRPC_URL=location:50051
       - OTEL_SERVICE_NAME=graphql-gateway
     ports:
       - "4000:4000"

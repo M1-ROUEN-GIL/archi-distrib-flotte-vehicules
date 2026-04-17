@@ -3,7 +3,8 @@ const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
 
 // 1. Charger le contrat (le fichier .proto)
-const PROTO_PATH = path.join(__dirname, '../grpc/location.proto');
+// On cherche le proto soit dans dist/proto (Docker), soit dans src/grpc (Local)
+const PROTO_PATH = process.env.PROTO_PATH || path.join(__dirname, '../grpc/location.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
     keepCase: true, // Très important pour garder les underscores (vehicle_id)
     longs: String,
@@ -16,8 +17,9 @@ const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
 const locationService = protoDescriptor.flotte.location.v1.LocationService;
 
 // 2. Créer le client gRPC (Connexion au serveur NestJS)
+const GRPC_URL = process.env.LOCATION_GRPC_URL || 'localhost:50051';
 const client = new locationService(
-    'localhost:50051',
+    GRPC_URL,
     grpc.credentials.createInsecure() // Pas de SSL pour les tests en local
 );
 

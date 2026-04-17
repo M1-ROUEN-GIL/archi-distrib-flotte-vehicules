@@ -26,6 +26,7 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 3000
+            - containerPort: 50051
           env:
             - name: DB_HOST
               value: "postgres-flotte-service"
