@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 token: keycloak.token,
                 username: keycloak.tokenParsed?.preferred_username,
                 roles: cleanRoles, // 👈 On distribue la liste propre !
-                logout: () => keycloak.logout({ redirectUri: isProd ? 'http://flotte.local' : 'http://localhost:5173' }),
+                logout: () => keycloak.logout({ redirectUri: window.location.origin }),
             }}
         >
     {children}

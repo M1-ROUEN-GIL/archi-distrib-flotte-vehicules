@@ -257,5 +257,16 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: flotte-frontend
+    ports:
+      - "3005:80"
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
 volumes:
   postgres_data:
