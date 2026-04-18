@@ -5,6 +5,7 @@ services:
     container_name: flotte-jaeger
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+      - QUERY_BASE_PATH=/jaeger
     ports:
       - "16686:16686" # Web UI
       # 4317 est géré exclusivement par otel-collector (pas de bind direct pour Jaeger)
@@ -67,8 +68,9 @@ services:
     image: grafana/promtail:2.9.4
     container_name: flotte-promtail
     command: -config.file=/etc/promtail/config.yaml
+    user: root
     volumes:
-      - ./infra/helm/fleet-observability/config/promtail-config.yaml:/etc/promtail/config.yaml
+      - ./infra/docker/promtail-config.yaml:/etc/promtail/config.yaml
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - loki
