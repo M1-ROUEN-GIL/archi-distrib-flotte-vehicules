@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useQuery, gql } from '@apollo/client'; // Importation Apollo
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useQuery, gql } from '@apollo/client';
+import { useAuth } from '@flotte/shared-auth';
 import { Layout } from './Layout';
 import { Truck, Wrench, Users, Clock } from 'lucide-react';
 
@@ -113,11 +114,15 @@ const Home = () => {
     );
 };
 
-// Imports dynamiques des Micro-Frontends avec résolution robuste (m.default || m)
 const VehicleList = React.lazy(() => import('vehicles_app/VehicleList').then(m => ({ default: m.default || m })));
 const DriverList = React.lazy(() => import('drivers_app/DriverList').then(m => ({ default: m.default || m })));
 const MaintenanceList = React.lazy(() => import('maintenance_app/MaintenanceList').then(m => ({ default: m.default || m })));
 const LocationMap = React.lazy(() => import('location_app/LocationMap').then(m => ({ default: m.default || m })));
+
+const ProtectedRoute = ({ allowed, children }: { allowed: string[]; children: React.ReactNode }) => {
+    const { roles } = useAuth();
+    return roles.some(r => allowed.includes(r)) ? <>{children}</> : <Navigate to="/" replace />;
+};
 
 function App() {
     return (
@@ -134,32 +139,38 @@ function App() {
                     <Route
                         path="vehicles"
                         element={
-                            <Suspense fallback={<div>Chargement du module véhicules...</div>}>
-                                <VehicleList />
-                            </Suspense>
+                            <ProtectedRoute allowed={['admin', 'technician']}>
+                                <Suspense fallback={<div>Chargement du module véhicules...</div>}>
+                                    <VehicleList />
+                                </Suspense>
+                            </ProtectedRoute>
                         }
                     />
                     <Route
                         path="drivers"
                         element={
-                            <Suspense fallback={<div>Chargement du module chauffeurs...</div>}>
-                                <DriverList />
-                            </Suspense>
+                            <ProtectedRoute allowed={['admin', 'manager']}>
+                                <Suspense fallback={<div>Chargement du module chauffeurs...</div>}>
+                                    <DriverList />
+                                </Suspense>
+                            </ProtectedRoute>
                         }
                     />
-
                     <Route path="maintenance" element={
-                        <Suspense fallback={<div>Chargement de la maintenance...</div>}>
-                            <MaintenanceList />
-                        </Suspense>
+                        <ProtectedRoute allowed={['admin', 'technician']}>
+                            <Suspense fallback={<div>Chargement de la maintenance...</div>}>
+                                <MaintenanceList />
+                            </Suspense>
+                        </ProtectedRoute>
                     } />
-
                     <Route
                         path="/location"
                         element={
-                            <Suspense fallback={<div style={{ padding: '2rem' }}>⏳ Chargement de la carte radar...</div>}>
-                                <LocationMap />
-                            </Suspense>
+                            <ProtectedRoute allowed={['admin', 'manager']}>
+                                <Suspense fallback={<div style={{ padding: '2rem' }}>⏳ Chargement de la carte radar...</div>}>
+                                    <LocationMap />
+                                </Suspense>
+                            </ProtectedRoute>
                         }
                     />
 

@@ -32,7 +32,7 @@ public class MaintenanceController {
 	}
 
 	@GetMapping
-	@PreAuthorize("hasAnyRole('admin', 'technician')")
+	@PreAuthorize("hasAnyRole('admin', 'technician', 'manager')")
 	public ResponseEntity<List<MaintenanceRecord>> getAllRecords(
 			@RequestParam(required = false) UUID vehicleId,
 			@RequestParam(required = false) MaintenanceStatus status,

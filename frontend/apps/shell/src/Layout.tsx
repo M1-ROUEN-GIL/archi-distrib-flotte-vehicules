@@ -1,5 +1,6 @@
 import { Outlet, Link, NavLink } from 'react-router-dom';
 import { useAuth } from '@flotte/shared-auth';
+
 import { Truck, Users, Wrench, LayoutDashboard, Search, MapPin, LogOut } from 'lucide-react';
 import monLogo from './assets/logo.png';
 
@@ -7,7 +8,8 @@ export const Layout = () => {
     // Récupération des infos dynamiques de l'utilisateur
     const { username, roles, logout } = useAuth();
 
-    // Petite fonction pour extraire les 2 premières lettres pour l'avatar (ex: "Ahcene" -> "AH")
+    const can = (...allowed: string[]) => roles.some(r => allowed.includes(r));
+
     const getInitials = (name?: string) => {
         return name ? name.substring(0, 2).toUpperCase() : '??';
     };
@@ -91,18 +93,26 @@ export const Layout = () => {
                     <NavLink to="/" end className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
                         <LayoutDashboard size={16} /> Tableau de bord
                     </NavLink>
-                    <NavLink to="/vehicles" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
-                        <Truck size={16} /> Véhicules
-                    </NavLink>
-                    <NavLink to="/drivers" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
-                        <Users size={16} /> Conducteurs
-                    </NavLink>
-                    <NavLink to="/maintenance" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
-                        <Wrench size={16} /> Maintenance
-                    </NavLink>
-                    <NavLink to="/location" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
-                        <MapPin size={16} /> Temps réel
-                    </NavLink>
+                    {can('admin', 'technician') && (
+                        <NavLink to="/vehicles" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
+                            <Truck size={16} /> Véhicules
+                        </NavLink>
+                    )}
+                    {can('admin', 'manager') && (
+                        <NavLink to="/drivers" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
+                            <Users size={16} /> Conducteurs
+                        </NavLink>
+                    )}
+                    {can('admin', 'technician') && (
+                        <NavLink to="/maintenance" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
+                            <Wrench size={16} /> Maintenance
+                        </NavLink>
+                    )}
+                    {can('admin', 'manager') && (
+                        <NavLink to="/location" className={({ isActive }) => `topnav__tab ${isActive ? 'is-active' : ''}`}>
+                            <MapPin size={16} /> Temps réel
+                        </NavLink>
+                    )}
                 </nav>
             </header>
 
