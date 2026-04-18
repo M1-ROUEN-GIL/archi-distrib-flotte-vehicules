@@ -39,8 +39,22 @@ echo -e "${GREEN}OK — $BASE_URL est accessible.${NC}"
 echo -e "${CYAN}[2/3] Lancement des tests E2E (mode : $MODE)...${NC}"
 cd "$(dirname "$0")/../frontend"
 
+# Vérifier les dépendances npm
+if [[ ! -d "node_modules" ]] || [[ ! -d "node_modules/@playwright" ]]; then
+  echo -e "${YELLOW}Installation des dépendances npm...${NC}"
+  npm ci
+fi
+
+# Installer les navigateurs Playwright
+if [[ ! -d "$HOME/.cache/ms-playwright" ]]; then
+  echo -e "${YELLOW}Installation des navigateurs Playwright...${NC}"
+  npx playwright install
+  echo -e "${YELLOW}Installation des dépendances système pour Playwright...${NC}"
+  npx playwright install-deps || true
+fi
+
 EXIT_CODE=0
-BASE_URL="$BASE_URL" npx playwright test --reporter=list,html || EXIT_CODE=$?
+BASE_URL="$BASE_URL" ./node_modules/.bin/playwright test --reporter=list,html || EXIT_CODE=$?
 
 # ── Rapport ───────────────────────────────────────────────────────────────────
 echo ""
@@ -51,6 +65,6 @@ else
 fi
 
 echo -e "${CYAN}Ouverture du rapport HTML...${NC}"
-npx playwright show-report
+./node_modules/.bin/playwright show-report
 
 exit $EXIT_CODE
