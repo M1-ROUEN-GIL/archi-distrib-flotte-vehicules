@@ -1,12 +1,15 @@
 import './tracing';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { OtelLoggerService } from './otel-logger.service';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 
 async function bootstrap() {
   // 1. Initialiser l'application classique (HTTP pour REST/GraphQL)
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new OtelLoggerService(),
+  });
 
   // 2. Ajouter la couche gRPC
   app.connectMicroservice<MicroserviceOptions>({

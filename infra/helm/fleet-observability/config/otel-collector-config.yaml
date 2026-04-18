@@ -20,6 +20,8 @@ exporters:
       insecure: true
   loki:
     endpoint: "http://loki:3100/loki/api/v1/push"
+  prometheus:
+    endpoint: "0.0.0.0:8889"
 
 service:
   pipelines:
@@ -27,6 +29,10 @@ service:
       receivers: [otlp]
       processors: [batch, memory_limiter]
       exporters: [otlp/jaeger]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
     logs:
       receivers: [otlp]
       processors: [batch]
