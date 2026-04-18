@@ -1,0 +1,21 @@
+import { test as setup, expect } from '@playwright/test';
+import path from 'path';
+
+const authFile = path.join(__dirname, '../.auth/user.json');
+
+setup('authenticate via Keycloak', async ({ page }) => {
+  await page.goto('/');
+
+  // Keycloak redirige automatiquement vers la page de login (onLoad: 'login-required')
+  await page.waitForURL(/\/auth\/realms\/gestion-flotte/);
+
+  await page.fill('#username', 'test-user');
+  await page.fill('#password', 'password');
+  await page.click('#kc-login');
+
+  // Attendre la redirection vers l'app
+  await page.waitForURL('/');
+  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+
+  await page.context().storageState({ path: authFile });
+});
