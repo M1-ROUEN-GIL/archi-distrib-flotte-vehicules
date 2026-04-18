@@ -258,7 +258,7 @@ Keycloak est configur\'{e} avec :
 \begin{itemize}[leftmargin=*]
   \item Le \textit{realm} \texttt{gestion-flotte} contenant les utilisateurs et les r\^{o}les m\'{e}tiers.
   \item Un client OIDC \texttt{frontend} de type \textit{public} (sans secret), utilisant \texttt{onLoad: 'login-required'} pour forcer l'authentification d\`{e}s l'acc\`{e}s.
-  \item Le chemin HTTP relatif \texttt{/auth} (\texttt{KC\_HTTP\_RELATIVE\_PATH=/auth}) permettant son exposition sous \texttt{flotte.local/auth} via l'ingress Nginx.
+  \item Le chemin HTTP relatif \texttt{/auth} (\texttt{KC\_HTTP\_RELATIVE\_PATH=/auth}) permettant son exposition sous \texttt{flotte.local/auth} via l'ingress \textbf{Traefik} (et non Nginx), utilis\'{e} comme contr\^{o}leur d'ingress dans notre d\'{e}ploiement Helm.
 \end{itemize}
 
 \subsection{Package \texttt{@flotte/shared-auth}}
@@ -469,5 +469,17 @@ Localisation & Absence d'erreur d'initialisation & \textcolor{success}{\textbf{P
 \end{tabular}
 \caption{R\'{e}capitulatif des tests end-to-end Playwright}
 \end{table}
+
+% ============================================================
+\section{Bilan et perspectives --- Semaine 7}
+% ============================================================
+
+\subsection{Travaux r\'{e}alis\'{e}s}
+
+L'ensemble du \textbf{frontend} a \'{e}t\'{e} d\'{e}velopp\'{e} et est fonctionnel : architecture Micro-Frontend, int\'{e}gration Keycloak (SSO, JWT, RBAC), dashboards temps r\'{e}el (v\'{e}hicules, conducteurs, maintenance, localisation GPS) et tests E2E Playwright. Le p\'{e}rim\`{e}tre frontal pr\'{e}vu pour la semaine 6 est donc compl\`{e}tement trait\'{e}.
+
+\subsection{Perspectives --- Semaine 7}
+
+La semaine 7 comportera plusieurs travaux. Parmi ceux-ci, le \textbf{syst\`{e}me d'alertes} n'a pas encore \'{e}t\'{e} impl\'{e}ment\'{e} et figurera au programme : ce composant permettra de notifier les op\'{e}rateurs en cas d'\'{e}v\'{e}nements m\'{e}tiers critiques (v\'{e}hicule en panne, maintenance urgente, etc.).
 
 \end{document}
