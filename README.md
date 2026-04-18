@@ -32,9 +32,18 @@ minikube tunnel  # dans un terminal séparé
 | Jaeger         | http://localhost:16686           | http://flotte.local/jaeger      |
 
 **Identifiants par défaut**
-- Keycloak admin : `admin` / `admin`
-- Utilisateur test : `test-user` / `password` (realm `gestion-flotte`)
-- PostgreSQL : `admin` / `password`
+
+Keycloak admin console : `admin` / `admin`
+
+Utilisateurs du realm `gestion-flotte` :
+
+| Utilisateur | Mot de passe | Rôle |
+| :---------- | :----------- | :--- |
+| `admin` | `admin` | Administrateur — accès complet |
+| `technicien` | `technicien` | Technicien — accès maintenance et véhicules |
+| `manager` | `manager` | Manager — accès tableaux de bord et conducteurs |
+
+PostgreSQL : `admin` / `password`
 
 ---
 

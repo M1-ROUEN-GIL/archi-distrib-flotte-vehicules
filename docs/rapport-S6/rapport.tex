@@ -261,6 +261,31 @@ Keycloak est configur\'{e} avec :
   \item Le chemin HTTP relatif \texttt{/auth} (\texttt{KC\_HTTP\_RELATIVE\_PATH=/auth}) permettant son exposition sous \texttt{flotte.local/auth} via l'ingress \textbf{Traefik} (et non Nginx), utilis\'{e} comme contr\^{o}leur d'ingress dans notre d\'{e}ploiement Helm.
 \end{itemize}
 
+\subsection{Utilisateurs pr\'{e}-configur\'{e}s}
+
+Trois utilisateurs sont automatiquement inject\'{e}s dans le realm lors du d\'{e}marrage, couvrant les trois profils m\'{e}tiers de l'application :
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\ttfamily\raggedright\arraybackslash}p{3cm}
+  >{\ttfamily\centering\arraybackslash}p{3cm}
+  >{\raggedright\arraybackslash}p{7cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Identifiant} & \textbf{Mot de passe} & \textbf{R\^{o}le} \\
+\midrule
+admin      & admin      & Administrateur (acc\`{e}s complet) \\
+\rowcolor{rowgray}
+technicien & technicien & Technicien (maintenance et v\'{e}hicules) \\
+manager    & manager    & Manager (tableaux de bord et conducteurs) \\
+\bottomrule
+\end{tabular}
+\caption{Utilisateurs par d\'{e}faut du realm \texttt{gestion-flotte}}
+\end{table}
+
 \subsection{Package \texttt{@flotte/shared-auth}}
 
 La m\'{e}canique d'int\'{e}gration Keycloak est encapsul\'{e}e dans le paquetage transversal \texttt{@flotte/shared-auth}, inject\'{e} \`{a} la racine du Shell.
@@ -372,6 +397,18 @@ const location = realtimeData?.vehicleLocationUpdated
 
 La position courante est transmise au composant \texttt{RecenterAutomatically} qui repositionne la carte sans rechargement gr\^{a}ce au hook \texttt{useMap()} de \textit{react-leaflet}. La vitesse et le cap courants sont affich\'{e}s en temps r\'{e}el dans l'en-t\^{e}te de la vue.
 
+\subsubsection{Script de simulation}
+
+Un script \texttt{scripts/simulate.sh} permet de simuler un v\'{e}hicule en mouvement en envoyant des coordonn\'{e}es GPS r\'{e}elles via gRPC directement vers le \texttt{location-service}. Le trajet part de Rouen et progresse en temps r\'{e}el, ce qui permet de visualiser le d\'{e}placement sur la carte Leaflet sans intervention manuelle.
+
+\begin{lstlisting}[language=bash, caption=Lancement de la simulation GPS]
+# Sur Docker Compose
+./scripts/simulate.sh docker
+
+# Sur Minikube (ouvre automatiquement un port-forward gRPC)
+./scripts/simulate.sh minikube
+\end{lstlisting}
+
 % ============================================================
 \section{Tests End-to-End avec Playwright}
 % ============================================================
@@ -471,14 +508,15 @@ Localisation & Absence d'erreur d'initialisation & \textcolor{success}{\textbf{P
 \end{table}
 
 % ============================================================
-\section{Bilan et perspectives --- Semaine 7}
+\newpage
+\section{Bilan et perspectives pour la Semaine 7}
 % ============================================================
 
 \subsection{Travaux r\'{e}alis\'{e}s}
 
 L'ensemble du \textbf{frontend} a \'{e}t\'{e} d\'{e}velopp\'{e} et est fonctionnel : architecture Micro-Frontend, int\'{e}gration Keycloak (SSO, JWT, RBAC), dashboards temps r\'{e}el (v\'{e}hicules, conducteurs, maintenance, localisation GPS) et tests E2E Playwright. Le p\'{e}rim\`{e}tre frontal pr\'{e}vu pour la semaine 6 est donc compl\`{e}tement trait\'{e}.
 
-\subsection{Perspectives --- Semaine 7}
+\subsection{Ce qui est pr\'{e}vu en semaine 7}
 
 La semaine 7 comportera plusieurs travaux. Parmi ceux-ci, le \textbf{syst\`{e}me d'alertes} n'a pas encore \'{e}t\'{e} impl\'{e}ment\'{e} et figurera au programme : ce composant permettra de notifier les op\'{e}rateurs en cas d'\'{e}v\'{e}nements m\'{e}tiers critiques (v\'{e}hicule en panne, maintenance urgente, etc.).
 

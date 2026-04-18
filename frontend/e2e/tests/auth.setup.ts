@@ -9,8 +9,8 @@ setup('authenticate via Keycloak', async ({ page }) => {
   // Keycloak redirige automatiquement vers la page de login (onLoad: 'login-required')
   await page.waitForURL(/\/auth\/realms\/gestion-flotte/);
 
-  await page.fill('#username', 'test-user');
-  await page.fill('#password', 'password');
+  await page.fill('#username', 'admin');
+  await page.fill('#password', 'admin');
   await page.click('#kc-login');
 
   // Attendre la redirection vers l'app
