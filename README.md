@@ -74,6 +74,63 @@ Tous les scripts se trouvent dans [`scripts/`](./scripts).
 
 ---
 
+## Frontend
+
+Architecture **Micro-Frontend** basée sur Vite Module Federation (npm workspaces).
+
+| App | Rôle | Port (dev) |
+| :-- | :--- | :--------- |
+| `shell` | Application hôte — routing, layout, chargement des remotes | — |
+| `vehicles` | Module véhicules (remote) | 5002 |
+| `drivers` | Module conducteurs (remote) | 5003 |
+| `maintenance` | Module maintenance (remote) | 5004 |
+| `location` | Module géolocalisation temps réel (remote) | 5005 |
+
+**Packages partagés** (`packages/`) :
+
+| Package | Contenu |
+| :------ | :------ |
+| `shared-auth` | Contexte Keycloak / OIDC partagé entre remotes |
+| `shared-client` | Client Apollo GraphQL partagé |
+| `shared-ui` | Composants UI communs |
+
+### Lancer le frontend en développement
+
+```bash
+cd frontend
+npm install
+npm run start:all   # lance tous les remotes + le shell
+```
+
+Le shell est accessible sur **http://localhost:3005** (servi par Docker Compose).
+
+---
+
+## Infrastructure & Bases de données
+
+| Service | Image | Rôle |
+| :------ | :---- | :--- |
+| `flotte-postgres` | `timescale/timescaledb:2.14.2-pg15` | Base de données principale (TimescaleDB) — une base par microservice |
+| `flotte-redis` | `redis:7.2-alpine` | Cache distribué |
+| `flotte-kafka` | `apache/kafka:3.7.0` | Bus d'événements (KRaft, sans ZooKeeper) |
+| `flotte-keycloak` | `keycloak:26.5.7` | Authentification OAuth2 / OIDC |
+| `flotte-pgadmin` | `dpage/pgadmin4` | Interface d'administration PostgreSQL |
+
+---
+
+## Stack d'observabilité
+
+| Service | Image | Rôle |
+| :------ | :---- | :--- |
+| `flotte-jaeger` | `jaegertracing/all-in-one:1.55` | Tracing distribué — UI sur :16686 |
+| `flotte-prometheus` | `prom/prometheus:v2.51.0` | Collecte des métriques |
+| `flotte-loki` | `grafana/loki:2.9.4` | Agrégation des logs |
+| `flotte-grafana` | `grafana/grafana:10.4.1` | Dashboards (métriques, logs, traces) |
+| `flotte-otel-collector` | `otel/opentelemetry-collector-contrib:0.96.0` | Point d'ingestion OTLP central (gRPC :4317, HTTP :4318) |
+| `flotte-promtail` | `grafana/promtail:2.9.4` | Collecte des logs non-OTLP (frontend, location-service) vers Loki |
+
+---
+
 ## Tests API avec Bruno
 
 1. Ouvrir [Bruno](https://usebruno.com) et charger le dossier [`/bruno`](./bruno)
