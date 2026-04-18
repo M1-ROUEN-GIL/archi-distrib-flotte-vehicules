@@ -1,0 +1,473 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{hyperref}
+
+% ============================================================
+% MISE EN PAGE
+% ============================================================
+\geometry{
+  headheight=25pt,
+  top=2.6cm,
+  bottom=2.8cm,
+  left=2.8cm,
+  right=2.8cm
+}
+\setstretch{1.12}
+
+% ============================================================
+% COULEURS
+% ============================================================
+\definecolor{primary}{RGB}{28, 90, 168}
+\definecolor{primarylight}{RGB}{88, 145, 220}
+\definecolor{secondary}{RGB}{232, 240, 252}
+\definecolor{codebg}{RGB}{248, 250, 255}
+\definecolor{codeframe}{RGB}{170, 195, 230}
+\definecolor{success}{RGB}{34, 130, 90}
+\definecolor{warning}{RGB}{200, 120, 40}
+\definecolor{darkgray}{RGB}{45, 55, 72}
+\definecolor{lightgray}{RGB}{95, 110, 140}
+\definecolor{rowgray}{RGB}{245, 247, 250}
+
+% ============================================================
+% STYLE DU CODE
+% ============================================================
+\lstset{
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{primary}\bfseries,
+  commentstyle=\color{lightgray}\itshape,
+  stringstyle=\color{success},
+  breaklines=true,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\sffamily\textcolor{lightgray},
+  numbersep=6pt,
+  tabsize=2,
+  captionpos=b,
+  aboveskip=1em,
+  belowskip=1em,
+  xleftmargin=0pt,
+  framexleftmargin=0pt
+}
+
+% ============================================================
+% EN-TETE ET PIED DE PAGE
+% ============================================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\textcolor{primary!85!black}{Projet M1 GIL --- Gestion de flotte}}
+\fancyhead[R]{\small\sffamily\textcolor{primary!85!black}{Univ. Rouen Normandie \textperiodcentered{} 2025--2026}}
+\fancyfoot[C]{\small\sffamily\textcolor{primary!70!black}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primary!35}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0pt}
+
+% ============================================================
+% STYLE DES TITRES
+% ============================================================
+\titleformat{\section}
+  {\Large\sffamily\bfseries\color{primary}}
+  {\thesection.}{0.55em}{}
+
+\titleformat{\subsection}
+  {\large\sffamily\bfseries\color{primary!85!black}}
+  {\thesubsection.}{0.45em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\sffamily\bfseries\color{primary!75!black}}
+  {\thesubsubsection.}{0.4em}{}
+
+\titlespacing*{\section}{0pt}{1.6ex plus .2ex}{1ex plus .1ex}
+\titlespacing*{\subsection}{0pt}{1.3ex plus .15ex}{0.7ex plus .1ex}
+
+% ============================================================
+% BOITE INFO
+% ============================================================
+\newmdenv[
+  backgroundcolor=secondary,
+  linecolor=primary,
+  linewidth=1.1pt,
+  leftline=true,
+  rightline=false,
+  topline=false,
+  bottomline=false,
+  innerleftmargin=11pt,
+  innerrightmargin=11pt,
+  innertopmargin=9pt,
+  innerbottommargin=9pt,
+  skipabove=0.6em,
+  skipbelow=0.6em
+]{infobox}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=primary!90!black,
+  urlcolor=primarylight,
+  pdfborderstyle={/S/U/W 0}
+}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+\begin{document}
+
+% ------------------------------------------------------------
+% PAGE DE TITRE
+% ------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+
+  {\Large\textbf{Universit\'{e} de Rouen Normandie}\\[0.3cm]
+  \large Master 1 -- G\'{e}nie Informatique et Logiciel}
+
+  \vspace{1.5cm}
+  {\color{primary!55}\rule{\linewidth}{0.5mm}}\\[0.45cm]
+
+  {\Huge\sffamily\bfseries\color{primary} Projet Gestion de Flotte\\[0.35cm]}
+  {\LARGE\sffamily\bfseries\color{primary!80!black} Rapport de Semaine 6}\\[0.35cm]
+  {\large\sffamily\color{primary!65!black} Architecture Frontend, S\'{e}curit\'{e} SSO \& Tests E2E}
+
+  {\color{primary!55}\rule{\linewidth}{0.5mm}}\\[1.5cm]
+
+  \begin{minipage}{0.45\textwidth}
+    \begin{flushleft}
+      \textbf{\'{E}tudiants :}\\
+      Ahc\`{e}ne Amouchas \\
+      Florian Pepin \\[0.5cm]
+      \textbf{Encadrants :}\\
+      Lydia \& Luc
+    \end{flushleft}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.45\textwidth}
+    \begin{flushright}
+      \textbf{Ann\'{e}e universitaire :}\\
+      2025 -- 2026 \\[0.5cm]
+      \textbf{Semaine :}\\
+      6 / 7
+    \end{flushright}
+  \end{minipage}
+
+  \vfill
+  {\large 18 avril 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{D\'{e}veloppement du Micro-Frontend}
+% ============================================================
+
+\subsection{Philosophie et structure en Monorepo}
+
+L'interface utilisateur de la plateforme de gestion de flotte a \'{e}t\'{e} con\c{c}ue selon une architecture \textbf{Micro-Frontend (MFE)}, organis\'{e}e au sein d'un \textbf{Monorepo NPM Workspaces}. Cette approche permet \`{a} plusieurs d\'{e}veloppeurs de travailler en parall\`{e}le sur des domaines m\'{e}tiers distincts sans g\'{e}n\'{e}rer de conflits, tout en maintenant une coh\'{e}rence visuelle et s\'{e}curitaire globale.
+
+L'arborescence se divise en deux cat\'{e}gories :
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{\texttt{apps/}} : applications ex\'{e}cutables de fa\c{c}on autonome (\texttt{shell}, \texttt{vehicles}, \texttt{drivers}, \texttt{maintenance}, \texttt{location}).
+  \item \textbf{\texttt{packages/}} : biblioth\`{e}ques transversales partag\'{e}es (\texttt{shared-auth}, \texttt{shared-ui}, \texttt{shared-client}).
+\end{itemize}
+
+\subsection{Module Federation avec Vite.js}
+
+L'assemblage dynamique des micro-applications s'effectue gr\^{a}ce au plugin \textbf{Module Federation} de Vite. L'application \textbf{Shell} joue le r\^{o}le d'h\^{o}te : elle d\'{e}finit les routes, applique la politique de s\'{e}curit\'{e} et charge \`{a} la demande les composants expos\'{e}s par les applications distantes (\textit{Remotes}).
+
+\begin{lstlisting}[language=bash, caption=Configuration Module Federation --- shell/vite.config.ts]
+federation({
+  name: 'shell',
+  remotes: {
+    vehicles_app:    'http://localhost:5002/assets/remoteEntry.js',
+    drivers_app:     'http://localhost:5003/assets/remoteEntry.js',
+    maintenance_app: 'http://localhost:5004/assets/remoteEntry.js',
+    location_app:    'http://localhost:5005/assets/remoteEntry.js',
+  },
+  shared: ['react', 'react-dom', '@apollo/client', 'graphql'],
+})
+\end{lstlisting}
+
+\subsection{Composants React et chargement asynchrone}
+
+Chaque module distant est import\'{e} dynamiquement via \texttt{React.lazy()} et envelopp\'{e} dans un \texttt{<Suspense>}, ce qui diff\`{e}re le t\'{e}l\'{e}chargement du bundle jusqu'au moment o\`{u} l'utilisateur acc\`{e}de \`{a} la route correspondante.
+
+\begin{lstlisting}[language=Java, caption=shell/src/App.tsx --- chargement lazy des remotes]
+const VehicleList = React.lazy(() =>
+  import('vehicles_app/VehicleList').then(m => ({ default: m.default || m }))
+);
+
+<Route path="vehicles" element={
+  <Suspense fallback={<div>Chargement du module vehicules...</div>}>
+    <VehicleList />
+  </Suspense>
+} />
+\end{lstlisting}
+
+\subsection{Communication avec la Gateway GraphQL}
+
+Un paquetage partag\'{e} \texttt{@flotte/shared-client} base sur \texttt{@apollo/client} injecte automatiquement le jeton JWT dans l'en-t\^{e}te \texttt{Authorization} de chaque requ\^{e}te via un \textit{Context Link} Apollo.
+
+\begin{lstlisting}[language=Java, caption=packages/shared-client --- injection du token JWT]
+const authLink = new ApolloLink((operation, forward) => {
+  const token = keycloak.token;
+  operation.setContext({
+    headers: { Authorization: token ? `Bearer ${token}` : '' },
+  });
+  return forward(operation);
+});
+\end{lstlisting}
+
+% ============================================================
+\section{Int\'{e}gration Keycloak (SSO, login, logout)}
+% ============================================================
+
+\subsection{Choix de Keycloak et protocole OIDC}
+
+L'authentification a \'{e}t\'{e} d\'{e}l\'{e}gu\'{e}e \`{a} un serveur \textbf{Keycloak} conteneuris\'{e}, impl\'{e}mentant le protocole \textbf{OAuth2 / OpenID Connect (OIDC)}. Aucun formulaire de connexion n'est pr\'{e}sent dans le code React : les requ\^{e}tes non authentifi\'{e}es sont automatiquement redirig\'{e}es vers Keycloak (\textit{Standard Flow} avec \textit{PKCE}).
+
+\begin{infobox}
+\textbf{Flux de connexion :} L'utilisateur acc\`{e}de \`{a} l'application $\rightarrow$ Keycloak intercepte et affiche sa page de login $\rightarrow$ Apr\`{e}s validation des identifiants, Keycloak retourne un \textbf{JWT} (access token + refresh token) $\rightarrow$ L'application est mont\'{e}e et les requ\^{e}tes GraphQL sont autoris\'{e}es.
+\end{infobox}
+
+\subsection{Configuration Keycloak}
+
+Keycloak est configur\'{e} avec :
+\begin{itemize}[leftmargin=*]
+  \item Le \textit{realm} \texttt{gestion-flotte} contenant les utilisateurs et les r\^{o}les m\'{e}tiers.
+  \item Un client OIDC \texttt{frontend} de type \textit{public} (sans secret), utilisant \texttt{onLoad: 'login-required'} pour forcer l'authentification d\`{e}s l'acc\`{e}s.
+  \item Le chemin HTTP relatif \texttt{/auth} (\texttt{KC\_HTTP\_RELATIVE\_PATH=/auth}) permettant son exposition sous \texttt{flotte.local/auth} via l'ingress Nginx.
+\end{itemize}
+
+\subsection{Package \texttt{@flotte/shared-auth}}
+
+La m\'{e}canique d'int\'{e}gration Keycloak est encapsul\'{e}e dans le paquetage transversal \texttt{@flotte/shared-auth}, inject\'{e} \`{a} la racine du Shell.
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Verrou d'initialisation :} Un verrou m\'{e}moris\'{e} hors de la port\'{e}e du composant garantit une unique instanciation du client Keycloak, m\^{e}me en mode \textit{React Strict Mode}.
+  \item \textbf{Blocage du rendu :} L'arbre DOM n'est mont\'{e} qu'apr\`{e}s r\'{e}solution compl\`{e}te de l'initialisation, \'{e}vitant tout \textit{flickering} de routes prot\'{e}g\'{e}es.
+  \item \textbf{Hook \texttt{useAuth} :} Expose une fa\c{c}ade permettant \`{a} n'importe quel micro-frontend de r\'{e}cup\'{e}rer l'identit\'{e} utilisateur (\texttt{username}, \texttt{roles}) ou de d\'{e}clencher une d\'{e}connexion propre.
+\end{enumerate}
+
+\begin{lstlisting}[language=Java, caption=Utilisation du hook useAuth dans le Layout]
+const { username, roles, logout } = useAuth();
+
+<button onClick={logout}>
+  <LogOut size={16} /> Quitter
+</button>
+\end{lstlisting}
+
+% ============================================================
+\section{Gestion JWT et RBAC (routes prot\'{e}g\'{e}es par r\^{o}le)}
+% ============================================================
+
+\subsection{Structure du JWT Keycloak}
+
+Apr\`{e}s authentification, Keycloak \'{e}met un \textbf{JSON Web Token (JWT)} sign\'{e} contenant les informations d'identit\'{e} et les r\^{o}les de l'utilisateur. Le frontend ne stocke jamais le token en \texttt{localStorage} : il est conserv\'{e} en m\'{e}moire par le client Keycloak.js et renouvel\'{e} automatiquement avant expiration (\textit{token refresh silencieux}).
+
+\begin{lstlisting}[language=bash, caption=Extrait d'un payload JWT Keycloak d\'{e}cod\'{e}]
+{
+  "sub": "uuid-utilisateur",
+  "preferred_username": "florian",
+  "realm_access": {
+    "roles": ["fleet-manager", "offline_access"]
+  },
+  "exp": 1713480000
+}
+\end{lstlisting}
+
+\subsection{Injection automatique dans Apollo}
+
+Le \textit{Context Link} Apollo r\'{e}cup\`{e}re \`{a} chaque requ\^{e}te le token courant (\texttt{keycloak.token}) et l'injecte dans l'en-t\^{e}te HTTP. La Gateway GraphQL valide ensuite ce token aupr\`{e}s de Keycloak avant de laisser passer la requ\^{e}te.
+
+\subsection{Contr\^{o}le d'acc\`{e}s bas\'{e} sur les r\^{o}les (RBAC)}
+
+Les r\^{o}les extraits du JWT permettent de conditionner dynamiquement l'interface. Le hook \texttt{useAuth} expose un tableau \texttt{roles} consommable par n'importe quel composant pour masquer ou afficher des actions selon les habilitations.
+
+\begin{lstlisting}[language=Java, caption=Affichage conditionnel selon le r\^{o}le]
+const { roles } = useAuth();
+const isManager = roles?.includes('fleet-manager');
+
+{isManager && (
+  <button onClick={() => openModal()}>
+    Ajouter un vehicule
+  </button>
+)}
+\end{lstlisting}
+
+\begin{infobox}
+\textbf{S\'{e}curit\'{e} en profondeur :} La v\'{e}rification RBAC c\^{o}t\'{e} frontend est uniquement cosmétique. La v\'{e}ritable barrière de s\'{e}curit\'{e} est appliqu\'{e}e c\^{o}t\'{e} serveur par la Gateway GraphQL, qui rejette tout token invalide ou insuffisamment habilit\'{e}.
+\end{infobox}
+
+% ============================================================
+\section{Dashboards temps r\'{e}el}
+% ============================================================
+
+Chaque domaine m\'{e}tier poss\`{e}de sa propre vue d\'{e}di\'{e}e, consommant l'API GraphQL et affichant les donn\'{e}es sous forme de tableau ou de carte interactive. Les donn\'{e}es sont rafra\^{i}chies soit par requ\^{e}te (\texttt{useQuery}) soit par abonnement WebSocket (\texttt{useSubscription}) selon le module.
+
+\subsection{Vue Tableau de bord}
+
+La page d'accueil pr\'{e}sente une vue synth\'{e}tique de l'activit\'{e} du parc. Elle agr\`{e}ge en une seule requ\^{e}te GraphQL (\texttt{GetAllForStats}) les donn\'{e}es des trois microservices principaux et calcule c\^{o}t\'{e} client quatre indicateurs cl\'{e}s :
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{V\'{e}hicules disponibles} : v\'{e}hicules au statut \texttt{AVAILABLE}.
+  \item \textbf{En maintenance} : interventions au statut \texttt{IN\_PROGRESS}.
+  \item \textbf{Conducteurs actifs} : conducteurs au statut \texttt{ACTIVE} ou \texttt{ON\_TOUR}.
+  \item \textbf{Maintenances pr\'{e}vues} : interventions au statut \texttt{SCHEDULED}.
+\end{itemize}
+
+Chaque indicateur est affich\'{e} dans une carte visuelle avec une ic\^{o}ne et un code couleur propre \`{a} son \'{e}tat m\'{e}tier.
+
+\subsection{Vue V\'{e}hicules}
+
+Le module \texttt{vehicles} affiche l'ensemble du parc automobile dans un tableau avec les colonnes : immatriculation, marque et mod\`{e}le, kilom\'{e}trage et statut. Chaque ligne propose des actions d'\'{e}dition et de suppression. Un formulaire modal permet la cr\'{e}ation d'un nouveau v\'{e}hicule (plaque, marque, mod\`{e}le, kilom\'{e}trage initial, charge utile, volume, carburant). Les statuts sont mat\'{e}rialis\'{e}s par des badges color\'{e}s (\texttt{AVAILABLE}, \texttt{ON\_DELIVERY}, \texttt{IN\_MAINTENANCE}, \texttt{OUT\_OF\_SERVICE}).
+
+\subsection{Vue Conducteurs}
+
+Le module \texttt{drivers} liste les conducteurs avec leur pr\'{e}nom, nom et statut courant. Comme pour les v\'{e}hicules, les enregistrements sont r\'{e}cup\'{e}r\'{e}s via une requ\^{e}te GraphQL (\texttt{GetDrivers}) et affich\'{e}s dans un tableau. Le statut (\texttt{ACTIVE}, \texttt{ON\_TOUR}, \texttt{UNAVAILABLE}) est rendu visuellement par un badge.
+
+\subsection{Vue Maintenance}
+
+Le module \texttt{maintenance} pr\'{e}sente l'ensemble des interventions planifi\'{e}es ou en cours sur le parc. Chaque ligne du tableau indique le v\'{e}hicule concern\'{e}, le type d'intervention, la date pr\'{e}visionnelle et le statut (\texttt{SCHEDULED}, \texttt{IN\_PROGRESS}, \texttt{COMPLETED}). Les donn\'{e}es sont charg\'{e}es via \texttt{maintenanceRecords} depuis la Gateway GraphQL.
+
+\subsection{Vue Localisation --- Suivi GPS temps r\'{e}el}
+
+Le module \texttt{location} affiche la position GPS des v\'{e}hicules sur une carte interactive \textbf{Leaflet}. Deux m\'{e}canismes sont combin\'{e}s :
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Requ\^{e}te initiale (\texttt{useQuery})} : r\'{e}cup\`{e}re la derni\`{e}re position connue au chargement de la page.
+  \item \textbf{Abonnement temps r\'{e}el (\texttt{useSubscription})} : \'{e}coute un flux WebSocket GraphQL (\texttt{WATCH\_VEHICLE\_LOCATION}) et met \`{a} jour la carte \`{a} chaque nouveau signal GPS re\c{c}u.
+\end{enumerate}
+
+\begin{lstlisting}[language=Java, caption=location/src/App.tsx --- abonnement WebSocket]
+const { data: realtimeData } = useSubscription(WATCH_VEHICLE_LOCATION, {
+  variables: { vehicle_id: selectedVehicleId },
+});
+
+const location = realtimeData?.vehicleLocationUpdated
+               || initialData?.vehicleLocation;
+\end{lstlisting}
+
+La position courante est transmise au composant \texttt{RecenterAutomatically} qui repositionne la carte sans rechargement gr\^{a}ce au hook \texttt{useMap()} de \textit{react-leaflet}. La vitesse et le cap courants sont affich\'{e}s en temps r\'{e}el dans l'en-t\^{e}te de la vue.
+
+% ============================================================
+\section{Tests End-to-End avec Playwright}
+% ============================================================
+
+\subsection{Mise en place}
+
+Les tests E2E sont impl\'{e}ment\'{e}s avec \textbf{Playwright} et configur\'{e}s au niveau du Monorepo (\texttt{frontend/playwright.config.ts}). Deux projets sont d\'{e}finis :
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{\texttt{setup}} : ex\'{e}cute l'authentification Keycloak et sauvegarde la session dans \texttt{e2e/.auth/user.json}.
+  \item \textbf{\texttt{chromium}} : charge la session sauvegard\'{e}e (\texttt{storageState}) et ex\'{e}cute les tests m\'{e}tiers. Il d\'{e}pend du projet \texttt{setup}.
+\end{itemize}
+
+\begin{lstlisting}[language=Java, caption=playwright.config.ts --- configuration des projets]
+projects: [
+  { name: 'setup', testMatch: '**/auth.setup.ts' },
+  {
+    name: 'chromium',
+    use: {
+      ...devices['Desktop Chrome'],
+      storageState: 'e2e/.auth/user.json',
+    },
+    dependencies: ['setup'],
+  },
+]
+\end{lstlisting}
+
+\subsection{Authentification automatis\'{e}e}
+
+Le fichier \texttt{auth.setup.ts} simule la connexion Keycloak une seule fois avant la suite de tests. La session est r\'{e}utilis\'{e}e pour tous les tests suivants, \'{e}vitant une reconnexion \`{a} chaque sc\'{e}nario.
+
+\begin{lstlisting}[language=Java, caption=e2e/tests/auth.setup.ts]
+setup('authenticate via Keycloak', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForURL(/\/auth\/realms\/gestion-flotte/);
+  await page.fill('#username', 'test-user');
+  await page.fill('#password', 'password');
+  await page.click('#kc-login');
+  await page.waitForURL('/');
+  await expect(
+    page.getByRole('heading', { name: 'Tableau de bord' })
+  ).toBeVisible();
+  await page.context().storageState({ path: authFile });
+});
+\end{lstlisting}
+
+\subsection{Lancement des tests}
+
+Un script shell \texttt{test-e2e.sh} plac\'{e} \`{a} la racine du projet permet de lancer les tests selon l'environnement cible. Il v\'{e}rifie la disponibilit\'{e} de l'application avant de d\'{e}marrer Playwright et ouvre automatiquement le rapport HTML en fin d'ex\'{e}cution.
+
+\begin{lstlisting}[language=bash, caption=Lancement des tests E2E]
+# Mode Docker Compose (http://localhost:3005)
+./test-e2e.sh docker
+
+# Mode Minikube (http://flotte.local)
+./test-e2e.sh minikube
+\end{lstlisting}
+
+\subsection{R\'{e}capitulatif des tests}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{3cm}
+  >{\raggedright\arraybackslash}p{6.2cm}
+  >{\centering\arraybackslash}p{2.2cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Module} & \textbf{Sc\'{e}nario test\'{e}} & \textbf{R\'{e}sultat} \\
+\midrule
+Authentification & Redirection vers Keycloak et connexion & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Authentification & Sauvegarde de session (\texttt{storageState}) & \textcolor{success}{\textbf{Pass}} \\
+Dashboard & Affichage du titre \og Tableau de bord \fg{} & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Dashboard & Pr\'{e}sence des 4 cartes de statistiques & \textcolor{success}{\textbf{Pass}} \\
+Dashboard & Chargement des valeurs sans erreur GraphQL & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+V\'{e}hicules & Affichage de la liste des v\'{e}hicules & \textcolor{success}{\textbf{Pass}} \\
+V\'{e}hicules & Cr\'{e}ation d'un v\'{e}hicule via le formulaire & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+V\'{e}hicules & Suppression d'un v\'{e}hicule avec confirmation & \textcolor{success}{\textbf{Pass}} \\
+Conducteurs & Affichage de la liste des conducteurs & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Conducteurs & Absence d'erreur GraphQL & \textcolor{success}{\textbf{Pass}} \\
+Maintenance & Affichage de la liste des interventions & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Maintenance & Absence d'erreur GraphQL & \textcolor{success}{\textbf{Pass}} \\
+Localisation & Chargement de la carte Leaflet & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Localisation & Absence d'erreur d'initialisation & \textcolor{success}{\textbf{Pass}} \\
+\bottomrule
+\end{tabular}
+\caption{R\'{e}capitulatif des tests end-to-end Playwright}
+\end{table}
+
+\end{document}
