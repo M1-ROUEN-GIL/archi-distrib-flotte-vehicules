@@ -57,7 +57,6 @@ Tous les scripts se trouvent dans [`scripts/`](./scripts).
 | `simulate.sh docker\|minikube` | Simule un camion en mouvement en envoyant des coordonnées GPS en temps réel via gRPC. |
 | `simulate-alerts.sh docker\|minikube` | Simule des alertes métier (excès de vitesse, sortie de zone, maintenance, permis…) en publiant des événements Kafka. |
 | `load-tests.sh [smoke\|load\|stress]` | Lance tous les tests de charge k6 (GraphQL, REST, gRPC) pour le scénario choisi (défaut : `smoke`). |
-| `reset-docker.sh` | Remet Docker Compose à zéro (volumes inclus), relance les services et redémarre la Gateway. |
 | `watch-kafka.sh` | Affiche en temps réel les événements Kafka du namespace `flotte.*` (Minikube uniquement). |
 | `test-e2e.sh docker\|minikube` | Vérifie l'accès à l'environnement cible, lance les tests Playwright et ouvre le rapport HTML. |
 
