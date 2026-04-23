@@ -225,7 +225,7 @@ service:
 \subsection{Jaeger --- Distributed Tracing}
 
 Jaeger (\texttt{jaegertracing/all-in-one:1.55}) est d\'{e}ploy\'{e} en mode
-\textit{all-in-one} pour la d\'{e}monstration. Il rec\`{e}it les traces via
+\textit{all-in-one} pour la d\'{e}monstration. Il re\c{c}oit les traces via
 OTLP gRPC (port 4317) depuis l'OTel Collector et expose son interface
 graphique sous le chemin \texttt{/jaeger} de l'ingress \texttt{flotte.local},
 ce qui permet une navigation unifi\'{e}e depuis le navigateur.
@@ -432,7 +432,7 @@ RBAC              & Technicien redirig\'{e} depuis \texttt{/drivers}  & \textcol
 RBAC              & Manager redirig\'{e} depuis \texttt{/maintenance} & \textcolor{success}{\textbf{Pass}} \\
 \bottomrule
 \end{tabular}
-\caption{R\'{e}capitulatif des 32 tests end-to-end Playwright --- 0 \'{e}chec (Minikube)}
+\caption{R\'{e}capitulatif des 15 sc\'{e}narios end-to-end Playwright --- 0 \'{e}chec (Minikube)}
 \end{table}
 
 \begin{lstlisting}[language=bash, caption=Lancement des tests E2E]
@@ -500,9 +500,8 @@ load-tests/
 \end{itemize}
 
 \begin{lstlisting}[language=bash, caption=Lancement des tests K6]
-./scripts/load-tests.sh           # smoke (defaut)
-./scripts/load-tests.sh load      # test de charge (10 VUs)
-./scripts/load-tests.sh stress    # test de stress (100 VUs)
+./scripts/load-tests.sh docker    # smoke -> load -> stress (Docker Compose)
+./scripts/load-tests.sh minikube  # smoke -> load -> stress (Minikube)
 \end{lstlisting}
 
 % ============================================================
@@ -773,7 +772,14 @@ automatiquement via la subscription WebSocket.
 
 Pendant la d\'{e}monstration, le script \texttt{scripts/watch-kafka.sh} permet
 d'afficher en direct les \'{e}v\'{e}nements circulant sur tous les topics
-\texttt{flotte.*}. Cela permet de montrer le flux \'{e}v\'{e}nementiel complet~:
+\texttt{flotte.*}. Il supporte les deux environnements~:
+
+\begin{lstlisting}[language=bash, caption=Surveillance Kafka en temps r\'{e}el]
+./scripts/watch-kafka.sh docker    # via docker exec sur flotte-kafka
+./scripts/watch-kafka.sh minikube  # via kubectl exec sur le pod Kafka
+\end{lstlisting}
+
+Cela permet de montrer le flux \'{e}v\'{e}nementiel complet~:
 de la publication GPS jusqu'\`{a} l'apparition de l'alerte dans le navigateur.
 
 \subsection{Collection Bruno --- Tests manuels API}
@@ -832,7 +838,7 @@ Pipeline OTel Collector (traces + m\'{e}triques + logs) & \textcolor{success}{\t
 Dashboards Grafana (business metrics) & \textcolor{success}{\textbf{Termin\'{e}}} \\
 \rowcolor{rowgray}
 Page \texttt{/alerts} dans le shell (temps r\'{e}el, RBAC, filtres) & \textcolor{success}{\textbf{Termin\'{e}}} \\
-Tests E2E Playwright (3 r\^{o}les, RBAC, 11 sc\'{e}narios) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+Tests E2E Playwright (3 r\^{o}les, RBAC, 15 sc\'{e}narios) & \textcolor{success}{\textbf{Termin\'{e}}} \\
 \rowcolor{rowgray}
 Tests de charge K6 (smoke / load / stress, GraphQL + REST + gRPC) & \textcolor{success}{\textbf{Termin\'{e}}} \\
 D\'{e}ploiement Helm prod-ready (3 charts, script kube.sh) & \textcolor{success}{\textbf{Termin\'{e}}} \\
