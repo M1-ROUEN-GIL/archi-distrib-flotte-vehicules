@@ -32,7 +32,7 @@ export class LocationController {
     }
 
     // Streaming serveur — s'abonner aux positions d'un véhicule
-    @GrpcStreamMethod('LocationService', 'WatchVehicle')
+    @GrpcMethod('LocationService', 'WatchVehicle')
     watchVehicle(request: { vehicle_id: string }): Observable<any> {
         return this.locationService.watchVehicle(request.vehicle_id);
     }

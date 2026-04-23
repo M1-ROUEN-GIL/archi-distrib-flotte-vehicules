@@ -4,6 +4,7 @@ import { useQuery, gql } from '@apollo/client';
 import { useAuth } from '@flotte/shared-auth';
 import { Layout } from './Layout';
 import { Truck, Wrench, Users, Clock } from 'lucide-react';
+import AlertsPage from './alerts/AlertsPage';
 
 // 1. La requête combinée (basée sur les requêtes existantes de tes autres pages)
 const GET_ALL_FOR_STATS = gql`
@@ -173,6 +174,7 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+                    <Route path="/alerts" element={<AlertsPage />} />
 
                 </Route>
             </Routes>

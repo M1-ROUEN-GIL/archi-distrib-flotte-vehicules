@@ -55,6 +55,8 @@ Tous les scripts se trouvent dans [`scripts/`](./scripts).
 | :----- | :---------- |
 | `kube.sh` | Lance Minikube, build les images, déploie toute la stack via Helm et attend que tout soit prêt. |
 | `simulate.sh docker\|minikube` | Simule un camion en mouvement en envoyant des coordonnées GPS en temps réel via gRPC. |
+| `simulate-alerts.sh docker\|minikube` | Simule des alertes métier (excès de vitesse, sortie de zone, maintenance, permis…) en publiant des événements Kafka. |
+| `load-tests.sh [smoke\|load\|stress]` | Lance tous les tests de charge k6 (GraphQL, REST, gRPC) pour le scénario choisi (défaut : `smoke`). |
 | `reset-docker.sh` | Remet Docker Compose à zéro (volumes inclus), relance les services et redémarre la Gateway. |
 | `watch-kafka.sh` | Affiche en temps réel les événements Kafka du namespace `flotte.*` (Minikube uniquement). |
 | `test-e2e.sh docker\|minikube` | Vérifie l'accès à l'environnement cible, lance les tests Playwright et ouvre le rapport HTML. |
@@ -62,7 +64,10 @@ Tous les scripts se trouvent dans [`scripts/`](./scripts).
 ```bash
 # Exemples
 ./scripts/simulate.sh docker
-./scripts/simulate.sh minikube
+./scripts/simulate-alerts.sh docker
+
+./scripts/load-tests.sh smoke
+./scripts/load-tests.sh load
 
 ./scripts/test-e2e.sh docker
 ./scripts/test-e2e.sh minikube
@@ -89,11 +94,19 @@ Architecture **Micro-Frontend** basée sur Vite Module Federation (npm workspace
 
 | App | Rôle | Port (dev) |
 | :-- | :--- | :--------- |
-| `shell` | Application hôte — routing, layout, chargement des remotes | — |
+| `shell` | Application hôte — routing, layout, chargement des remotes, page Alertes | — |
 | `vehicles` | Module véhicules (remote) | 5002 |
 | `drivers` | Module conducteurs (remote) | 5003 |
 | `maintenance` | Module maintenance (remote) | 5004 |
 | `location` | Module géolocalisation temps réel (remote) | 5005 |
+
+**Rôles et accès** :
+
+| Rôle | Véhicules | Conducteurs | Maintenance | Temps réel | Alertes |
+| :--- | :-------: | :---------: | :---------: | :--------: | :-----: |
+| `admin` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `technicien` | ✓ | — | ✓ | — | ✓ |
+| `manager` | — | ✓ | — | ✓ | ✓ |
 
 **Packages partagés** (`packages/`) :
 
@@ -146,4 +159,4 @@ Architecture **Micro-Frontend** basée sur Vite Module Federation (npm workspace
 - **Data** : PostgreSQL 16, Apache Kafka (KRaft)
 - **Infra** : Docker, Kubernetes / Helm 3
 - **Observabilité** : Prometheus, Grafana, Jaeger, Loki, Promtail, OpenTelemetry
-- **Tests E2E** : Playwright
+- **Tests** : Playwright (E2E), k6 (charge — GraphQL, REST, gRPC)

@@ -1,0 +1,45 @@
+{
+  "cookies": [
+    {
+      "name": "AUTH_SESSION_ID",
+      "value": "b3lyclpwTFpKOGgxM09ZTzhLQTNYbVp3LjhadjBYX0pJNEVMYjZBMUVFbDJqZUtsWGtrZ0JIMnh1enk4YVFjXzFjekV6clZwR29VNG5WbG5SU1VSR0lWcHFrdUlUNEZhTVNKeEd1SDBSU0RLUllR",
+      "domain": "localhost",
+      "path": "/auth/realms/gestion-flotte/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "KC_AUTH_SESSION_HASH",
+      "value": "\"vfv8wdfJb4fpcImzkXlt/L1miByz3BBIn4XPAqNCdUU\"",
+      "domain": "localhost",
+      "path": "/auth/realms/gestion-flotte/",
+      "expires": 1776953334.396347,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "KEYCLOAK_IDENTITY",
+      "value": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkM2I1MGM3OC0yNzFkLTQzZTYtOTBmMi01NjM0YmY3MTAxMWYifQ.eyJleHAiOjE3NzY5ODkyNzQsImlhdCI6MTc3Njk1MzI3NCwianRpIjoiMGU1M2JlZWItMTg3Ni04YzdiLTNhZGQtMjg5ODlkNTEwNjY0IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDA1L2F1dGgvcmVhbG1zL2dlc3Rpb24tZmxvdHRlIiwic3ViIjoiYWFhMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAyIiwidHlwIjoiU2VyaWFsaXplZC1JRCIsInNpZCI6Im95cnJacExaSjhoMTNPWU84S0EzWG1adyIsInN0YXRlX2NoZWNrZXIiOiJsTGZHMmNvNXFUOFc2UHV3VkhLX1Z1Y0diTXIwb1pITk1oand3LS1wTG40In0.nrbepTn89XXhgXL2uiiYP_JWT6WnOpBJ-1g8lAeOuTgdJxw-nsxDZ8KTC50plbHBBzWbVPXyAgaTI3acb1YOZw",
+      "domain": "localhost",
+      "path": "/auth/realms/gestion-flotte/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "KEYCLOAK_SESSION",
+      "value": "vfv8wdfJb4fpcImzkXlt_L1miByz3BBIn4XPAqNCdUU",
+      "domain": "localhost",
+      "path": "/auth/realms/gestion-flotte/",
+      "expires": 1776989274.645267,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    }
+  ],
+  "origins": []
+}
