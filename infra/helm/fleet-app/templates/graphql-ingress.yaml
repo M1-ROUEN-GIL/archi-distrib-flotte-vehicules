@@ -1,0 +1,25 @@
+# Ingress dédié pour GraphQL et les WebSockets (sans rewrite-target)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flotte-graphql-ingress
+  namespace: {{ .Values.namespace }}
+  annotations:
+    # On désactive explicitement la réécriture pour ce domaine
+    # pour que /graphql arrive intact sur la Gateway
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "75"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: flotte.local
+      http:
+        paths:
+          - path: /graphql
+            pathType: Prefix
+            backend:
+              service:
+                name: graphql-gateway-service
+                port:
+                  number: 4000

@@ -24,13 +24,6 @@ spec:
                 name: grafana
                 port:
                   number: 3000
-          - path: /(graphql)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: graphql-gateway-service
-                port:
-                  number: 4000
           - path: /api/(vehicles)(.*)
             pathType: ImplementationSpecific
             backend:

@@ -10,8 +10,9 @@ const isProd = import.meta.env.PROD;
 
 // ⚠️ URLs de la Gateway GraphQL
 const GATEWAY_HTTP_URL = isProd ? '/graphql' : 'http://localhost:4000/graphql';
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const GATEWAY_WS_URL = isProd 
-    ? `ws://${window.location.host}/graphql` 
+    ? `${protocol}//${window.location.host}/graphql` 
     : 'ws://localhost:4000/graphql';
 
 export const AppGraphQLProvider = ({ children }: { children: React.ReactNode }) => {

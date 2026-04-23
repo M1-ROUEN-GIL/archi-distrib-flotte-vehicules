@@ -16,11 +16,13 @@ if [[ "$MODE" == "docker" ]]; then
     GATEWAY_URL="http://localhost:4000/graphql"
     KAFKA_BOOTSTRAP="kafka:9092"
     KAFKA_EXEC=(docker exec -i flotte-kafka)
+    KAFKA_BIN="/opt/kafka/bin/kafka-console-producer.sh"
 else
     KC_URL="http://flotte.local/auth/realms/gestion-flotte/protocol/openid-connect/token"
     GATEWAY_URL="http://flotte.local/graphql"
-    KAFKA_BOOTSTRAP="kafka.flotte.local:9092"
-    KAFKA_EXEC=(kubectl exec -i -n flotte deploy/kafka --)
+    KAFKA_BOOTSTRAP="kafka-service:9092"
+    KAFKA_EXEC=(kubectl exec -i -n flotte-namespace deploy/kafka-deployment --)
+    KAFKA_BIN="/usr/bin/kafka-console-producer"
 fi
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -35,7 +37,7 @@ rand_float() {
 kafka_send() {
     local topic="$1" payload="$2"
     echo "$payload" | "${KAFKA_EXEC[@]}" \
-        /opt/kafka/bin/kafka-console-producer.sh \
+        "$KAFKA_BIN" \
         --topic "$topic" \
         --bootstrap-server "$KAFKA_BOOTSTRAP" 2>/dev/null
 }
