@@ -1,5 +1,5 @@
 # BUILD STAGE (On compile le TypeScript)
-FROM node:18.20-alpine AS builder
+FROM node:20.18-alpine AS builder
 WORKDIR /app
 
 # Copier les fichiers de dépendances
@@ -18,7 +18,7 @@ RUN npm run build
 RUN npm ci --only=production && npm cache clean --force
 
 # RUNTIME STAGE (On ne garde que ce qui est utile pour tourner)
-FROM node:18.20-alpine
+FROM node:20.18-alpine
 WORKDIR /app
 
 RUN apk upgrade --no-cache && \

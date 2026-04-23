@@ -4,7 +4,7 @@ import { GET_DRIVERS, CREATE_DRIVER, UPDATE_DRIVER_STATUS, UPDATE_DRIVER, DELETE
 import { Edit2, Trash2, Plus } from 'lucide-react';
 
 export default function DriverList() {
-  const { loading, error, data, refetch } = useQuery(GET_DRIVERS, { fetchPolicy: 'network-only' });
+  const { loading, error, data } = useQuery(GET_DRIVERS, { fetchPolicy: 'network-only' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -12,10 +12,10 @@ export default function DriverList() {
   const [editingDriver, setEditingDriver] = useState<any>(null);
 
   // Mutations
-  const [createDriver] = useMutation(CREATE_DRIVER, { onCompleted: () => { refetch(); closeModal(); } });
-  const [updateStatus] = useMutation(UPDATE_DRIVER_STATUS);
-  const [updateDriver] = useMutation(UPDATE_DRIVER, { onCompleted: () => { refetch(); closeModal(); } });
-  const [deleteDriver] = useMutation(DELETE_DRIVER, { onCompleted: () => refetch() });
+  const [createDriver] = useMutation(CREATE_DRIVER, { refetchQueries: [{ query: GET_DRIVERS }], onCompleted: () => closeModal() });
+  const [updateStatus] = useMutation(UPDATE_DRIVER_STATUS, { refetchQueries: [{ query: GET_DRIVERS }], awaitRefetchQueries: true });
+  const [updateDriver] = useMutation(UPDATE_DRIVER, { refetchQueries: [{ query: GET_DRIVERS }], onCompleted: () => closeModal() });
+  const [deleteDriver] = useMutation(DELETE_DRIVER, { refetchQueries: [{ query: GET_DRIVERS }] });
 
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', email: '', phone: '', employee_id: '',
@@ -39,7 +39,14 @@ export default function DriverList() {
       setEditingDriver(null);
       setFormData({
         first_name: '', last_name: '', email: '', phone: '', employee_id: '',
-        keycloak_user_id: crypto.randomUUID ? crypto.randomUUID() : '550e8400-e29b-41d4-a716-446655440000'
+        keycloak_user_id: (() => {
+            if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+            const b = crypto.getRandomValues(new Uint8Array(16));
+            b[6] = (b[6] & 0x0f) | 0x40;
+            b[8] = (b[8] & 0x3f) | 0x80;
+            const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+            return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+          })()
       });
     }
     setIsModalOpen(true);

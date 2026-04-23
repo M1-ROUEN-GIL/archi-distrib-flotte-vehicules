@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
+const BASE = process.env.BASE_URL ?? 'http://localhost:3005';
+
 // ── Rôle technicien ───────────────────────────────────────────────────────────
 // Accès : /vehicles, /maintenance
 // Interdit (redirect → /) : /drivers, /location
@@ -22,12 +24,12 @@ test.describe('Rôle technicien', () => {
 
   test('est redirigé depuis /drivers', async ({ page }) => {
     await page.goto('/drivers');
-    await expect(page).toHaveURL('http://localhost:3005/', { timeout: 5_000 });
+    await expect(page).toHaveURL(`${BASE}/`, { timeout: 5_000 });
   });
 
   test('est redirigé depuis /location', async ({ page }) => {
     await page.goto('/location');
-    await expect(page).toHaveURL('http://localhost:3005/', { timeout: 5_000 });
+    await expect(page).toHaveURL(`${BASE}/`, { timeout: 5_000 });
   });
 });
 
@@ -52,11 +54,11 @@ test.describe('Rôle manager', () => {
 
   test('est redirigé depuis /vehicles', async ({ page }) => {
     await page.goto('/vehicles');
-    await expect(page).toHaveURL('http://localhost:3005/', { timeout: 5_000 });
+    await expect(page).toHaveURL(`${BASE}/`, { timeout: 5_000 });
   });
 
   test('est redirigé depuis /maintenance', async ({ page }) => {
     await page.goto('/maintenance');
-    await expect(page).toHaveURL('http://localhost:3005/', { timeout: 5_000 });
+    await expect(page).toHaveURL(`${BASE}/`, { timeout: 5_000 });
   });
 });

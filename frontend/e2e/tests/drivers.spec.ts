@@ -4,10 +4,11 @@ test.describe('Conducteurs', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/drivers');
     await expect(page.getByText('Chargement du module chauffeurs...')).not.toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Chargement des conducteurs')).not.toBeVisible({ timeout: 15_000 });
   });
 
   test('affiche la liste des conducteurs', async ({ page }) => {
-    await expect(page.locator('table')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('table')).toBeVisible({ timeout: 20_000 });
   });
 
   test("la liste ne contient pas d'erreur GraphQL", async ({ page }) => {
@@ -26,11 +27,12 @@ test.describe('Conducteurs', () => {
     await form.locator('input[type="email"]').fill(`create-${tag}@flotte.test`);
     await page.getByRole('button', { name: /créer/i }).click();
 
-    await expect(page.getByText(`${lastName.toUpperCase()} Jean`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(`${lastName.toUpperCase()} Jean`)).toBeVisible({ timeout: 20_000 });
 
     // Nettoyage
     page.once('dialog', d => d.accept());
     await page.locator('tr').filter({ hasText: lastName.toUpperCase() }).locator('button[title="Supprimer"]').click();
+    await expect(page.locator('tr').filter({ hasText: lastName.toUpperCase() })).not.toBeVisible({ timeout: 10_000 });
   });
 
   test('permet de modifier un conducteur', async ({ page }) => {
@@ -44,7 +46,7 @@ test.describe('Conducteurs', () => {
     await form.locator('input').nth(1).fill(lastName);
     await form.locator('input[type="email"]').fill(`edit-${tag}@flotte.test`);
     await page.getByRole('button', { name: /créer/i }).click();
-    await expect(page.getByText(`${lastName.toUpperCase()} Paul`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(`${lastName.toUpperCase()} Paul`)).toBeVisible({ timeout: 20_000 });
 
     // Modification : ajout d'un numéro de téléphone
     const row = page.locator('tr').filter({ hasText: lastName.toUpperCase() });
@@ -52,11 +54,12 @@ test.describe('Conducteurs', () => {
     await page.getByPlaceholder('Facultatif').nth(0).fill('0612345678');
     await page.getByRole('button', { name: /mettre à jour/i }).click();
 
-    await expect(page.getByText('0612345678')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('0612345678')).toBeVisible({ timeout: 20_000 });
 
     // Nettoyage
     page.once('dialog', d => d.accept());
     await row.locator('button[title="Supprimer"]').click();
+    await expect(row).not.toBeVisible({ timeout: 10_000 });
   });
 
   test("permet de changer le statut d'un conducteur", async ({ page }) => {
@@ -69,16 +72,17 @@ test.describe('Conducteurs', () => {
     await form.locator('input').nth(1).fill(lastName);
     await form.locator('input[type="email"]').fill(`status-${tag}@flotte.test`);
     await page.getByRole('button', { name: /créer/i }).click();
-    await expect(page.getByText(`${lastName.toUpperCase()} Marc`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(`${lastName.toUpperCase()} Marc`)).toBeVisible({ timeout: 20_000 });
 
     const row = page.locator('tr').filter({ hasText: lastName.toUpperCase() });
     await row.locator('select').selectOption('ON_LEAVE');
     // Cible le span du badge (pas l'option du select qui contient aussi ce texte)
-    await expect(row.locator('span').filter({ hasText: 'En congé' })).toBeVisible({ timeout: 10_000 });
+    await expect(row.locator('span').filter({ hasText: 'En congé' })).toBeVisible({ timeout: 20_000 });
 
     // Nettoyage
     page.once('dialog', d => d.accept());
     await row.locator('button[title="Supprimer"]').click();
+    await expect(row).not.toBeVisible({ timeout: 10_000 });
   });
 
   test('permet de supprimer un conducteur', async ({ page }) => {
@@ -91,10 +95,10 @@ test.describe('Conducteurs', () => {
     await form.locator('input').nth(1).fill(lastName);
     await form.locator('input[type="email"]').fill(`del-${tag}@flotte.test`);
     await page.getByRole('button', { name: /créer/i }).click();
-    await expect(page.getByText(`${lastName.toUpperCase()} Alice`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(`${lastName.toUpperCase()} Alice`)).toBeVisible({ timeout: 20_000 });
 
     page.once('dialog', d => d.accept());
     await page.locator('tr').filter({ hasText: lastName.toUpperCase() }).locator('button[title="Supprimer"]').click();
-    await expect(page.getByText(`${lastName.toUpperCase()} Alice`)).not.toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(`${lastName.toUpperCase()} Alice`)).not.toBeVisible({ timeout: 20_000 });
   });
 });

@@ -20,7 +20,9 @@
 \usepackage{float}
 \usepackage{microtype}
 \usepackage{setspace}
+\usepackage{amssymb}
 \usepackage{hyperref}
+\setlength{\emergencystretch}{2em}
 
 % ============================================================
 % MISE EN PAGE
@@ -44,6 +46,7 @@
 \definecolor{codeframe}{RGB}{170, 195, 230}
 \definecolor{success}{RGB}{34, 130, 90}
 \definecolor{warning}{RGB}{200, 120, 40}
+\definecolor{danger}{RGB}{185, 40, 40}
 \definecolor{darkgray}{RGB}{45, 55, 72}
 \definecolor{lightgray}{RGB}{95, 110, 140}
 \definecolor{rowgray}{RGB}{245, 247, 250}
@@ -148,7 +151,11 @@
 
   {\Huge\sffamily\bfseries\color{primary} Projet Gestion de Flotte\\[0.35cm]}
   {\LARGE\sffamily\bfseries\color{primary!80!black} Rapport de Semaine 7}\\[0.35cm]
-  {\large\sffamily\color{primary!65!black} Observabilit\'{e}, Performance \& D\'{e}ploiement Final}
+  {\large\sffamily\color{primary!65!black}
+    Observabilit\'{e} compl\`{e}te \textperiodcentered{}
+    Alertes temps r\'{e}el \textperiodcentered{}
+    Tests de charge K6 \textperiodcentered{}
+    D\'{e}ploiement Helm prod-ready}
 
   {\color{primary!55}\rule{\linewidth}{0.5mm}}\\[1.5cm]
 
@@ -179,139 +186,679 @@
 \newpage
 
 % ============================================================
-\section{Observabilit\'{e} Compl\`{e}te}
+\section{Observabilit\'{e} compl\`{e}te}
 % ============================================================
 
-L'architecture distribu\'{e}e de la plateforme a \'{e}t\'{e} enrichie d'une stack d'observabilit\'{e} compl\`{e}te permettant de surveiller la sant\'{e} du syst\`{e}me et de diagnostiquer les problèmes en temps r\'{e}el.
+\subsection{Architecture de la stack}
 
-\subsection{Tra\c{c}age Distribu\'{e} avec Jaeger}
+L'observabilit\'{e} de la plateforme repose sur le pattern \textbf{LGTMo}
+(Loki, Grafana, Tempo/Jaeger, M\'{e}triques via Prometheus, OpenTelemetry),
+int\'{e}gralement pilot\'{e} par le chart Helm \texttt{fleet-observability}.
+L'\textbf{OpenTelemetry Collector} constitue le pivot central : il re\c{c}oit
+traces, m\'{e}triques et logs de tous les microservices via OTLP et les route
+vers les backends sp\'{e}cialis\'{e}s.
 
-Chaque microservice (Java et Node.js) intègre l'\textbf{agent OpenTelemetry} pour collecter et exporter des traces distribu\'{e}es. Cela permet de visualiser le cheminement complet d'une requ\^{e}te, de la Gateway GraphQL jusqu'aux services backend et aux bases de donn\'{e}es.
+\begin{lstlisting}[language=bash, caption=Pipeline de l'OTel Collector
+--- \texttt{otel-collector-config.yaml}]
+receivers:
+  otlp:
+    protocols:
+      grpc:  { endpoint: "0.0.0.0:4317" }
+      http:  { endpoint: "0.0.0.0:4318" }
 
-\begin{itemize}[leftmargin=*]
-  \item \textbf{Instrumentation automatique} : Utilisation du \texttt{opentelemetry-javaagent.jar} pour les services Java et du SDK OpenTelemetry pour Node.js.
-  \item \textbf{Propagation de contexte} : Les en-t\^{e}tes de trace sont transmis lors des appels gRPC et des messages Kafka.
-\end{itemize}
+processors:
+  memory_limiter: { limit_percentage: 70, spike_limit_percentage: 30 }
+  batch: {}
 
-\subsection{Collecte de M\'{e}triques avec Prometheus}
+exporters:
+  otlp/jaeger: { endpoint: "jaeger:4317", tls: { insecure: true } }
+  loki:        { endpoint: "http://loki:3100/loki/api/v1/push" }
+  prometheus:  { endpoint: "0.0.0.0:8889" }
 
-Un serveur \textbf{Prometheus} centralise les m\'{e}triques techniques et m\'{e}tiers du cluster.
-\begin{itemize}[leftmargin=*]
-  \item \textbf{Spring Boot Actuator} : Expose les m\'{e}triques JVM, HTTP et Kafka via le endpoint \texttt{/actuator/prometheus}.
-  \item \textbf{NestJS Metrics} : Int\'{e}gration de m\'{e}triques Prometheus personnalis\'{e}es pour le service de localisation.
-  \item \textbf{Kafka Exporter} : Surveillance du lag des consommateurs et du d\'{e}bit des topics.
-\end{itemize}
+service:
+  pipelines:
+    traces:  { receivers: [otlp], processors: [batch], exporters: [otlp/jaeger] }
+    metrics: { receivers: [otlp], processors: [batch], exporters: [prometheus] }
+    logs:    { receivers: [otlp], processors: [batch], exporters: [loki] }
+\end{lstlisting}
 
-\subsection{Dashboards Grafana Personnalis\'{e}s}
+\subsection{Jaeger --- Distributed Tracing}
 
-Nous avons conçu des tableaux de bord \textbf{Grafana} pour offrir une visibilit\'{e} multi-niveaux :
+Jaeger (\texttt{jaegertracing/all-in-one:1.55}) est d\'{e}ploy\'{e} en mode
+\textit{all-in-one} pour la d\'{e}monstration. Il rec\`{e}it les traces via
+OTLP gRPC (port 4317) depuis l'OTel Collector et expose son interface
+graphique sous le chemin \texttt{/jaeger} de l'ingress \texttt{flotte.local},
+ce qui permet une navigation unifi\'{e}e depuis le navigateur.
+
+\begin{infobox}
+\textbf{Correction technique appliqu\'{e}e :} La datasource Jaeger dans Grafana
+doit pointer vers \texttt{jaeger:16686\textbf{/jaeger}} (avec le base path) et
+non \texttt{jaeger:16686}. Sans ce correctif, l'exploration de traces
+depuis les panels Grafana retourne une erreur 404.
+\end{infobox}
+
+\subsection{Prometheus --- M\'{e}triques}
+
+Prometheus (\texttt{prom/prometheus:v2.51.0}) scrape les m\'{e}triques agr\'{e}g\'{e}es
+par l'OTel Collector sur le port 8889 avec un intervalle de \textbf{5 secondes},
+adapt\'{e} au suivi en quasi-temps r\'{e}el des \'{e}v\'{e}nements de la flotte. Les
+microservices ne s'exposent pas directement \`{a} Prometheus~: ils poussent
+leurs m\'{e}triques en OTLP, ce qui centralise la configuration de collecte.
+
+\begin{lstlisting}[language=bash, caption=Configuration du scraping Prometheus]
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+\end{lstlisting}
+
+\subsection{Loki + Promtail --- Centralisation des logs}
+
+Loki (\texttt{grafana/loki:2.9.4}) centralise les logs applicatifs. Promtail
+est d\'{e}ploy\'{e} en \textbf{DaemonSet} pour collecter les logs au niveau de chaque
+n\oe{}ud Kubernetes. Cette approche compl\`{e}te l'OTel Collector pour les
+composants qui n'\'{e}mettent pas nativement en OTLP (frontend React,
+\texttt{location-service} Node.js).
+
+\begin{infobox}
+\textbf{Probl\`{e}me rencontr\'{e} sous Minikube :} Promtail ne trouvait pas les
+fichiers de log \`{a} cause de symlinks Docker absents. Solution appliqu\'{e}e~:
+configuration \texttt{static\_configs} pointant directement vers
+\texttt{/var/log/pods/**/*.log} au lieu des symlinks \texttt{/var/log/containers}.
+\end{infobox}
+
+\subsection{Alertes m\'{e}tier}
+
+Les alertes m\'{e}tier sont produites par le \texttt{events-service} \`{a} partir
+de la consommation des topics Kafka. La cha\^{i}ne compl\`{e}te est la suivante~:
+
 \begin{enumerate}[leftmargin=*]
-  \item \textbf{System Health} : CPU, M\'{e}moire, Taux d'erreurs par service.
-  \item \textbf{Business Metrics} : Nombre de v\'{e}hicules en mouvement, alertes actives par s\'{e}v\'{e}rit\'{e}, taux de disponibilité de la flotte.
-  \item \textbf{Kafka Traffic} : Visualisation des flux de messages entre les services.
+  \item Un \'{e}v\'{e}nement arrive sur un topic Kafka m\'{e}tier
+        (\texttt{location.events}, \texttt{alertes.events} ou
+        \texttt{conducteurs.events}).
+  \item Le \texttt{events-service} consomme l'\'{e}v\'{e}nement, cr\'{e}e une alerte
+        en base et publie \texttt{ALERT\_CREATED} sur
+        \texttt{flotte.alerts.created}.
+  \item La Gateway GraphQL propage l'alerte via la subscription WebSocket
+        \texttt{ALERT\_CREATED\_SUB} vers tous les clients connect\'{e}s.
+  \item Le frontend met \`{a} jour la vue \texttt{/alerts} sans rechargement.
 \end{enumerate}
 
-\section{Interface de pilotage des Alertes}
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\ttfamily\raggedright\arraybackslash}p{4.8cm}
+  >{\ttfamily\raggedright\arraybackslash}p{5cm}
+  >{\centering\arraybackslash}p{3cm}
+}
+\toprule
+\rowcolor{secondary}
+\normalfont\textbf{Type d'alerte} & \normalfont\textbf{Topic source} & \normalfont\textbf{S\'{e}v\'{e}rit\'{e}} \\
+\midrule
+SPEED\_EXCEEDED        & flotte.location.events    & WARNING / HIGH \\
+\rowcolor{rowgray}
+GEOFENCING\_BREACH     & flotte.location.events    & HIGH \\
+VEHICLE\_IMMOBILIZED   & flotte.location.events    & WARNING \\
+\rowcolor{rowgray}
+MAINTENANCE\_OVERDUE   & flotte.alertes.events     & CRITICAL / HIGH \\
+LICENSE\_EXPIRING      & flotte.conducteurs.events & WARNING \\
+\rowcolor{rowgray}
+LICENSE\_EXPIRED       & flotte.conducteurs.events & CRITICAL \\
+\bottomrule
+\end{tabular}
+\caption{Types d'alertes m\'{e}tier et topics Kafka associ\'{e}s}
+\end{table}
 
-Une nouvelle page \texttt{/alerts} a \'{e}t\'{e} int\'{e}gr\'{e}e au frontend pour permettre aux op\'{e}rateurs de visualiser et d'acquitter les alertes en temps r\'{e}el.
-
-\begin{infobox}
-\textbf{Choix d'architecture :} Contrairement aux autres modules m\'{e}tiers, la gestion des alertes a \'{e}t\'{e} impl\'{e}ment\'{e}e directement au sein de l'application \textbf{Shell} et non comme un micro-frontend (MFE) s\'{e}par\'{e}. Ce choix permet d'\'{e}viter la complexit\'{e} disproportionn\'{e}e qu'induirait la cr\'{e}ation d'un d\'{e}p\^{o}t et d'un pipeline de d\'{e}ploiement d\'{e}di\'{e} pour un composant aussi transverse et l\'{e}ger.
-\end{infobox}
-
-Cette interface consomme le flux de messages du \texttt{events-service} via GraphQL et permet un pilotage r\'{e}actif de la flotte directement depuis le cockpit central.
-
-\section{Tests de Charge et Performance (K6)}
+% ============================================================
+\section{Dashboards Grafana personnalis\'{e}s}
 % ============================================================
 
-Pour valider la robustesse de l'architecture face \`{a} une montée en charge, nous avons utilis\'{e} \textbf{K6}.
+\subsection{Configuration des datasources}
 
-\subsection{Sc\'{e}narios de Tests}
+Grafana 10.4.1 est configur\'{e} avec trois datasources d\'{e}clar\'{e}es en tant que
+\textit{provisioned resources} (fichiers YAML mont\'{e}s dans le pod), ce qui
+\'{e}vite toute configuration manuelle apr\`{e}s d\'{e}ploiement.
 
-Plusieurs sc\'{e}narios ont \'{e}t\'{e} mod\'{e}lis\'{e}s dans le dossier \texttt{load-tests/} :
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{3.2cm}
+  >{\ttfamily\raggedright\arraybackslash}p{6cm}
+  >{\raggedright\arraybackslash}p{4.5cm}
+}
+\toprule
+\rowcolor{secondary}
+\normalfont\textbf{Datasource} & \normalfont\textbf{URL interne} & \normalfont\textbf{Usage} \\
+\midrule
+Prometheus (d\'{e}faut) & http://prometheus:9090    & M\'{e}triques techniques et m\'{e}tier \\
+\rowcolor{rowgray}
+Loki                & http://loki:3100           & Logs applicatifs \\
+Jaeger              & http://jaeger:16686/jaeger & Traces distribu\'{e}es \\
+\bottomrule
+\end{tabular}
+\caption{Datasources Grafana provisionn\'{e}es automatiquement}
+\end{table}
+
+\subsection{Dashboards m\'{e}tier (business metrics)}
+
+Les dashboards couvrent quatre domaines fonctionnels~:
+
 \begin{itemize}[leftmargin=*]
-  \item \textbf{Flux GPS Massif} : Simulation de 500 v\'{e}hicules envoyant simultan\'{e}ment leurs positions via gRPC.
-  \item \textbf{Consultation Dashboard} : Requ\^{e}tes GraphQL complexes simulant l'acc\`{e}s de 50 managers simultan\'{e}s.
-  \item \textbf{Stress Test Kafka} : Injection rapide d'alertes pour v\'{e}rifier la capacit\'{e} de traitement du \texttt{events-service}.
+  \item \textbf{Vue flotte} : nombre de v\'{e}hicules disponibles, en maintenance,
+        en tourn\'{e}e, hors service. \'{E}volution temporelle du statut du parc.
+  \item \textbf{Vue conducteurs} : conducteurs actifs, en tourn\'{e}e, indisponibles.
+        Alertes permis expirant sous 30 jours.
+  \item \textbf{Vue alertes} : r\'{e}partition des alertes actives par s\'{e}v\'{e}rit\'{e}
+        (CRITICAL, HIGH, WARNING, INFO). Taux d'acquittement.
+  \item \textbf{Vue performance API} : latences p50/p95/p99 des endpoints
+        GraphQL, REST et gRPC. Taux d'erreur par service.
 \end{itemize}
 
-\subsection{R\'{e}sultats et Optimisations}
-
-Les tests ont mis en \'{e}vidence la n\'{e}cessit\'{e} de configurer des \textit{HPA (Horizontal Pod Autoscalers)} sur la Gateway et le service de localisation. Le passage \`{a} une communication asynchrone via Kafka pour les alertes a permis de maintenir une latence stable sous charge.
+Grafana est accessible sous \texttt{http://flotte.local/grafana} (chemin
+relatif configur\'{e} via \texttt{GF\_SERVER\_ROOT\_URL} et
+\texttt{GF\_SERVER\_SERVE\_FROM\_SUB\_PATH=true}).
 
 % ============================================================
-\section{D\'{e}ploiement Final avec Helm}
+\section{Tests end-to-end et tests de charge}
 % ============================================================
 
-Le d\'{e}ploiement a \'{e}t\'{e} uniformis\'{e} via \textbf{Helm} pour \^{e}tre \og prod-ready \fg{}.
+\subsection{Tests E2E --- Playwright}
 
-\subsection{Organisation des Charts}
+Les tests end-to-end sont impl\'{e}ment\'{e}s avec \textbf{Playwright} au niveau
+du Monorepo (\texttt{frontend/playwright.config.ts}). Trois profils de r\^{o}les
+sont couverts~: administrateur, manager, technicien. Chaque profil poss\`{e}de
+son propre fichier d'authentification sauvegard\'{e}
+(\texttt{e2e/.auth/\{user,manager,technicien\}.json}), ce qui \'{e}vite une
+reconnexion Keycloak \`{a} chaque sc\'{e}nario.
+
+\subsubsection{Organisation des tests}
+
+\begin{lstlisting}[language=bash, caption=Arborescence des tests E2E]
+frontend/e2e/tests/
+  auth.setup.ts              # Login admin       -> .auth/user.json
+  auth.setup.manager.ts      # Login manager     -> .auth/manager.json
+  auth.setup.technicien.ts   # Login technicien  -> .auth/technicien.json
+  dashboard.spec.ts          # Statistiques tableau de bord
+  vehicles.spec.ts           # CRUD vehicules
+  drivers.spec.ts            # CRUD conducteurs
+  maintenance.spec.ts        # Suivi des interventions
+  location.spec.ts           # Carte GPS temps reel
+  roles.spec.ts              # Controle d'acces par role (RBAC)
+\end{lstlisting}
+
+\subsubsection{R\'{e}capitulatif des sc\'{e}narios}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{3cm}
+  >{\raggedright\arraybackslash}p{8.5cm}
+  >{\centering\arraybackslash}p{2cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Module} & \textbf{Sc\'{e}nario test\'{e}} & \textbf{R\'{e}sultat} \\
+\midrule
+Auth (admin)      & Connexion Keycloak + sauvegarde session        & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Auth (manager)    & Connexion avec r\^{o}le manager                & \textcolor{success}{\textbf{Pass}} \\
+Auth (technicien) & Connexion avec r\^{o}le technicien             & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Dashboard         & Pr\'{e}sence des 4 cartes de statistiques      & \textcolor{success}{\textbf{Pass}} \\
+Dashboard         & Valeurs charg\'{e}es sans erreur GraphQL        & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+V\'{e}hicules     & Liste, cr\'{e}ation, suppression               & \textcolor{success}{\textbf{Pass}} \\
+Conducteurs       & Liste et absence d'erreur GraphQL              & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Conducteurs       & Cr\'{e}ation (UUID v4, email unique)            & \textcolor{success}{\textbf{Pass}} \\
+Conducteurs       & Modification (mise \`{a} jour t\'{e}l\'{e}phone) & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Conducteurs       & Changement de statut (\texttt{ON\_LEAVE})      & \textcolor{success}{\textbf{Pass}} \\
+Conducteurs       & Suppression (soft delete v\'{e}rifi\'{e})       & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+Maintenance       & Liste, planification, modification statut      & \textcolor{success}{\textbf{Pass}} \\
+Localisation      & Chargement carte Leaflet                       & \textcolor{success}{\textbf{Pass}} \\
+\rowcolor{rowgray}
+RBAC              & Technicien redirig\'{e} depuis \texttt{/drivers}  & \textcolor{success}{\textbf{Pass}} \\
+RBAC              & Manager redirig\'{e} depuis \texttt{/maintenance} & \textcolor{success}{\textbf{Pass}} \\
+\bottomrule
+\end{tabular}
+\caption{R\'{e}capitulatif des 32 tests end-to-end Playwright --- 0 \'{e}chec (Minikube)}
+\end{table}
+
+\begin{lstlisting}[language=bash, caption=Lancement des tests E2E]
+./scripts/test-e2e.sh docker    # cible http://localhost:3005
+./scripts/test-e2e.sh minikube  # cible http://flotte.local
+\end{lstlisting}
+
+\subsection{Tests de charge --- K6}
+
+Les tests de charge sont impl\'{e}ment\'{e}s avec \textbf{K6} et couvrent les trois
+protocoles utilis\'{e}s par la plateforme~: GraphQL (HTTP/JSON), REST et gRPC
+(streaming).
+
+\subsubsection{Profils de charge}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{2.5cm}
+  >{\centering\arraybackslash}p{2cm}
+  >{\centering\arraybackslash}p{2.5cm}
+  >{\raggedright\arraybackslash}p{5cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Profil} & \textbf{VUs max} & \textbf{Dur\'{e}e} & \textbf{Seuil d'acceptation} \\
+\midrule
+\textbf{Smoke}  & 1   & 1 min & p(99) $<$ 1\,500 ms \\
+\rowcolor{rowgray}
+\textbf{Load}   & 10  & 4 min & p(95) $<$ 500 ms \\
+\textbf{Stress} & 100 & 4 min & taux d'erreur $<$ 1\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Profils de charge K6 d\'{e}finis dans \texttt{scenarios/options.js}}
+\end{table}
+
+Le profil \textit{load} suit un \textit{ramp-up} progressif~: 0 $\rightarrow$ 10 VUs
+en 1 minute, maintien 2 minutes, descente en 1 minute, afin d'observer le
+comportement de la plateforme sous charge r\'{e}aliste.
+
+\subsubsection{Scripts de test}
+
+\begin{lstlisting}[language=bash, caption=Arborescence des scripts K6]
+load-tests/
+  utils/config.js               # Auth Keycloak + helpers
+  scenarios/options.js           # Profils smoke / load / stress
+  targets/
+    graphql-vehicles.js          # POST /graphql -> liste vehicules
+    rest-alerts.js               # GET  /api/alerts -> liste alertes
+    grpc-location.js             # gRPC WatchVehicle (server-streaming)
+\end{lstlisting}
 
 \begin{itemize}[leftmargin=*]
-  \item \textbf{\texttt{fleet-infra}} : Gère les dépendances (PostgreSQL, Kafka, Keycloak, Prometheus, Jaeger).
-  \item \textbf{\texttt{fleet-app}} : Déploie l'ensemble des microservices et le frontend.
-  \item \textbf{\texttt{fleet-observability}} : Configure Grafana et les dashboards.
+  \item \textbf{\texttt{graphql-vehicles.js}} : requ\^{e}te GraphQL
+        \texttt{GetVehicles} avec jeton Bearer. V\'{e}rifie le statut HTTP 200,
+        l'absence d'erreurs GraphQL et la pr\'{e}sence du tableau
+        \texttt{vehicles}.
+  \item \textbf{\texttt{rest-alerts.js}} : appel REST
+        \texttt{GET /api/alerts} avec authentification. V\'{e}rifie le statut
+        200 et que la r\'{e}ponse est un tableau.
+  \item \textbf{\texttt{grpc-location.js}} : ouvre un flux
+        \texttt{LocationService/WatchVehicle} en gRPC server-streaming,
+        teste la connexion et le half-close propre.
 \end{itemize}
 
-\subsection{Configuration Ingress et S\'{e}curit\'{e}}
+\begin{lstlisting}[language=bash, caption=Lancement des tests K6]
+./scripts/load-tests.sh           # smoke (defaut)
+./scripts/load-tests.sh load      # test de charge (10 VUs)
+./scripts/load-tests.sh stress    # test de stress (100 VUs)
+\end{lstlisting}
 
-L'acc\`{e}s externe est g\'{e}r\'{e} par un Ingress Controller (Traefik ou Nginx) avec :
+% ============================================================
+\section{D\'{e}ploiement final avec Helm}
+% ============================================================
+
+\subsection{Architecture des charts}
+
+L'ensemble du syst\`{e}me est d\'{e}ploy\'{e} via trois charts Helm ind\'{e}pendants,
+permettant de mettre \`{a} jour chaque couche s\'{e}par\'{e}ment~:
+
+\begin{lstlisting}[language=bash, caption=Structure des charts Helm]
+infra/helm/
+  fleet-infra/          # PostgreSQL (TimescaleDB), Kafka (KRaft), Redis
+  fleet-observability/  # Loki, Grafana, Jaeger, Prometheus, OTel, Promtail
+  fleet-app/            # 8 services applicatifs + frontend + ingress
+\end{lstlisting}
+
 \begin{itemize}[leftmargin=*]
-  \item Isolation des réseaux via des \textbf{Network Policies} Kubernetes.
-  \item Gestion des secrets via des \texttt{Secret} Kubernetes (inject\'{e}s au runtime).
-  \item \textit{Readiness} et \textit{Liveness probes} configur\'{e}es pour chaque service.
+  \item \textbf{\texttt{fleet-infra}} : infrastructure stateful. G\`{e}re les bases
+        de donn\'{e}es PostgreSQL/TimescaleDB par service, Kafka en mode KRaft
+        (sans ZooKeeper) et Redis pour le cache.
+  \item \textbf{\texttt{fleet-observability}} : stack d'observabilit\'{e}. Toutes
+        les ressources Kubernetes (Deployments, Services, ConfigMaps) sont
+        g\'{e}n\'{e}r\'{e}es depuis les templates du chart.
+  \item \textbf{\texttt{fleet-app}} : couche applicative. D\'{e}ploie les 6
+        microservices m\'{e}tier, la Gateway GraphQL, le frontend React, Keycloak
+        et les r\`{e}gles d'ingress.
 \end{itemize}
 
-% ============================================================
-\section{Documentation et Finalisation}
-% ============================================================
+\subsection{D\'{e}ploiement automatis\'{e} --- \texttt{scripts/kube.sh}}
 
-\subsection{Documentation Technique}
+Le script \texttt{kube.sh} orchestre l'int\'{e}gralit\'{e} du d\'{e}ploiement Minikube
+en une seule commande~:
 
-La documentation a \'{e}t\'{e} centralis\'{e}e et mise \`{a} jour :
-\begin{itemize}[leftmargin=*]
-  \item \textbf{README.md} : Guide d'installation rapide (Docker \& Kubernetes).
-  \item \textbf{API Docs} : Documentation OpenAPI pour les services REST et sch\'{e}ma GraphQL auto-g\'{e}n\'{e}r\'{e}.
-  \item \textbf{ADR (Architecture Decision Records)} : Justification des choix technologiques (Kafka, Micro-frontend, gRPC).
-\end{itemize}
+\begin{lstlisting}[language=bash, caption=\'{E}tapes du script \texttt{kube.sh}]
+# 1. Demarrage Minikube + addon ingress
+minikube start --cpus=4 --memory=8192
+minikube addons enable ingress
 
-\subsection{Pr\'{e}paration de la D\'{e}monstration}
+# 2. Namespace et secrets
+kubectl create namespace flotte-namespace
+kubectl create secret generic db-secrets ...
 
-Pour le rendu final, un sc\'{e}nario complet a \'{e}t\'{e} pr\'{e}par\'{e} :
-\begin{enumerate}
-  \item Initialisation des donn\'{e}es (Conducteurs, V\'{e}hicules).
-  \item Lancement d'une simulation GPS avec d\'{e}passement de vitesse.
-  \item Visualisation de l'alerte sur le frontend.
-  \item Consultation des traces dans Jaeger pour analyser le flux de l'alerte.
-\end{enumerate}
+# 3. Build des images dans le daemon Docker de Minikube
+eval $(minikube docker-env)
+docker build -t vehicle-service:latest ./services/vehicle-service
+# ... (driver, maintenance, events, location, gateway, frontend)
 
-% ============================================================
-\section{Livrables et État Final}
-% ============================================================
+# 4. Installation des charts dans l'ordre
+helm install fleet-infra      ./infra/helm/fleet-infra
+helm install fleet-observability ./infra/helm/fleet-observability
 
-Le système est d\'{e}sormais complet et d\'{e}ployable. 
+# 5. Creation des topics Kafka
+kubectl exec -n flotte-namespace kafka-0 -- kafka-topics.sh \
+  --create --topic flotte.location.events ...
 
-\begin{infobox}
-\textbf{Note sur l'avancement :} Certains \'{e}l\'{e}ments de d\'{e}tail (polissage fin de certains dashboards, documentation exhaustive de chaque endpoint obscur) seront finalis\'{e}s d'ici le rendu final, mais le cœur fonctionnel et l'infrastructure sont op\'{e}rationnels et v\'{e}rifi\'{e}s par la CI/CD.
-\end{infobox}
+# 6. Deploiement applicatif
+helm install fleet-app ./infra/helm/fleet-app
+\end{lstlisting}
+
+\subsection{Points d'acc\`{e}s}
 
 \begin{table}[H]
 \centering
 \renewcommand{\arraystretch}{1.4}
-\begin{tabular}{lp{10cm}}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{4cm}
+  >{\ttfamily\raggedright\arraybackslash}p{7cm}
+}
 \toprule
-\textbf{Livrable} & \textbf{Statut} \\
+\rowcolor{secondary}
+\textbf{Service} & \textbf{URL} \\
 \midrule
-Code source & Disponible sur GitHub (Monorepo) \\
+Frontend shell   & http://flotte.local \\
 \rowcolor{rowgray}
-Images Docker & Publi\'{e}es sur GHCR \\
-Charts Helm & Valid\'{e}s (Linting OK) \\
+GraphQL Gateway  & http://flotte.local/graphql \\
+Keycloak         & http://flotte.local/auth \\
 \rowcolor{rowgray}
-Rapports S1-S7 & Termis et archiv\'{e}s \\
-Documentation & Complète (README, ADR, PDF) \\
+Grafana          & http://flotte.local/grafana \\
+Jaeger UI        & http://flotte.local/jaeger \\
 \bottomrule
 \end{tabular}
-\caption{État des livrables pour le rendu final}
+\caption{Points d'acc\`{e}s de la plateforme sous Minikube}
 \end{table}
+
+% ============================================================
+\section{Page d'alertes dans le shell frontend}
+% ============================================================
+
+\subsection{Choix d'int\'{e}gration}
+
+La page \texttt{/alerts} a \'{e}t\'{e} int\'{e}gr\'{e}e \textbf{directement dans l'application
+shell} (\texttt{shell/src/alerts/AlertsPage.tsx}) plut\^{o}t que
+comme micro-frontend d\'{e}di\'{e}. Ce choix se justifie par deux raisons~:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Taille fonctionnelle} : la fonctionnalit\'{e} tient en un seul
+        composant React~; cr\'{e}er un remote Module Federation pour cela aurait
+        ajout\'{e} de la complexit\'{e} de build sans valeur ajout\'{e}e.
+  \item \textbf{Transversalit\'{e}} : les alertes concernent tous les r\^{o}les et
+        doivent \^{e}tre accessibles depuis n'importe quel contexte de navigation~;
+        les placer dans le shell garantit leur disponibilit\'{e} permanente.
+\end{enumerate}
+
+\subsection{Fonctionnalit\'{e}s de \texttt{AlertsPage.tsx}}
+
+\subsubsection{Temps r\'{e}el via subscription GraphQL}
+
+Les nouvelles alertes apparaissent instantan\'{e}ment sans rechargement gr\^{a}ce
+\`{a} une subscription WebSocket \texttt{ALERT\_CREATED\_SUB} via Apollo Client.
+
+\begin{lstlisting}[language=Java, caption=Subscription temps r\'{e}el des alertes
+--- \texttt{AlertsPage.tsx}]
+const ALERT_CREATED_SUB = gql`
+  subscription OnAlertCreated {
+    alertCreated {
+      id
+      type
+      severity
+      status
+      message
+      vehicleId
+      driverId
+      createdAt
+    }
+  }
+`;
+
+useSubscription(ALERT_CREATED_SUB, {
+  onData: ({ data }) => {
+    const newAlert = data.data?.alertCreated;
+    if (newAlert) {
+      setAlerts(prev => [newAlert, ...prev]);
+    }
+  },
+});
+\end{lstlisting}
+
+\subsubsection{Filtres et pagination}
+
+\begin{itemize}[leftmargin=*]
+  \item Filtre par \textbf{statut}~: ACTIVE, ACKNOWLEDGED, RESOLVED, EXPIRED
+  \item Filtre par \textbf{s\'{e}v\'{e}rit\'{e}}~: CRITICAL, HIGH, WARNING, INFO
+  \item Pagination~: 20 alertes par page
+\end{itemize}
+
+\subsubsection{Actions selon le r\^{o}le (RBAC)}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{4.5cm}
+  >{\centering\arraybackslash}p{2.5cm}
+  >{\centering\arraybackslash}p{2.5cm}
+  >{\centering\arraybackslash}p{2.5cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Action} & \textbf{admin} & \textbf{manager} & \textbf{technicien} \\
+\midrule
+Acquitter (\textit{acknowledge}) & \textcolor{success}{\checkmark} & \textcolor{success}{\checkmark} & \texttimes \\
+\rowcolor{rowgray}
+R\'{e}soudre (\textit{resolve})  & \textcolor{success}{\checkmark} & \textcolor{success}{\checkmark} & \textcolor{success}{\checkmark} \\
+\bottomrule
+\end{tabular}
+\caption{Contr\^{o}le d'acc\`{e}s aux actions sur les alertes}
+\end{table}
+
+\subsubsection{Types d'alertes affich\'{e}s}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\ttfamily\raggedright\arraybackslash}p{5.8cm}
+  >{\raggedright\arraybackslash}p{6.5cm}
+}
+\toprule
+\rowcolor{secondary}
+\normalfont\textbf{Code} & \normalfont\textbf{Label affich\'{e}} \\
+\midrule
+GEOFENCING\_BREACH      & Sortie de zone \\
+\rowcolor{rowgray}
+SPEED\_EXCEEDED         & Exc\`{e}s de vitesse \\
+VEHICLE\_IMMOBILIZED    & Immobilisation v\'{e}hicule \\
+\rowcolor{rowgray}
+MAINTENANCE\_OVERDUE    & Maintenance en retard \\
+LICENSE\_EXPIRING       & Permis expirant \\
+\rowcolor{rowgray}
+LICENSE\_EXPIRED        & Permis expir\'{e} \\
+DELIVERY\_TOUR\_DELAYED & Tourn\'{e}e en retard \\
+\bottomrule
+\end{tabular}
+\caption{Types d'alertes m\'{e}tier et leurs libell\'{e}s dans l'interface}
+\end{table}
+
+\subsection{Int\'{e}gration dans le Layout et la navigation}
+
+La route \texttt{/alerts} est d\'{e}clar\'{e}e dans l'application Shell et ajout\'{e}e
+au menu de navigation du \texttt{Layout.tsx}. Elle est visible par tous les
+r\^{o}les (admin, manager, technicien).
+
+\begin{lstlisting}[language=Java, caption=Route /alerts dans \texttt{App.tsx} (shell)]
+import AlertsPage from './alerts/AlertsPage';
+
+<Route path="alerts" element={<AlertsPage />} />
+\end{lstlisting}
+
+% ============================================================
+\section{Pr\'{e}paration de la d\'{e}monstration}
+% ============================================================
+
+\subsection{Script de simulation d'alertes --- \texttt{simulate-alerts.sh}}
+
+Le script \texttt{scripts/simulate-alerts.sh} g\'{e}n\`{e}re des sc\'{e}narios r\'{e}alistes
+en s'appuyant sur les v\'{e}hicules et conducteurs r\'{e}els pr\'{e}sents en base (r\'{e}cup\'{e}r\'{e}s
+via une requ\^{e}te GraphQL). Il publie ensuite les \'{e}v\'{e}nements directement
+dans Kafka.
+
+\begin{lstlisting}[language=bash, caption=Lancement de la simulation]
+./scripts/simulate-alerts.sh minikube  # ou docker
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{4.4cm}
+  >{\ttfamily\raggedright\arraybackslash}p{5.5cm}
+  >{\raggedright\arraybackslash}p{3.2cm}
+}
+\toprule
+\rowcolor{secondary}
+\normalfont\textbf{Type d'\'{e}v\'{e}nement} & \normalfont\textbf{Topic Kafka} & \normalfont\textbf{D\'{e}tail} \\
+\midrule
+SPEED\_EXCEEDED        & flotte.location.events    & 138, 108, 65 km/h \\
+\rowcolor{rowgray}
+GEOFENCING\_BREACH     & flotte.location.events    & Zone Nord, P\'{e}rim\`{e}tre Rouen \\
+VEHICLE\_IMMOBILIZED   & flotte.location.events    & V\'{e}hicule arr\^{e}t\'{e} trop longtemps \\
+\rowcolor{rowgray}
+MAINTENANCE\_OVERDUE   & flotte.alertes.events     & S\'{e}v\'{e}rit\'{e} CRITICAL et HIGH \\
+LICENSE\_EXPIRING      & flotte.conducteurs.events & 5 et 12 jours restants \\
+\rowcolor{rowgray}
+LICENSE\_EXPIRED       & flotte.conducteurs.events & Permis expir\'{e} \\
+\bottomrule
+\end{tabular}
+\caption{\'{E}v\'{e}nements g\'{e}n\'{e}r\'{e}s par le script de simulation}
+\end{table}
+
+\subsection{Script de simulation GPS --- \texttt{simulate-GPS.sh}}
+
+Le script \texttt{scripts/simulate-GPS.sh} simule un v\'{e}hicule en mouvement
+en envoyant des coordonn\'{e}es GPS r\'{e}elles via gRPC directement vers le
+\texttt{location-service}. Le trajet part de Rouen et progresse en temps
+r\'{e}el~; la carte Leaflet du module \texttt{location} se met \`{a} jour
+automatiquement via la subscription WebSocket.
+
+\begin{lstlisting}[language=bash, caption=Lancement de la simulation GPS]
+./scripts/simulate-GPS.sh minikube  # ouvre le port-forward gRPC si besoin
+./scripts/simulate-GPS.sh docker
+\end{lstlisting}
+
+\subsection{Surveillance Kafka en temps r\'{e}el --- \texttt{watch-kafka.sh}}
+
+Pendant la d\'{e}monstration, le script \texttt{scripts/watch-kafka.sh} permet
+d'afficher en direct les \'{e}v\'{e}nements circulant sur tous les topics
+\texttt{flotte.*}. Cela permet de montrer le flux \'{e}v\'{e}nementiel complet~:
+de la publication GPS jusqu'\`{a} l'apparition de l'alerte dans le navigateur.
+
+\subsection{Collection Bruno --- Tests manuels API}
+
+La collection Bruno (\texttt{bruno/}) permet de rejouer manuellement
+n'importe quel appel API pendant la d\'{e}monstration~:
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{4cm}
+  >{\centering\arraybackslash}p{2cm}
+  >{\raggedright\arraybackslash}p{6cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Cat\'{e}gorie} & \textbf{Nb requ\^{e}tes} & \textbf{Services couverts} \\
+\midrule
+GraphQL   & 34 & V\'{e}hicules, conducteurs, maintenance, alertes, localisation \\
+\rowcolor{rowgray}
+REST      & 37 & CRUD complet de tous les microservices \\
+gRPC      & 2  & WatchVehicle, StreamPositions \\
+\bottomrule
+\end{tabular}
+\caption{Collection Bruno~: 73 requ\^{e}tes API pr\^{e}tes pour la d\'{e}monstration}
+\end{table}
+
+L'authentification Keycloak est g\'{e}r\'{e}e automatiquement par un
+\textit{pre-request script} Bruno~: il \'{e}change les credentials contre un
+JWT, d\'{e}tecte l'expiration (marge de 120 secondes) et injecte le token
+dans l'en-t\^{e}te \texttt{Authorization} de chaque requ\^{e}te. Deux
+environnements sont pr\'{e}-configur\'{e}s~: \texttt{docker} et \texttt{minikube}.
+
+% ============================================================
+\newpage
+\section{Bilan de la semaine 7}
+% ============================================================
+
+\subsection{Travaux r\'{e}alis\'{e}s}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{6.5cm}
+  >{\centering\arraybackslash}p{2.5cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Fonctionnalit\'{e}} & \textbf{Statut} \\
+\midrule
+Stack observabilit\'{e} compl\`{e}te (Jaeger, Prometheus, Loki, Grafana) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+\rowcolor{rowgray}
+Pipeline OTel Collector (traces + m\'{e}triques + logs) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+Dashboards Grafana (business metrics) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+\rowcolor{rowgray}
+Page \texttt{/alerts} dans le shell (temps r\'{e}el, RBAC, filtres) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+Tests E2E Playwright (3 r\^{o}les, RBAC, 11 sc\'{e}narios) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+\rowcolor{rowgray}
+Tests de charge K6 (smoke / load / stress, GraphQL + REST + gRPC) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+D\'{e}ploiement Helm prod-ready (3 charts, script kube.sh) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+\rowcolor{rowgray}
+Scripts de simulation (alertes + GPS) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+Collection Bruno (73 requ\^{e}tes) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+\rowcolor{rowgray}
+Int\'{e}gration CI/CD (frontend + location dans le pipeline) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+\bottomrule
+\end{tabular}
+\caption{Bilan des d\'{e}livrables de la semaine 7}
+\end{table}
+
+\subsection{Points techniques notables}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Pas de micro-frontend d\'{e}di\'{e} pour les alertes} : le composant
+        est int\'{e}gr\'{e} directement dans le shell. Ce choix \'{e}vite la surcharge
+        architecturale d'un remote Module Federation pour une fonctionnalit\'{e}
+        simple et transversale.
+  \item \textbf{K6 couvre les trois protocoles} : la plupart des projets ne testent
+        que le REST~; ici le gRPC streaming est \'{e}galement test\'{e} en charge,
+        ce qui est repr\'{e}sentatif de l'usage r\'{e}el du \texttt{location-service}.
+  \item \textbf{Alertes enti\`{e}rement \'{e}v\'{e}nementielles} : aucun polling~; le
+        chemin complet Kafka $\rightarrow$ events-service $\rightarrow$ GraphQL
+        subscription $\rightarrow$ frontend est temps r\'{e}el de bout en bout.
+\end{itemize}
 
 \end{document}

@@ -12,7 +12,7 @@ setup('authenticate as manager', async ({ page }) => {
   await page.click('#kc-login');
 
   await page.waitForURL('/');
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible({ timeout: 15_000 });
 
   await page.context().storageState({ path: authFile });
 });

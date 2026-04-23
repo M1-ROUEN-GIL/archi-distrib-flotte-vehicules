@@ -54,19 +54,22 @@ Tous les scripts se trouvent dans [`scripts/`](./scripts).
 | Script | Description |
 | :----- | :---------- |
 | `kube.sh` | Lance Minikube, build les images, déploie toute la stack via Helm et attend que tout soit prêt. |
-| `simulate.sh docker\|minikube` | Simule un camion en mouvement en envoyant des coordonnées GPS en temps réel via gRPC. |
+| `simulate-GPS.sh docker\|minikube` | Simule un camion en mouvement en envoyant des coordonnées GPS en temps réel via gRPC. |
 | `simulate-alerts.sh docker\|minikube` | Simule des alertes métier (excès de vitesse, sortie de zone, maintenance, permis…) en publiant des événements Kafka. |
-| `load-tests.sh` | Lance l'ensemble des tests de charge k6 (GraphQL, REST, gRPC) simultanément (scénario `smoke` par défaut). |
-| `watch-kafka.sh` | Affiche en temps réel les événements Kafka du namespace `flotte.*` (Minikube uniquement). |
-| `test-e2e.sh docker|minikube` | Vérifie l'accès à l'environnement cible, lance les tests Playwright et ouvre le rapport HTML. |
+| `load-tests.sh docker\|minikube` | Lance tous les scénarios k6 (smoke → load → stress) pour chaque cible (GraphQL, REST, gRPC). |
+| `watch-kafka.sh docker\|minikube` | Affiche en temps réel les événements Kafka du namespace `flotte.*` (Docker Compose ou Minikube). |
+| `test-e2e.sh docker\|minikube` | Vérifie l'accès à l'environnement cible, lance les tests Playwright et ouvre le rapport HTML. |
 
 ```bash
 # Exemples
-./scripts/simulate.sh docker
+./scripts/simulate-GPS.sh docker
 ./scripts/simulate-alerts.sh docker
 
-./scripts/load-tests.sh
-./scripts/load-tests.sh load
+./scripts/load-tests.sh docker
+./scripts/load-tests.sh minikube
+
+./scripts/watch-kafka.sh docker
+./scripts/watch-kafka.sh minikube
 
 ./scripts/test-e2e.sh docker
 ./scripts/test-e2e.sh minikube
