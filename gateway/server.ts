@@ -55,7 +55,23 @@ const wsServer = new WebSocketServer({
 });
 
 // 3. Brancher GraphQL sur le WebSocket
-const serverCleanup = useServer({ schema }, wsServer);
+const serverCleanup = useServer(
+	{
+		schema,
+		context: async (ctx) => {
+			// On simule un objet Request pour createContext afin d'extraire le token
+			const authHeader = ctx.connectionParams?.authorization || ctx.connectionParams?.Authorization;
+			return createContext({
+				req: {
+					headers: {
+						authorization: typeof authHeader === 'string' ? authHeader : undefined,
+					},
+				} as any,
+			});
+		},
+	},
+	wsServer,
+);
 
 // 4. Initialiser Apollo Server
 const apollo = new ApolloServer({

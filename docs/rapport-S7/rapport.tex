@@ -1,0 +1,317 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{hyperref}
+
+% ============================================================
+% MISE EN PAGE
+% ============================================================
+\geometry{
+  headheight=25pt,
+  top=2.6cm,
+  bottom=2.8cm,
+  left=2.8cm,
+  right=2.8cm
+}
+\setstretch{1.12}
+
+% ============================================================
+% COULEURS
+% ============================================================
+\definecolor{primary}{RGB}{28, 90, 168}
+\definecolor{primarylight}{RGB}{88, 145, 220}
+\definecolor{secondary}{RGB}{232, 240, 252}
+\definecolor{codebg}{RGB}{248, 250, 255}
+\definecolor{codeframe}{RGB}{170, 195, 230}
+\definecolor{success}{RGB}{34, 130, 90}
+\definecolor{warning}{RGB}{200, 120, 40}
+\definecolor{darkgray}{RGB}{45, 55, 72}
+\definecolor{lightgray}{RGB}{95, 110, 140}
+\definecolor{rowgray}{RGB}{245, 247, 250}
+
+% ============================================================
+% STYLE DU CODE
+% ============================================================
+\lstset{
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{primary}\bfseries,
+  commentstyle=\color{lightgray}\itshape,
+  stringstyle=\color{success},
+  breaklines=true,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\sffamily\textcolor{lightgray},
+  numbersep=6pt,
+  tabsize=2,
+  captionpos=b,
+  aboveskip=1em,
+  belowskip=1em,
+  xleftmargin=0pt,
+  framexleftmargin=0pt
+}
+
+% ============================================================
+% EN-TETE ET PIED DE PAGE
+% ============================================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\textcolor{primary!85!black}{Projet M1 GIL --- Gestion de flotte}}
+\fancyhead[R]{\small\sffamily\textcolor{primary!85!black}{Univ. Rouen Normandie \textperiodcentered{} 2025--2026}}
+\fancyfoot[C]{\small\sffamily\textcolor{primary!70!black}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primary!35}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0pt}
+
+% ============================================================
+% STYLE DES TITRES
+% ============================================================
+\titleformat{\section}
+  {\Large\sffamily\bfseries\color{primary}}
+  {\thesection.}{0.55em}{}
+
+\titleformat{\subsection}
+  {\large\sffamily\bfseries\color{primary!85!black}}
+  {\thesubsection.}{0.45em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\sffamily\bfseries\color{primary!75!black}}
+  {\thesubsubsection.}{0.4em}{}
+
+\titlespacing*{\section}{0pt}{1.6ex plus .2ex}{1ex plus .1ex}
+\titlespacing*{\subsection}{0pt}{1.3ex plus .15ex}{0.7ex plus .1ex}
+
+% ============================================================
+% BOITE INFO
+% ============================================================
+\newmdenv[
+  backgroundcolor=secondary,
+  linecolor=primary,
+  linewidth=1.1pt,
+  leftline=true,
+  rightline=false,
+  topline=false,
+  bottomline=false,
+  innerleftmargin=11pt,
+  innerrightmargin=11pt,
+  innertopmargin=9pt,
+  innerbottommargin=9pt,
+  skipabove=0.6em,
+  skipbelow=0.6em
+]{infobox}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=primary!90!black,
+  urlcolor=primarylight,
+  pdfborderstyle={/S/U/W 0}
+}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+\begin{document}
+
+% ------------------------------------------------------------
+% PAGE DE TITRE
+% ------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+
+  {\Large\textbf{Universit\'{e} de Rouen Normandie}\\[0.3cm]
+  \large Master 1 -- G\'{e}nie Informatique et Logiciel}
+
+  \vspace{1.5cm}
+  {\color{primary!55}\rule{\linewidth}{0.5mm}}\\[0.45cm]
+
+  {\Huge\sffamily\bfseries\color{primary} Projet Gestion de Flotte\\[0.35cm]}
+  {\LARGE\sffamily\bfseries\color{primary!80!black} Rapport de Semaine 7}\\[0.35cm]
+  {\large\sffamily\color{primary!65!black} Observabilit\'{e}, Performance \& D\'{e}ploiement Final}
+
+  {\color{primary!55}\rule{\linewidth}{0.5mm}}\\[1.5cm]
+
+  \begin{minipage}{0.45\textwidth}
+    \begin{flushleft}
+      \textbf{\'{E}tudiants :}\\
+      Ahc\`{e}ne Amouchas \\
+      Florian Pepin \\[0.5cm]
+      \textbf{Encadrants :}\\
+      Lydia \& Luc
+    \end{flushleft}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.45\textwidth}
+    \begin{flushright}
+      \textbf{Ann\'{e}e universitaire :}\\
+      2025 -- 2026 \\[0.5cm]
+      \textbf{Semaine :}\\
+      7 / 7
+    \end{flushright}
+  \end{minipage}
+
+  \vfill
+  {\large 23 avril 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Observabilit\'{e} Compl\`{e}te}
+% ============================================================
+
+L'architecture distribu\'{e}e de la plateforme a \'{e}t\'{e} enrichie d'une stack d'observabilit\'{e} compl\`{e}te permettant de surveiller la sant\'{e} du syst\`{e}me et de diagnostiquer les problèmes en temps r\'{e}el.
+
+\subsection{Tra\c{c}age Distribu\'{e} avec Jaeger}
+
+Chaque microservice (Java et Node.js) intègre l'\textbf{agent OpenTelemetry} pour collecter et exporter des traces distribu\'{e}es. Cela permet de visualiser le cheminement complet d'une requ\^{e}te, de la Gateway GraphQL jusqu'aux services backend et aux bases de donn\'{e}es.
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Instrumentation automatique} : Utilisation du \texttt{opentelemetry-javaagent.jar} pour les services Java et du SDK OpenTelemetry pour Node.js.
+  \item \textbf{Propagation de contexte} : Les en-t\^{e}tes de trace sont transmis lors des appels gRPC et des messages Kafka.
+\end{itemize}
+
+\subsection{Collecte de M\'{e}triques avec Prometheus}
+
+Un serveur \textbf{Prometheus} centralise les m\'{e}triques techniques et m\'{e}tiers du cluster.
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Spring Boot Actuator} : Expose les m\'{e}triques JVM, HTTP et Kafka via le endpoint \texttt{/actuator/prometheus}.
+  \item \textbf{NestJS Metrics} : Int\'{e}gration de m\'{e}triques Prometheus personnalis\'{e}es pour le service de localisation.
+  \item \textbf{Kafka Exporter} : Surveillance du lag des consommateurs et du d\'{e}bit des topics.
+\end{itemize}
+
+\subsection{Dashboards Grafana Personnalis\'{e}s}
+
+Nous avons conçu des tableaux de bord \textbf{Grafana} pour offrir une visibilit\'{e} multi-niveaux :
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{System Health} : CPU, M\'{e}moire, Taux d'erreurs par service.
+  \item \textbf{Business Metrics} : Nombre de v\'{e}hicules en mouvement, alertes actives par s\'{e}v\'{e}rit\'{e}, taux de disponibilité de la flotte.
+  \item \textbf{Kafka Traffic} : Visualisation des flux de messages entre les services.
+\end{enumerate}
+
+\section{Interface de pilotage des Alertes}
+
+Une nouvelle page \texttt{/alerts} a \'{e}t\'{e} int\'{e}gr\'{e}e au frontend pour permettre aux op\'{e}rateurs de visualiser et d'acquitter les alertes en temps r\'{e}el.
+
+\begin{infobox}
+\textbf{Choix d'architecture :} Contrairement aux autres modules m\'{e}tiers, la gestion des alertes a \'{e}t\'{e} impl\'{e}ment\'{e}e directement au sein de l'application \textbf{Shell} et non comme un micro-frontend (MFE) s\'{e}par\'{e}. Ce choix permet d'\'{e}viter la complexit\'{e} disproportionn\'{e}e qu'induirait la cr\'{e}ation d'un d\'{e}p\^{o}t et d'un pipeline de d\'{e}ploiement d\'{e}di\'{e} pour un composant aussi transverse et l\'{e}ger.
+\end{infobox}
+
+Cette interface consomme le flux de messages du \texttt{events-service} via GraphQL et permet un pilotage r\'{e}actif de la flotte directement depuis le cockpit central.
+
+\section{Tests de Charge et Performance (K6)}
+% ============================================================
+
+Pour valider la robustesse de l'architecture face \`{a} une montée en charge, nous avons utilis\'{e} \textbf{K6}.
+
+\subsection{Sc\'{e}narios de Tests}
+
+Plusieurs sc\'{e}narios ont \'{e}t\'{e} mod\'{e}lis\'{e}s dans le dossier \texttt{load-tests/} :
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Flux GPS Massif} : Simulation de 500 v\'{e}hicules envoyant simultan\'{e}ment leurs positions via gRPC.
+  \item \textbf{Consultation Dashboard} : Requ\^{e}tes GraphQL complexes simulant l'acc\`{e}s de 50 managers simultan\'{e}s.
+  \item \textbf{Stress Test Kafka} : Injection rapide d'alertes pour v\'{e}rifier la capacit\'{e} de traitement du \texttt{events-service}.
+\end{itemize}
+
+\subsection{R\'{e}sultats et Optimisations}
+
+Les tests ont mis en \'{e}vidence la n\'{e}cessit\'{e} de configurer des \textit{HPA (Horizontal Pod Autoscalers)} sur la Gateway et le service de localisation. Le passage \`{a} une communication asynchrone via Kafka pour les alertes a permis de maintenir une latence stable sous charge.
+
+% ============================================================
+\section{D\'{e}ploiement Final avec Helm}
+% ============================================================
+
+Le d\'{e}ploiement a \'{e}t\'{e} uniformis\'{e} via \textbf{Helm} pour \^{e}tre \og prod-ready \fg{}.
+
+\subsection{Organisation des Charts}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{\texttt{fleet-infra}} : Gère les dépendances (PostgreSQL, Kafka, Keycloak, Prometheus, Jaeger).
+  \item \textbf{\texttt{fleet-app}} : Déploie l'ensemble des microservices et le frontend.
+  \item \textbf{\texttt{fleet-observability}} : Configure Grafana et les dashboards.
+\end{itemize}
+
+\subsection{Configuration Ingress et S\'{e}curit\'{e}}
+
+L'acc\`{e}s externe est g\'{e}r\'{e} par un Ingress Controller (Traefik ou Nginx) avec :
+\begin{itemize}[leftmargin=*]
+  \item Isolation des réseaux via des \textbf{Network Policies} Kubernetes.
+  \item Gestion des secrets via des \texttt{Secret} Kubernetes (inject\'{e}s au runtime).
+  \item \textit{Readiness} et \textit{Liveness probes} configur\'{e}es pour chaque service.
+\end{itemize}
+
+% ============================================================
+\section{Documentation et Finalisation}
+% ============================================================
+
+\subsection{Documentation Technique}
+
+La documentation a \'{e}t\'{e} centralis\'{e}e et mise \`{a} jour :
+\begin{itemize}[leftmargin=*]
+  \item \textbf{README.md} : Guide d'installation rapide (Docker \& Kubernetes).
+  \item \textbf{API Docs} : Documentation OpenAPI pour les services REST et sch\'{e}ma GraphQL auto-g\'{e}n\'{e}r\'{e}.
+  \item \textbf{ADR (Architecture Decision Records)} : Justification des choix technologiques (Kafka, Micro-frontend, gRPC).
+\end{itemize}
+
+\subsection{Pr\'{e}paration de la D\'{e}monstration}
+
+Pour le rendu final, un sc\'{e}nario complet a \'{e}t\'{e} pr\'{e}par\'{e} :
+\begin{enumerate}
+  \item Initialisation des donn\'{e}es (Conducteurs, V\'{e}hicules).
+  \item Lancement d'une simulation GPS avec d\'{e}passement de vitesse.
+  \item Visualisation de l'alerte sur le frontend.
+  \item Consultation des traces dans Jaeger pour analyser le flux de l'alerte.
+\end{enumerate}
+
+% ============================================================
+\section{Livrables et État Final}
+% ============================================================
+
+Le système est d\'{e}sormais complet et d\'{e}ployable. 
+
+\begin{infobox}
+\textbf{Note sur l'avancement :} Certains \'{e}l\'{e}ments de d\'{e}tail (polissage fin de certains dashboards, documentation exhaustive de chaque endpoint obscur) seront finalis\'{e}s d'ici le rendu final, mais le cœur fonctionnel et l'infrastructure sont op\'{e}rationnels et v\'{e}rifi\'{e}s par la CI/CD.
+\end{infobox}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lp{10cm}}
+\toprule
+\textbf{Livrable} & \textbf{Statut} \\
+\midrule
+Code source & Disponible sur GitHub (Monorepo) \\
+\rowcolor{rowgray}
+Images Docker & Publi\'{e}es sur GHCR \\
+Charts Helm & Valid\'{e}s (Linting OK) \\
+\rowcolor{rowgray}
+Rapports S1-S7 & Termis et archiv\'{e}s \\
+Documentation & Complète (README, ADR, PDF) \\
+\bottomrule
+\end{tabular}
+\caption{État des livrables pour le rendu final}
+\end{table}
+
+\end{document}

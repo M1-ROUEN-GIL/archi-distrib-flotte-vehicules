@@ -8,6 +8,7 @@ import com.flotte.events.model.enums.AlertType;
 import com.flotte.events.repository.AlertRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +23,12 @@ public class AlertService {
     private static final Logger log = LoggerFactory.getLogger(AlertService.class);
 
     private final AlertRepository alertRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private static final String ALERTS_TOPIC = "flotte.alerts.created";
 
-    public AlertService(AlertRepository alertRepository) {
+    public AlertService(AlertRepository alertRepository, KafkaTemplate<String, Object> kafkaTemplate) {
         this.alertRepository = alertRepository;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     public Alert createAlert(AlertType type, AlertSeverity severity, UUID vehicleId, UUID driverId,
@@ -33,7 +37,21 @@ public class AlertService {
         Alert saved = alertRepository.save(alert);
         log.info("Alerte créée : id={} type={} severity={} vehicleId={} driverId={}",
                 saved.getId(), type, severity, vehicleId, driverId);
+        
+        // Notification temps réel via Kafka
+        notifyAlertUpdate(saved, "ALERT_CREATED");
+        
         return saved;
+    }
+
+    private void notifyAlertUpdate(Alert alert, String eventType) {
+        try {
+            AlertResponse response = AlertResponse.from(alert);
+            kafkaTemplate.send(ALERTS_TOPIC, alert.getId().toString(), response);
+            log.debug("Notification d'alerte envoyée sur Kafka : id={} eventType={}", alert.getId(), eventType);
+        } catch (Exception e) {
+            log.error("Échec de l'envoi de la notification d'alerte sur Kafka", e);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -86,9 +104,12 @@ public class AlertService {
             alert.setStatus(AlertStatus.ACKNOWLEDGED);
             alert.setAcknowledgedBy(userId);
             alert.setAcknowledgedAt(OffsetDateTime.now());
+            Alert saved = alertRepository.save(alert);
             log.info("Alerte {} acquittée par {}", alertId, userId);
+            notifyAlertUpdate(saved, "ALERT_UPDATED");
+            return AlertResponse.from(saved);
         }
-        return AlertResponse.from(alertRepository.save(alert));
+        return AlertResponse.from(alert);
     }
 
     public AlertResponse resolve(UUID alertId) {
@@ -97,9 +118,12 @@ public class AlertService {
         if (alert.getStatus() != AlertStatus.RESOLVED) {
             alert.setStatus(AlertStatus.RESOLVED);
             alert.setResolvedAt(OffsetDateTime.now());
+            Alert saved = alertRepository.save(alert);
             log.info("Alerte {} résolue", alertId);
+            notifyAlertUpdate(saved, "ALERT_UPDATED");
+            return AlertResponse.from(saved);
         }
-        return AlertResponse.from(alertRepository.save(alert));
+        return AlertResponse.from(alert);
     }
 
     @Transactional(readOnly = true)

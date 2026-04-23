@@ -267,7 +267,8 @@ services:
     command: >
       /bin/sh -c "
       /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic flotte.localisation.gps --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1 &&
-      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic flotte.location.events --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic flotte.location.events --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1 &&
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic flotte.alerts.created --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1
       "
 
   frontend:

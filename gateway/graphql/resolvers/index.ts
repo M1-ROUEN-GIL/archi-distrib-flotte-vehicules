@@ -24,20 +24,22 @@ const startKafkaConsumer = async () => {
     try {
       await consumer.connect();
       await consumer.subscribe({ topic: 'flotte.localisation.gps', fromBeginning: false });
+      await consumer.subscribe({ topic: 'flotte.alerts.created', fromBeginning: false });
       subscribed = true;
-      console.log('✅ Gateway : Écouteur Kafka branché sur flotte.localisation.gps !');
+      console.log('✅ Gateway : Écouteur Kafka branché sur flotte.localisation.gps et flotte.alerts.created !');
     } catch (err) {
-      console.error('⚠️ Attente du topic Kafka flotte.localisation.gps (nouvel essai dans 5s)...');
+      console.error('⚠️ Attente des topics Kafka (nouvel essai dans 5s)...');
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
 
   try {
     await consumer.run({
-      eachMessage: async ({ message }) => {
-        if (message.value) {
-          const data = JSON.parse(message.value.toString());
+      eachMessage: async ({ topic, message }) => {
+        if (!message.value) return;
+        const data = JSON.parse(message.value.toString());
 
+        if (topic === 'flotte.localisation.gps') {
           // 🛡️ FILET DE SÉCURITÉ : On s'adapte aux différents noms de variables possibles
           const positionPourReact = {
             ...data.payload,
@@ -48,16 +50,35 @@ const startKafkaConsumer = async () => {
             recorded_at: data.timestamp
           };
 
-          // Le nouveau mouchard pour voir exactement ce qui passe
-          console.log("🔍 DONNÉES ENVOYÉES À REACT :", positionPourReact);
+          console.log("🔍 DONNÉES GPS ENVOYÉES :", positionPourReact.vehicle_id);
 
-          // On vérifie que la latitude existe bien avant d'envoyer
           if (positionPourReact.latitude !== undefined && positionPourReact.latitude !== null) {
             ee.emit('VEHICLE_LOCATION_UPDATED', { vehicleLocationUpdated: positionPourReact });
-          } else {
-            console.warn("⚠️ Point GPS ignoré (Latitude manquante) :", data.payload);
           }
+        } else if (topic === 'flotte.alerts.created') {
+          console.log("🚨 ALERTE KAFKA REÇUE :", data.id);
+
+          // 🛠️ MAPPING STRICT : On convertit tout au format attendu par le schéma GraphQL
+          const alert = {
+            ...data,
+            id: data.id,
+            type: data.type,
+            severity: data.severity,
+            status: data.status || 'ACTIVE',
+            message: data.message,
+            vehicle_id: data.vehicleId || data.vehicle_id,
+            driver_id: data.driverId || data.driver_id,
+            // Conversion du timestamp Java (secondes) en String ISO pour le front
+            created_at: data.createdAt 
+              ? new Date(data.createdAt * 1000).toISOString() 
+              : new Date().toISOString()
+          };
+
+          console.log("📣 EMISSION ALERT_CREATED — ID:", alert.id, "VEHICLE:", alert.vehicle_id);
+          ee.emit('ALERT_CREATED', { alertCreated: alert });
+          ee.emit('ALERT_CREATED_SEVERITY', { alertCreatedBySeverity: alert });
         }
+
       },
     });
     console.log('✅ Gateway : Écouteur Kafka branché sur flotte.localisation.gps !');
@@ -101,7 +122,13 @@ export const resolvers = {
       subscribe: async function* () { for await (const [payload] of on(ee, 'ALERT_CREATED')) yield payload; }
     },
     alertCreatedBySeverity: {
-      subscribe: async function* () { for await (const [payload] of on(ee, 'ALERT_CREATED_SEVERITY')) yield payload; }
+      subscribe: async function* (_: any, args: { severity: string }) {
+        for await (const [payload] of on(ee, 'ALERT_CREATED_SEVERITY')) {
+          if (payload.alertCreatedBySeverity.severity === args.severity) {
+            yield payload;
+          }
+        }
+      }
     },
   },
   Vehicle: vehicleResolvers.Vehicle,

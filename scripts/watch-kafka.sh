@@ -15,7 +15,7 @@ fi
 
 echo "✅ Pod trouvé : $KAFKA_POD"
 echo "🚀 Écoute des nouveaux événements (Temps Réel)..."
-echo "💡 (Note : L'historique est masqué. Fais une action dans Postman pour voir un event)"
+echo "💡 (Note : L'historique est masqué. Fais une action dans Bruno pour voir un event)"
 echo "--------------------------------------------------------------------------------"
 
 # Commande Kafka simplifiée et propre

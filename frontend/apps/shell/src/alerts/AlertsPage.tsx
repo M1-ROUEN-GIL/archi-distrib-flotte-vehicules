@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { useAuth } from '@flotte/shared-auth';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
-import { GET_ALERTS, ACKNOWLEDGE_ALERT, RESOLVE_ALERT } from './queries';
+import { GET_ALERTS, ACKNOWLEDGE_ALERT, RESOLVE_ALERT, ALERT_CREATED_SUB } from './queries';
 
 // ── Badges ────────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ export default function AlertsPage() {
   const [severityFilter, setSeverityFilter] = useState<string>('');
   const [offset, setOffset] = useState(0);
 
-  const { data, loading, error, refetch } = useQuery(GET_ALERTS, {
+  const { data, loading, error, refetch, subscribeToMore } = useQuery(GET_ALERTS, {
     variables: {
       status:   statusFilter   || null,
       severity: severityFilter || null,
@@ -69,6 +69,31 @@ export default function AlertsPage() {
     },
     fetchPolicy: 'network-only',
   });
+
+  // 🔔 S'abonner aux nouvelles alertes en temps réel
+  useEffect(() => {
+    const unsubscribe = subscribeToMore({
+      document: ALERT_CREATED_SUB,
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev;
+        const newAlert = subscriptionData.data.alertCreated;
+
+        // Éviter les doublons (si l'alerte est déjà là via refetch)
+        const exists = prev.alerts.items.some((a: any) => a.id === newAlert.id);
+        if (exists) return prev;
+
+        // Ajouter la nouvelle alerte au début de la liste
+        return {
+          alerts: {
+            ...prev.alerts,
+            total_count: prev.alerts.total_count + 1,
+            items: [newAlert, ...prev.alerts.items].slice(0, PAGE_SIZE),
+          },
+        };
+      },
+    });
+    return () => unsubscribe();
+  }, [subscribeToMore, statusFilter, severityFilter, offset]);
 
   const [acknowledge] = useMutation(ACKNOWLEDGE_ALERT, { onCompleted: () => refetch() });
   const [resolve]     = useMutation(RESOLVE_ALERT,     { onCompleted: () => refetch() });

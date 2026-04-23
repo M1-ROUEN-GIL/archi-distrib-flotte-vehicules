@@ -15,7 +15,7 @@ docker compose up -d --build
 ### Minikube
 ```bash
 ./scripts/kube.sh
-echo "$(minikube ip) flotte.local" | sudo tee -a /etc/hosts
+echo "127.0.0.1 flotte.local" | sudo tee -a /etc/hosts
 minikube tunnel  # dans un terminal séparé
 ```
 
@@ -56,16 +56,16 @@ Tous les scripts se trouvent dans [`scripts/`](./scripts).
 | `kube.sh` | Lance Minikube, build les images, déploie toute la stack via Helm et attend que tout soit prêt. |
 | `simulate.sh docker\|minikube` | Simule un camion en mouvement en envoyant des coordonnées GPS en temps réel via gRPC. |
 | `simulate-alerts.sh docker\|minikube` | Simule des alertes métier (excès de vitesse, sortie de zone, maintenance, permis…) en publiant des événements Kafka. |
-| `load-tests.sh [smoke\|load\|stress]` | Lance tous les tests de charge k6 (GraphQL, REST, gRPC) pour le scénario choisi (défaut : `smoke`). |
+| `load-tests.sh` | Lance l'ensemble des tests de charge k6 (GraphQL, REST, gRPC) simultanément (scénario `smoke` par défaut). |
 | `watch-kafka.sh` | Affiche en temps réel les événements Kafka du namespace `flotte.*` (Minikube uniquement). |
-| `test-e2e.sh docker\|minikube` | Vérifie l'accès à l'environnement cible, lance les tests Playwright et ouvre le rapport HTML. |
+| `test-e2e.sh docker|minikube` | Vérifie l'accès à l'environnement cible, lance les tests Playwright et ouvre le rapport HTML. |
 
 ```bash
 # Exemples
 ./scripts/simulate.sh docker
 ./scripts/simulate-alerts.sh docker
 
-./scripts/load-tests.sh smoke
+./scripts/load-tests.sh
 ./scripts/load-tests.sh load
 
 ./scripts/test-e2e.sh docker

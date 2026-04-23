@@ -70,6 +70,7 @@ if [ -z "$KAFKA_BIN" ]; then KAFKA_BIN="kafka-topics"; fi
 echo "🔧 Utilisation de : $KAFKA_BIN"
 kubectl exec $KAFKA_POD -n flotte-namespace -- $KAFKA_BIN --create --topic flotte.localisation.gps --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --if-not-exists || true
 kubectl exec $KAFKA_POD -n flotte-namespace -- $KAFKA_BIN --create --topic flotte.location.events --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --if-not-exists || true
+kubectl exec $KAFKA_POD -n flotte-namespace -- $KAFKA_BIN --create --topic flotte.alerts.created --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --if-not-exists || true
 
 
 echo "🚀 Déploiement de l'application complète via Helm..."
