@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ "main", "staging" ]
   workflow_dispatch:
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -29,7 +30,6 @@ jobs:
     env:
       SPRING_DATASOURCE_URL: ${{ matrix.datasource_url }}
 
-    # Ajout des services nécessaires pour le chargement du contexte Spring Boot
     services:
       postgres:
         image: postgres:15
@@ -69,7 +69,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-      - name: Créer les bases PostgreSQL (même instance, une base par service)
+      - name: Créer les bases PostgreSQL
         run: |
           sudo apt-get update -qq && sudo apt-get install -y postgresql-client
           export PGPASSWORD=password
@@ -82,6 +82,26 @@ jobs:
           cd services/${{ matrix.service }}
           chmod +x mvnw
           ./mvnw clean test
+
+  # 2. Tests pour les microservices Node.js (NestJS)
+  test-node-services:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/location-service/package-lock.json
+      - name: Install dependencies
+        run: |
+          cd services/location-service
+          npm ci
+      - name: Run tests
+        run: |
+          cd services/location-service
+          npm test
 
   # 3. Validation de l'infrastructure (Helm & Dockerfiles)
   linting:
@@ -97,9 +117,8 @@ jobs:
           helm lint infra/helm/fleet-observability
 
   # 4. Construction et Publication des images Docker
-  # Ce job ne s'exécute que si les tests passent et qu'on est sur la branche main ou staging
   build-and-push:
-    needs: [test-java-services, linting]
+    needs: [test-java-services, test-node-services, linting]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
     runs-on: ubuntu-latest
     permissions:
@@ -116,8 +135,12 @@ jobs:
             context: ./services/vehicle-service
           - service: events-service
             context: ./services/events-service
+          - service: location-service
+            context: ./services/location-service
           - service: gateway
             context: ./gateway
+          - service: frontend
+            context: ./frontend
     steps:
       - uses: actions/checkout@v4
       
