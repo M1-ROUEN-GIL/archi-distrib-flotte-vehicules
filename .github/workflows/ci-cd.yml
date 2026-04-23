@@ -1,4 +1,4 @@
-name: CI/CD Flotte Véhicules
+name: CI-CD-Flotte-Vehicules
 
 on:
   push:
