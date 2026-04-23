@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,9 @@ class AlertServiceTest {
 
     @Mock
     private AlertRepository alertRepository;
+
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @InjectMocks
     private AlertService alertService;
@@ -48,6 +52,7 @@ class AlertServiceTest {
                 "Maintenance en retard pour le véhicule",
                 "{}"
         );
+        sampleAlert.setId(UUID.randomUUID());
     }
 
     @Test
@@ -139,15 +144,14 @@ class AlertServiceTest {
 
     @Test
     void resolve_shouldBeIdempotentWhenAlreadyResolved() {
-        UUID alertId = UUID.randomUUID();
+        UUID alertId = sampleAlert.getId();
         sampleAlert.setStatus(AlertStatus.RESOLVED);
         when(alertRepository.findById(alertId)).thenReturn(Optional.of(sampleAlert));
-        when(alertRepository.save(any())).thenReturn(sampleAlert);
 
         alertService.resolve(alertId);
 
-        // Doit sauvegarder mais ne change pas le statut
-        verify(alertRepository).save(sampleAlert);
+        // Ne doit pas sauvegarder si déjà résolu
+        verify(alertRepository, never()).save(any());
         assertThat(sampleAlert.getStatus()).isEqualTo(AlertStatus.RESOLVED);
     }
 }

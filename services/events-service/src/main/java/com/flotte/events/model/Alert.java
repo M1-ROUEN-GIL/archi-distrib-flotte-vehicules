@@ -86,6 +86,7 @@ public class Alert {
 
     // Getters & Setters
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public AlertType getType() { return type; }
     public AlertSeverity getSeverity() { return severity; }
     public AlertStatus getStatus() { return status; }
