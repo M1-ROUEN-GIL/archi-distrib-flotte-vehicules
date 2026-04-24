@@ -210,8 +210,16 @@ start_minikube() {
         echo "  • Ajouter à /etc/hosts: 127.0.0.1 flotte.local"
         echo "    Commande: echo \"127.0.0.1 flotte.local\" | sudo tee -a /etc/hosts"
         echo ""
-        echo -e "${YELLOW}Dans un terminal séparé, lancez:${NC}"
-        echo "  minikube tunnel"
+
+        # Déterminer si minikube tunnel est nécessaire
+        if [[ "$OSTYPE" == "linux-gnu"* ]] && ! grep -qi microsoft /proc/version 2>/dev/null; then
+            echo -e "${BLUE}✓ Linux natif détecté - minikube tunnel n'est pas nécessaire${NC}"
+        else
+            echo -e "${YELLOW}Dans un terminal séparé, lancez:${NC}"
+            echo "  minikube tunnel"
+            echo ""
+            echo -e "${BLUE}(Requis sur WSL2/Windows ou macOS pour accéder aux services)${NC}"
+        fi
         echo ""
         echo -e "${BLUE}Services disponibles:${NC}"
         echo "  • Frontend: http://flotte.local"
