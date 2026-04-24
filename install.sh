@@ -63,6 +63,30 @@ check_prerequisites() {
         echo -e "${GREEN}✓ k6${NC} (v$(k6 version 2>/dev/null | grep -oP 'v\K[0-9.]+' || echo 'unknown'))"
     fi
 
+    # Minikube
+    if ! command -v minikube &> /dev/null; then
+        echo -e "${RED}✗ Minikube non installé${NC}"
+        missing=$((missing + 1))
+    else
+        echo -e "${GREEN}✓ Minikube${NC} (v$(minikube version --short 2>/dev/null || echo 'unknown'))"
+    fi
+
+    # Helm
+    if ! command -v helm &> /dev/null; then
+        echo -e "${RED}✗ Helm non installé${NC}"
+        missing=$((missing + 1))
+    else
+        echo -e "${GREEN}✓ Helm${NC} (v$(helm version --short 2>/dev/null | cut -d':' -f2 | tr -d ' ' || echo 'unknown'))"
+    fi
+
+    # kubectl
+    if ! command -v kubectl &> /dev/null; then
+        echo -e "${RED}✗ kubectl non installé${NC}"
+        missing=$((missing + 1))
+    else
+        echo -e "${GREEN}✓ kubectl${NC} (v$(kubectl version --client --short 2>/dev/null | grep -oP 'v\K[0-9.]+' || echo 'unknown'))"
+    fi
+
     echo ""
 
     if [ $missing -gt 0 ]; then
@@ -72,6 +96,9 @@ check_prerequisites() {
         echo "  • Docker: https://docs.docker.com/get-docker/"
         echo "  • Node.js: https://nodejs.org/ (v20+)"
         echo "  • k6: https://grafana.com/docs/k6/latest/get-started/installation/"
+        echo "  • Minikube: https://minikube.sigs.k8s.io/docs/start/"
+        echo "  • Helm: https://helm.sh/docs/intro/install/"
+        echo "  • kubectl: https://kubernetes.io/docs/tasks/tools/"
         echo ""
         exit 1
     fi

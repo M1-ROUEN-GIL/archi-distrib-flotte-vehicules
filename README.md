@@ -14,7 +14,7 @@ Architecture microservices distribuée pour la gestion d'une flotte de véhicule
 ```
 
 Le script va:
-- ✓ Vérifier les prérequis (Docker, Node.js, npm, k6)
+- ✓ Vérifier les prérequis (Docker, Node.js, npm, k6, Minikube, Helm, kubectl)
 - ✓ Installer les dépendances npm
 - ✓ Vous proposer un environnement (Docker Compose ou Minikube)
 - ✓ Démarrer automatiquement les services
