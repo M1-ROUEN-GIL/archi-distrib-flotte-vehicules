@@ -7,13 +7,29 @@ Architecture microservices distribuée pour la gestion d'une flotte de véhicule
 
 ## Démarrage rapide
 
-### Docker Compose
+### Installation automatisée (recommandé)
+
 ```bash
+./install.sh
+```
+
+Le script va:
+- ✓ Vérifier les prérequis (Docker, Node.js, npm, k6)
+- ✓ Installer les dépendances npm
+- ✓ Vous proposer un environnement (Docker Compose ou Minikube)
+- ✓ Démarrer automatiquement les services
+
+### Installation manuelle
+
+#### Docker Compose
+```bash
+npm install
 docker compose up -d --build
 ```
 
-### Minikube
+#### Minikube
 ```bash
+npm install
 ./scripts/kube.sh
 echo "127.0.0.1 flotte.local" | sudo tee -a /etc/hosts
 minikube tunnel  # dans un terminal séparé

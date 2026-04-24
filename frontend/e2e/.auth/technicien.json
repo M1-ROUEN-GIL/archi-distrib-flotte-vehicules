@@ -2,43 +2,43 @@
   "cookies": [
     {
       "name": "AUTH_SESSION_ID",
-      "value": "Z0RBc1U4THRHSGlsYk8tQmxlcUhhNGotLllJc3pTNzdTWUJYWEF1NGlKV1FoUWFHcU5uMkVmdWZFczRONUc0VFhLek5tT25XWGRsT2M5SHJmRTF3V1NBMXVhdkNFdGoxNzRfQVFiN0VDdjg5QnlB",
-      "domain": "flotte.local",
+      "value": "R0FuLTBGWmxKY3JqaUo1X0N5X2lJdnhyLkFvMTJoQzhQRG0wLUxtdTJTb2lpZlVHRExBOVE4cEE0T1hQYXpTX1NNbGZOQUJYaDlTWkplb2FoOUFHWnJEaVZiYVhiR01SVWpFUWFjNkV2M25zU2t3",
+      "domain": "localhost",
       "path": "/auth/realms/gestion-flotte/",
       "expires": -1,
       "httpOnly": true,
-      "secure": false,
-      "sameSite": "Lax"
+      "secure": true,
+      "sameSite": "None"
     },
     {
       "name": "KC_AUTH_SESSION_HASH",
-      "value": "jcJFttPXeOvqZzqDudM3vJhcCTN7auAXX+os9EOmwlg",
-      "domain": "flotte.local",
+      "value": "\"1o5aXVlD/P9/Hhl0wk3RHs+C6U7zqGdL5n4Q/+RXzFo\"",
+      "domain": "localhost",
       "path": "/auth/realms/gestion-flotte/",
-      "expires": 1776989193.32254,
+      "expires": 1776991313.195602,
       "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
+      "secure": true,
+      "sameSite": "None"
     },
     {
       "name": "KEYCLOAK_IDENTITY",
-      "value": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkM2I1MGM3OC0yNzFkLTQzZTYtOTBmMi01NjM0YmY3MTAxMWYifQ.eyJleHAiOjE3NzcwMjUxMzMsImlhdCI6MTc3Njk4OTEzMywianRpIjoiYjlhZjI1NWEtMjRiMy05YmYyLTk3NGQtMGZjMjEyZDQ4YzlhIiwiaXNzIjoiaHR0cDovL2Zsb3R0ZS5sb2NhbC9hdXRoL3JlYWxtcy9nZXN0aW9uLWZsb3R0ZSIsInN1YiI6ImFhYTAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMiIsInR5cCI6IlNlcmlhbGl6ZWQtSUQiLCJzaWQiOiJnREFzVThMdEdIaWxiTy1CbGVxSGE0ai0iLCJzdGF0ZV9jaGVja2VyIjoiTHpXYU5hMzcwcUJ0ZUJHRkJoeWdpaTFWc0lZR3RiWU82VVFfTl9iVk9sRSJ9.Jp3_UFG-aaT6-Ch9zDNRAsxFrJxIlDUQxpjOEyGbwZWB7EaBwkH3XHuPEhw2B9VY6gDUuulD5i9zP5BFGQWhCg",
-      "domain": "flotte.local",
+      "value": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkM2I1MGM3OC0yNzFkLTQzZTYtOTBmMi01NjM0YmY3MTAxMWYifQ.eyJleHAiOjE3NzcwMjcyNTMsImlhdCI6MTc3Njk5MTI1MywianRpIjoiNjcwYzRjMmYtMzgwMy02NmJhLTM2YzItOWJkYzZiYTg3ODU2IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMDA1L2F1dGgvcmVhbG1zL2dlc3Rpb24tZmxvdHRlIiwic3ViIjoiYWFhMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAyIiwidHlwIjoiU2VyaWFsaXplZC1JRCIsInNpZCI6IkdBbi0wRlpsSmNyamlKNV9DeV9pSXZ4ciIsInN0YXRlX2NoZWNrZXIiOiJ3VWNORmNnS1A5UGktdHRHMUhtT2c3RVVEV0NMZEticHFPa2RCRmI5NFBrIn0.Tmh6eozvSJNlzy44GuskUdEutO-FVBxTUuhXSNmDUhyiFrW3JeG1WIQQINNwgljeWkaS7mStARTRPuQmhoAuWA",
+      "domain": "localhost",
       "path": "/auth/realms/gestion-flotte/",
       "expires": -1,
       "httpOnly": true,
-      "secure": false,
-      "sameSite": "Lax"
+      "secure": true,
+      "sameSite": "None"
     },
     {
       "name": "KEYCLOAK_SESSION",
-      "value": "jcJFttPXeOvqZzqDudM3vJhcCTN7auAXX-os9EOmwlg",
-      "domain": "flotte.local",
+      "value": "1o5aXVlD_P9_Hhl0wk3RHs-C6U7zqGdL5n4Q_-RXzFo",
+      "domain": "localhost",
       "path": "/auth/realms/gestion-flotte/",
-      "expires": 1777025133.582611,
+      "expires": 1777027253.719146,
       "httpOnly": false,
-      "secure": false,
-      "sameSite": "Lax"
+      "secure": true,
+      "sameSite": "None"
     }
   ],
   "origins": []
