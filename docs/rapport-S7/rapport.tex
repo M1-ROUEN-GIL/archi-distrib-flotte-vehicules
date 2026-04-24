@@ -382,7 +382,7 @@ reconnexion Keycloak \`{a} chaque sc\'{e}nario.
 
 \begin{lstlisting}[language=bash, caption=Arborescence des tests E2E]
 frontend/e2e/tests/
-  auth.setup.ts              # Login admin       -> .auth/user.json
+  auth.setup.ts              # Login admin       -> .auth/admin.json
   auth.setup.manager.ts      # Login manager     -> .auth/manager.json
   auth.setup.technicien.ts   # Login technicien  -> .auth/technicien.json
   dashboard.spec.ts          # Statistiques tableau de bord
@@ -816,58 +816,127 @@ environnements sont pr\'{e}-configur\'{e}s~: \texttt{docker} et \texttt{minikube
 
 % ============================================================
 \newpage
-\section{Bilan de la semaine 7}
+\section{Script d'installation --- \texttt{install.sh}}
 % ============================================================
 
-\subsection{Travaux r\'{e}alis\'{e}s}
+Un script d'installation unifi\'{e} \texttt{install.sh} a \'{e}t\'{e} r\'{e}alis\'{e} \`{a} la
+racine du d\'{e}p\^{o}t afin de permettre \`{a} n'importe quel utilisateur de
+d\'{e}marrer la plateforme compl\`{e}te en une seule commande, sans connaissance
+pr\'{e}alable de l'architecture interne.
+
+\begin{lstlisting}[language=bash, caption=Lancement de l'installation]
+bash install.sh
+\end{lstlisting}
+
+\subsection{V\'{e}rification des pr\'{e}requis}
+
+La premi\`{e}re \'{e}tape contr\^{o}le la pr\'{e}sence de tous les outils n\'{e}cessaires
+avant toute action. En cas de manquant, le script liste les liens
+d'installation officiels et s'arr\^{e}te imm\'{e}diatement.
 
 \begin{table}[H]
 \centering
-\renewcommand{\arraystretch}{1.5}
+\renewcommand{\arraystretch}{1.4}
 \begin{tabular}{
-  >{\raggedright\arraybackslash}p{6.5cm}
-  >{\centering\arraybackslash}p{2.5cm}
+  >{\ttfamily\raggedright\arraybackslash}p{4cm}
+  >{\raggedright\arraybackslash}p{8.5cm}
 }
 \toprule
 \rowcolor{secondary}
-\textbf{Fonctionnalit\'{e}} & \textbf{Statut} \\
+\normalfont\textbf{Outil} & \normalfont\textbf{Usage dans le projet} \\
 \midrule
-Stack observabilit\'{e} compl\`{e}te (Jaeger, Prometheus, Loki, Grafana) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+docker            & Build et ex\'{e}cution des conteneurs (mode Docker Compose) \\
 \rowcolor{rowgray}
-Pipeline OTel Collector (traces + m\'{e}triques + logs) & \textcolor{success}{\textbf{Termin\'{e}}} \\
-Dashboards Grafana (business metrics) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+docker-compose    & Orchestration des services en d\'{e}veloppement \\
+node / npm        & Installation des d\'{e}pendances workspaces et build frontend \\
 \rowcolor{rowgray}
-Page \texttt{/alerts} dans le shell (temps r\'{e}el, RBAC, filtres) & \textcolor{success}{\textbf{Termin\'{e}}} \\
-Tests E2E Playwright (3 r\^{o}les, RBAC, 15 sc\'{e}narios) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+k6                & Ex\'{e}cution des tests de charge (smoke / load / stress) \\
+minikube          & Cluster Kubernetes local (mode Minikube uniquement) \\
 \rowcolor{rowgray}
-Tests de charge K6 (smoke / load / stress, GraphQL + REST + gRPC) & \textcolor{success}{\textbf{Termin\'{e}}} \\
-D\'{e}ploiement Helm prod-ready (3 charts, script kube.sh) & \textcolor{success}{\textbf{Termin\'{e}}} \\
-\rowcolor{rowgray}
-Scripts de simulation (alertes + GPS) & \textcolor{success}{\textbf{Termin\'{e}}} \\
-Collection Bruno (73 requ\^{e}tes) & \textcolor{success}{\textbf{Termin\'{e}}} \\
-\rowcolor{rowgray}
-Int\'{e}gration CI/CD (frontend + location dans le pipeline) & \textcolor{success}{\textbf{Termin\'{e}}} \\
+helm              & D\'{e}ploiement des charts \texttt{fleet-*} \\
+kubectl           & Gestion du cluster et cr\'{e}ation des topics Kafka \\
 \bottomrule
 \end{tabular}
-\caption{Bilan des d\'{e}livrables de la semaine 7}
+\caption{Pr\'{e}requis v\'{e}rifi\'{e}s automatiquement par \texttt{install.sh}}
 \end{table}
 
-\subsection{Points techniques notables}
+\subsection{Installation des d\'{e}pendances npm}
+
+Apr\`{e}s la v\'{e}rification des pr\'{e}requis, le script ex\'{e}cute \texttt{npm install}
+\`{a} la racine du monorepo. Gr\^{a}ce \`{a} la configuration npm workspaces, cette
+commande installe en une seule passe les d\'{e}pendances des trois espaces de
+travail (\texttt{gateway}, \texttt{services/location-service}, \texttt{frontend})
+avec d\'{e}duplication automatique.
+
+\subsection{S\'{e}lection interactive de l'environnement}
+
+L'utilisateur choisit son environnement cible via un menu interactif~:
+
+\begin{lstlisting}[language=bash, caption=Menu de s\'{e}lection de l'environnement]
+  1) Docker Compose  (simple, recommande pour le developpement)
+  2) Kubernetes / Minikube  (avance, production-like)
+  3) Passer  (vous demarrerez manuellement)
+\end{lstlisting}
+
+\subsubsection{Mode Docker Compose}
+
+Le script ex\'{e}cute \texttt{docker-compose up -d --build}, qui construit toutes
+les images localement et d\'{e}marre l'ensemble des services. Une fois les
+conteneurs actifs, les points d'acc\`{e}s sont affich\'{e}s~:
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{
+  >{\raggedright\arraybackslash}p{4.5cm}
+  >{\ttfamily\raggedright\arraybackslash}p{6cm}
+}
+\toprule
+\rowcolor{secondary}
+\textbf{Service} & \textbf{URL} \\
+\midrule
+Frontend shell   & http://localhost:3005 \\
+\rowcolor{rowgray}
+GraphQL Gateway  & http://localhost:4000 \\
+Keycloak         & http://localhost:8180 \\
+\rowcolor{rowgray}
+Grafana          & http://localhost:3001 \\
+Jaeger UI        & http://localhost:16686 \\
+\bottomrule
+\end{tabular}
+\caption{Points d'acc\`{e}s en mode Docker Compose}
+\end{table}
+
+\subsubsection{Mode Minikube}
+
+En mode Minikube, le script d\'{e}l\`{e}gue enti\`{e}rement \`{a}
+\texttt{scripts/kube.sh} (d\'{e}crit section~4.2). \`{A} l'issue du
+d\'{e}ploiement, il affiche les instructions de configuration r\'{e}seau
+sp\'{e}cifiques \`{a} la plateforme de l'utilisateur~:
 
 \begin{itemize}[leftmargin=*]
-  \item \textbf{Pas de micro-frontend d\'{e}di\'{e} pour les alertes} : le composant
-        est int\'{e}gr\'{e} directement dans le shell. Ce choix \'{e}vite la surcharge
-        architecturale d'un remote Module Federation pour une fonctionnalit\'{e}
-        simple et transversale.
-  \item \textbf{K6 couvre les trois protocoles} : la plupart des projets ne testent
-        que le REST~; ici le gRPC streaming est \'{e}galement test\'{e} en charge,
-        ce qui est repr\'{e}sentatif de l'usage r\'{e}el du \texttt{location-service}.
-  \item \textbf{Alertes enti\`{e}rement \'{e}v\'{e}nementielles} : aucun polling~; le
-        chemin complet Kafka $\rightarrow$ events-service $\rightarrow$ GraphQL
-        subscription $\rightarrow$ frontend est temps r\'{e}el de bout en bout.
+  \item Ajout de \texttt{127.0.0.1 flotte.local} dans \texttt{/etc/hosts}.
+  \item Sur WSL2 / Windows / macOS~: lancement de \texttt{minikube tunnel}
+        dans un terminal s\'{e}par\'{e} pour exposer les services via l'ingress.
+  \item Sur Linux natif~: aucune action suppl\'{e}mentaire n\'{e}cessaire.
 \end{itemize}
 
+\subsection{R\'{e}sum\'{e} final et prochaines \'{e}tapes}
+
+Quel que soit l'environnement choisi, le script affiche un r\'{e}sum\'{e} des
+prochaines \'{e}tapes~: URL de connexion, identifiants par d\'{e}faut
+(\texttt{admin~/ admin}), et rappel des commandes utiles
+(\texttt{docker-compose ps}, \texttt{docker-compose logs}, etc.).
+
+\begin{infobox}
+\textbf{Robustesse~:} le script utilise \texttt{set -e} pour s'arr\^{e}ter
+imm\'{e}diatement en cas d'erreur, et d\'{e}tecte automatiquement la commande
+disponible (\texttt{docker-compose} ou \texttt{docker compose}) pour assurer
+la compatibilit\'{e} avec les versions r\'{e}centes de Docker.
+\end{infobox}
+
 % ============================================================
+\newpage
 \section{Refonte de l'architecture du d\'{e}pot}
 % ============================================================
 

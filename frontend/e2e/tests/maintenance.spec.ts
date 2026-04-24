@@ -5,7 +5,7 @@ let testVehicleId: string;
 let testVehiclePlate: string;
 
 test.beforeAll(async ({ browser }) => {
-  const context = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
+  const context = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
   const page = await context.newPage();
   testVehiclePlate = `MAINT-${Date.now()}`;
 
@@ -39,7 +39,7 @@ test.beforeAll(async ({ browser }) => {
 
 test.afterAll(async ({ browser }) => {
   if (!testVehiclePlate) return;
-  const context = await browser.newContext({ storageState: 'e2e/.auth/user.json' });
+  const context = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
   const page = await context.newPage();
 
   await page.goto('/vehicles');

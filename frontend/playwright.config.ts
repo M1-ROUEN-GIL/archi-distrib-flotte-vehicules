@@ -37,7 +37,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'e2e/.auth/user.json',
+        storageState: 'e2e/.auth/admin.json',
       },
       dependencies: ['setup'],
       testIgnore: '**/roles.spec.ts',
@@ -48,7 +48,7 @@ export default defineConfig({
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
-        storageState: 'e2e/.auth/user.json',
+        storageState: 'e2e/.auth/admin.json',
       },
       dependencies: ['setup'],
       // Couvre uniquement les tests de lecture pour éviter les doublons CRUD en DB

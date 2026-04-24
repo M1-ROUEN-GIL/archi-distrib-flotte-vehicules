@@ -1,7 +1,7 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 
-const authFile = path.join(__dirname, '../.auth/user.json');
+const authFile = path.join(__dirname, '../.auth/admin.json');
 
 setup('authenticate via Keycloak', async ({ page }) => {
   await page.goto('/');

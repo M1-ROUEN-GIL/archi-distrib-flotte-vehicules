@@ -32,7 +32,7 @@ docker compose up -d --build
 npm install
 ./scripts/kube.sh
 echo "127.0.0.1 flotte.local" | sudo tee -a /etc/hosts
-minikube tunnel  # dans un terminal séparé
+minikube tunnel  # dans un terminal séparé (windows/macOS)
 ```
 
 ---

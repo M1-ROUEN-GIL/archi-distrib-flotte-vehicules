@@ -23,10 +23,10 @@ fi
 
 echo "🌐 Environnement cible : $ENV"
 
-# 2. Vérification des dépendances (installation locale au service si besoin)
-if [ ! -d "node_modules/@grpc/grpc-js" ]; then
-    echo "📦 Installation des dépendances gRPC à la racine..."
-    npm install @grpc/grpc-js @grpc/proto-loader
+# 2. Vérification des dépendances
+if [[ ! -d "node_modules/@grpc/grpc-js" ]]; then
+    echo "❌ Dépendances gRPC introuvables. Lance 'npm install' depuis la racine du projet."
+    exit 1
 fi
 
 # 3. Configuration de l'accès

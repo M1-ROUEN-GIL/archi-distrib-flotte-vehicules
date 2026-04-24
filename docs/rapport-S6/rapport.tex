@@ -418,7 +418,7 @@ Un script \texttt{scripts/simulate.sh} permet de simuler un v\'{e}hicule en mouv
 Les tests E2E sont impl\'{e}ment\'{e}s avec \textbf{Playwright} et configur\'{e}s au niveau du Monorepo (\texttt{frontend/playwright.config.ts}). Deux projets sont d\'{e}finis :
 
 \begin{itemize}[leftmargin=*]
-  \item \textbf{\texttt{setup}} : ex\'{e}cute l'authentification Keycloak et sauvegarde la session dans \texttt{e2e/.auth/user.json}.
+  \item \textbf{\texttt{setup}} : ex\'{e}cute l'authentification Keycloak et sauvegarde la session dans \texttt{e2e/.auth/admin.json}.
   \item \textbf{\texttt{chromium}} : charge la session sauvegard\'{e}e (\texttt{storageState}) et ex\'{e}cute les tests m\'{e}tiers. Il d\'{e}pend du projet \texttt{setup}.
 \end{itemize}
 
@@ -429,7 +429,7 @@ projects: [
     name: 'chromium',
     use: {
       ...devices['Desktop Chrome'],
-      storageState: 'e2e/.auth/user.json',
+      storageState: 'e2e/.auth/admin.json',
     },
     dependencies: ['setup'],
   },

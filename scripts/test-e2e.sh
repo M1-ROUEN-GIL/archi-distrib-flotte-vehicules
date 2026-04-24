@@ -39,22 +39,24 @@ echo -e "${GREEN}OK — $BASE_URL est accessible.${NC}"
 echo -e "${CYAN}[2/3] Lancement des tests E2E (mode : $MODE)...${NC}"
 cd "$(dirname "$0")/../frontend"
 
+PLAYWRIGHT="$(npm root)/.bin/playwright"
+
 # Vérifier les dépendances npm
-if [[ ! -d "node_modules" ]] || [[ ! -d "node_modules/@playwright" ]]; then
-  echo -e "${YELLOW}Installation des dépendances npm...${NC}"
-  npm ci
+if [[ ! -x "$PLAYWRIGHT" ]]; then
+  echo -e "${RED}Playwright introuvable. Lance 'npm install' depuis la racine du projet.${NC}"
+  exit 1
 fi
 
 # Installer les navigateurs Playwright
 if [[ ! -d "$HOME/.cache/ms-playwright" ]]; then
   echo -e "${YELLOW}Installation des navigateurs Playwright...${NC}"
-  npx playwright install
+  "$PLAYWRIGHT" install
   echo -e "${YELLOW}Installation des dépendances système pour Playwright...${NC}"
-  npx playwright install-deps || true
+  "$PLAYWRIGHT" install-deps || true
 fi
 
 EXIT_CODE=0
-BASE_URL="$BASE_URL" ./node_modules/.bin/playwright test --reporter=list,html || EXIT_CODE=$?
+BASE_URL="$BASE_URL" "$PLAYWRIGHT" test --reporter=list,html || EXIT_CODE=$?
 
 # ── Rapport ───────────────────────────────────────────────────────────────────
 echo ""
@@ -68,7 +70,7 @@ echo -e "${CYAN}Ouverture du rapport HTML...${NC}"
 # Essayer d'ouvrir le rapport sur différents ports si 9323 est occupé
 for port in 9323 9324 9325 9326 9327; do
   if ! lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
-    ./node_modules/.bin/playwright show-report --port=$port 2>/dev/null || true
+    "$PLAYWRIGHT" show-report --port=$port 2>/dev/null || true
     break
   fi
 done
