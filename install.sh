@@ -111,20 +111,12 @@ check_prerequisites() {
 # 2. INSTALLATION DES DÉPENDANCES
 # ============================================================================
 install_dependencies() {
-    echo -e "${YELLOW}📦 Installation des dépendances npm...${NC}"
+    echo -e "${YELLOW}📦 Installation des dépendances npm (workspaces)...${NC}"
 
     if [ ! -d "node_modules" ]; then
         npm install
     else
-        echo -e "${BLUE}ℹ node_modules existe déjà, mise à jour...${NC}"
-        npm install
-    fi
-
-    if [ -d "frontend" ]; then
-        cd frontend
-        echo -e "${YELLOW}📦 Installation des dépendances frontend...${NC}"
-        npm install
-        cd ..
+        echo -e "${BLUE}ℹ node_modules existe déjà${NC}"
     fi
 
     echo -e "${GREEN}✓ Dépendances installées${NC}"
