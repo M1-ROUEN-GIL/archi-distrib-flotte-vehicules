@@ -5,11 +5,11 @@ cd "$(dirname "$0")/.."
 echo "🚀 Démarrage de Minikube..."
 minikube start --addons=ingress
 
-echo "⏳ Attente du contrôleur Ingress..."
+echo "⏳ Attente du contrôleur Ingress (cela peut prendre 1-2 minutes)..."
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
-  --timeout=120s
+  --timeout=120s && echo "✓ Ingress prêt"
 
 # Passage en LoadBalancer pour minikube tunnel
 kubectl patch svc ingress-nginx-controller -n ingress-nginx \
@@ -48,17 +48,20 @@ echo "🔨 Building flotte-frontend..."
 minikube image build -t "flotte-frontend:latest" "./frontend/"
 
 echo "🛠️ Déploiement de l'infrastructure (DB, Kafka, Redis)..."
+echo "   (cela peut prendre 2-3 minutes)..."
 helm dependency build ./infra/helm/fleet-infra/ || echo "⚠️ Warning: build failed, attempting to continue..."
 helm upgrade --install fleet-infra ./infra/helm/fleet-infra/ -n flotte-namespace -f ./infra/helm/fleet-infra/values.secret.yaml
+echo "✓ Infrastructure déployée"
 
 echo "📊 Déploiement de l'observabilité..."
 helm upgrade --install fleet-obs ./infra/helm/fleet-observability/ -n flotte-namespace
+echo "✓ Observabilité déployée"
 
-echo "⏳ Attente de PostgreSQL..."
-kubectl wait --for=condition=ready --timeout=300s pod/postgres-flotte-service-0 -n flotte-namespace
+echo "⏳ Attente de PostgreSQL... (cela peut prendre 1-2 minutes)"
+kubectl wait --for=condition=ready --timeout=300s pod/postgres-flotte-service-0 -n flotte-namespace && echo "✓ PostgreSQL prêt"
 
-echo "⏳ Attente de Kafka..."
-kubectl wait --for=condition=ready --timeout=300s pod -l app=kafka-broker -n flotte-namespace
+echo "⏳ Attente de Kafka... (cela peut prendre 1-2 minutes)"
+kubectl wait --for=condition=ready --timeout=300s pod -l app=kafka-broker -n flotte-namespace && echo "✓ Kafka prêt"
 echo "🎸 Création des topics Kafka..."
 KAFKA_POD=$(kubectl get pods -n flotte-namespace -l app=kafka-broker -o name | head -n 1)
 # On cherche le binaire avec ou sans .sh
@@ -75,15 +78,22 @@ kubectl exec $KAFKA_POD -n flotte-namespace -- $KAFKA_BIN --create --topic flott
 
 echo "🚀 Déploiement de l'application complète via Helm..."
 helm upgrade --install fleet-app ./infra/helm/fleet-app/ -n flotte-namespace
+echo "✓ Application déployée"
 
 echo "🏁 Attente des déploiements applicatifs..."
-kubectl rollout status deployment/keycloak-deployment -n flotte-namespace --timeout=900s
-kubectl rollout status deployment/graphql-gateway-deployment -n flotte-namespace --timeout=600s
-kubectl rollout status deployment/frontend-deployment -n flotte-namespace --timeout=600s
+echo "   ⏳ Keycloak... (cela peut prendre 2-3 minutes)"
+kubectl rollout status deployment/keycloak-deployment -n flotte-namespace --timeout=900s && echo "   ✓ Keycloak prêt"
+
+echo "   ⏳ GraphQL Gateway... (cela peut prendre 1-2 minutes)"
+kubectl rollout status deployment/graphql-gateway-deployment -n flotte-namespace --timeout=600s && echo "   ✓ GraphQL Gateway prêt"
+
+echo "   ⏳ Frontend... (cela peut prendre 1-2 minutes)"
+kubectl rollout status deployment/frontend-deployment -n flotte-namespace --timeout=600s && echo "   ✓ Frontend prêt"
 
 echo "♻️ Redémarrage des collecteurs (Force Refresh)..."
 kubectl rollout restart daemonset promtail -n flotte-namespace
 kubectl rollout restart deployment otel-collector -n flotte-namespace
+echo "✓ Collecteurs redémarrés"
 
 echo "--------------------------------------------------"
 echo "✅ Installation terminée avec succès !"

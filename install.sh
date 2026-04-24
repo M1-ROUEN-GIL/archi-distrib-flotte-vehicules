@@ -164,8 +164,19 @@ select_environment() {
 start_docker() {
     echo -e "${YELLOW}🐳 Démarrage avec Docker Compose...${NC}"
     echo ""
+    echo -e "${BLUE}⏳ Construction des images et démarrage des conteneurs...${NC}"
+    echo -e "${BLUE}   (cela peut prendre quelques minutes, soyez patient)${NC}"
+    echo ""
 
-    if docker-compose up -d --build 2>/dev/null || docker compose up -d --build 2>/dev/null; then
+    # Essayer avec docker-compose, sinon docker compose
+    local cmd="docker-compose"
+    if ! command -v docker-compose &> /dev/null; then
+        cmd="docker compose"
+    fi
+
+    # Lancer avec affichage complet
+    if $cmd up -d --build; then
+        echo ""
         echo -e "${GREEN}✓ Services lancés${NC}"
         echo ""
         echo -e "${BLUE}Services disponibles:${NC}"
@@ -219,11 +230,19 @@ start_minikube() {
 
     # Exécuter le script kube.sh
     if [ -f "scripts/kube.sh" ]; then
-        echo -e "${YELLOW}📝 Exécution de scripts/kube.sh...${NC}"
-        bash scripts/kube.sh
-
+        echo -e "${YELLOW}☸️  Déploiement Minikube en cours...${NC}"
+        echo -e "${BLUE}⏳ Initialisation du cluster et déploiement des services${NC}"
+        echo -e "${BLUE}   (cela peut prendre 5-10 minutes, soyez patient)${NC}"
         echo ""
-        echo -e "${GREEN}✓ Déploiement Minikube terminé${NC}"
+
+        if bash scripts/kube.sh; then
+            echo ""
+            echo -e "${GREEN}✓ Déploiement Minikube terminé${NC}"
+        else
+            echo ""
+            echo -e "${RED}❌ Erreur lors du déploiement Minikube${NC}"
+            exit 1
+        fi
         echo ""
         echo -e "${YELLOW}Configuration d'accès requise:${NC}"
         echo "  • Ajouter à /etc/hosts: 127.0.0.1 flotte.local"
