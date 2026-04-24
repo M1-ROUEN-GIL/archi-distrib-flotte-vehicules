@@ -1,8 +1,32 @@
 {
-  "dependencies": {
+  "name": "archi-dist-flotte-vehicules",
+  "version": "1.0.0",
+  "description": "Architecture distribuée - Gestion de flotte de véhicules",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "services/location-service",
+    "gateway",
+    "frontend"
+  ],
+  "scripts": {
+    "install": "npm install --workspaces",
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "start:gateway": "npm start --workspace=gateway",
+    "start:location": "npm start --workspace=services/location-service",
+    "dev:gateway": "npm run dev --workspace=gateway",
+    "dev:location": "npm run dev --workspace=services/location-service"
+  },
+  "devDependencies": {
     "@grpc/grpc-js": "^1.14.3",
-    "@grpc/proto-loader": "^0.8.0",
-    "kafkajs": "^2.2.4",
-    "lucide-react": "^1.8.0"
+    "@grpc/proto-loader": "^0.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=10.0.0"
   }
 }

@@ -867,4 +867,76 @@ Int\'{e}gration CI/CD (frontend + location dans le pipeline) & \textcolor{succes
         subscription $\rightarrow$ frontend est temps r\'{e}el de bout en bout.
 \end{itemize}
 
+% ============================================================
+\section{Refonte de l'architecture du d\'{e}pot}
+% ============================================================
+
+\subsection{Migration vers npm workspaces}
+
+Un probl\`{e}me architectural majeur a \'{e}t\'{e} identifi\'{e} et corrig\'{e}~:
+le d\'{e}pot contenait plusieurs \texttt{package.json} sans configuration de
+monorepo, causant une duplication des d\'{e}pendances et une gestion des versions
+incoh\'{e}rente.
+
+\subsubsection{Structure pr\'{e}c\'{e}dente}
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{package.json} racine vide (seulement 150 octets, d\'{e}pendances
+        gRPC incoh\'{e}rentes)
+  \item \texttt{gateway/package.json} (Express + Apollo)
+  \item \texttt{services/location-service/package.json} (NestJS + gRPC)
+  \item \texttt{frontend/package.json} (React micro-frontend)
+  \item 3 fichiers \texttt{package-lock.json} ind\'{e}pendants $\Rightarrow$ versions
+        diff\'{e}rentes install\'{e}es en parall\`{e}le
+\end{itemize}
+
+\subsubsection{Nouvelle architecture (npm workspaces)}
+
+Le \texttt{package.json} racine a \'{e}t\'{e} reconfigur\'{e} comme \textit{monorepo}
+centralisant les d\'{e}pendances partag\'{e}es et la gestion des builds~:
+
+\begin{lstlisting}[language=bash, caption=Configuration npm workspaces dans \texttt{package.json}]
+{
+  "name": "archi-dist-flotte-vehicules",
+  "workspaces": [
+    "services/location-service",
+    "gateway",
+    "frontend"
+  ],
+  "scripts": {
+    "install": "npm install --workspaces",
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "start:gateway": "npm start --workspace=gateway",
+    "start:location": "npm start --workspace=services/location-service"
+  }
+}
+\end{lstlisting}
+
+\subsubsection{B\'{e}n\'{e}fices imm\'{e}diats}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Deduplication automatique} : npm installe une seule copie de
+        \texttt{@grpc/grpc-js} (v1.14.3) et la partage via symlinks.
+  \item \textbf{Lock file centralis\'{e}} : un seul \texttt{package-lock.json} \`{a}
+        la racine, suppression des fichiers en doublons (\texttt{gateway/} et
+        \texttt{frontend/}).
+  \item \textbf{Commandes unifi\'{e}es} : \texttt{npm run build --workspaces} compile
+        tous les services d'un coup, simplifiant le CI/CD.
+  \item \textbf{Versionning coh\'{e}rent} : tous les workspaces utilisent les m\^{e}mes
+        versions de d\'{e}pendances, \'{e}vitant les incompatibilit\'{e}s subtiles.
+\end{itemize}
+
+\subsection{Nettoyage des r\'{e}sidus}
+
+Les fichiers suivants ont \'{e}t\'{e} supprim\'{e}s pour \'{e}viter les conflits~:
+\begin{itemize}[leftmargin=*]
+  \item \texttt{gateway/package-lock.json}
+  \item \texttt{frontend/package-lock.json}
+\end{itemize}
+
+Seul le \texttt{package-lock.json} racine demeure, maintenu par npm
+automatiquement lors de chaque \texttt{npm install}.
+
 \end{document}

@@ -63,7 +63,31 @@ PostgreSQL : `admin` / `password`
 
 ---
 
-## Scripts
+## Commandes npm (Monorepo)
+
+Le projet est structuré en **npm workspaces**. Toutes les commandes se lancent depuis la racine.
+
+```bash
+# Installation et builds
+npm install                           # Installe tous les workspaces
+npm run build --workspaces           # Build tous les services
+npm run dev --workspaces             # Dev mode tous les services
+
+# Services individuels
+npm start --workspace=gateway         # Démarre la Gateway seule
+npm start --workspace=services/location-service  # Démarre Location Service
+npm run dev --workspace=gateway       # Dev mode Gateway
+npm run dev --workspace=services/location-service # Dev mode Location Service
+
+# Tests et linting
+npm run test --workspaces            # Tests tous les workspaces
+npm run lint --workspaces            # Linting tous les workspaces
+npm run test:e2e --workspace=frontend # Tests Playwright (frontend seul)
+```
+
+---
+
+## Scripts de démonstration
 
 Tous les scripts se trouvent dans [`scripts/`](./scripts).
 
