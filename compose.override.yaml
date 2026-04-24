@@ -15,8 +15,13 @@ services:
   prometheus:
     image: prom/prometheus:v2.51.0
     container_name: flotte-prometheus
+    command:
+      - "--config.file=/etc/prometheus-config/prometheus.yaml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
     volumes:
-      - ./infra/helm/fleet-observability/config/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./infra/helm/fleet-observability/config:/etc/prometheus-config:ro
     ports:
       - "9090:9090"
     restart: unless-stopped

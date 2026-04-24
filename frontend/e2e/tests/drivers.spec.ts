@@ -53,8 +53,11 @@ test.describe('Conducteurs', () => {
     await row.locator('button[title="Modifier"]').click();
     await page.getByPlaceholder('Facultatif').nth(0).fill('0612345678');
     await page.getByRole('button', { name: /mettre à jour/i }).click();
-
     await expect(page.getByText('0612345678')).toBeVisible({ timeout: 20_000 });
+
+    // Laisser les refetchQueries de l'update se terminer avant de supprimer,
+    // sinon la réponse tardive écrase le résultat du delete dans le cache Apollo.
+    await page.waitForLoadState('networkidle');
 
     // Nettoyage
     page.once('dialog', d => d.accept());

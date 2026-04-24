@@ -25,7 +25,8 @@ export default function () {
 
     stream.on('error', (err) => {
         // code 2 = CANCELLED : fermeture volontaire côté client, pas une vraie erreur
-        if (err.code !== 2) {
+        // eslint-disable-next-line eqeqeq
+        if (err.code != 2) {
             console.error('Stream error: ' + JSON.stringify(err));
         }
     });
